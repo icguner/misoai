@@ -7,16 +7,16 @@ import {
   defaultRunDirName,
   getMidsceneRunSubDir,
   logDir,
-} from '@midscene/shared/common';
+} from 'misoai-shared/common';
 import {
   MIDSCENE_DEBUG_MODE,
   MIDSCENE_OPENAI_INIT_CONFIG_JSON,
   getAIConfig,
   getAIConfigInJson,
-} from '@midscene/shared/env';
-import { getRunningPkgInfo } from '@midscene/shared/fs';
-import { assert, getGlobalScope } from '@midscene/shared/utils';
-import { ifInBrowser, uuid } from '@midscene/shared/utils';
+} from 'misoai-shared/env';
+import { getRunningPkgInfo } from 'misoai-shared/fs';
+import { assert, getGlobalScope } from 'misoai-shared/utils';
+import { ifInBrowser, uuid } from 'misoai-shared/utils';
 import type { Rect, ReportDumpWithAttributes } from './types';
 
 let logEnvReady = false;

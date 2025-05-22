@@ -1,4 +1,4 @@
-import { getPreferredLanguage } from '@midscene/shared/env';
+import { getPreferredLanguage } from 'misoai-shared/env';
 
 const preferredLanguage = getPreferredLanguage();
 

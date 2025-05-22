@@ -7,9 +7,9 @@ import type {
   PlanningActionParamSleep,
   PlanningActionParamTap,
   PlanningLocateParam,
-} from '@midscene/core';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-core';
+import { getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
 
 const debug = getDebug('plan-builder');
 

@@ -1,6 +1,6 @@
 import { platform } from 'node:os';
 import { PuppeteerAgent } from '@/puppeteer';
-import { sleep } from '@midscene/core/utils';
+import { sleep } from 'misoai-core/utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { launchPage } from './utils';
 

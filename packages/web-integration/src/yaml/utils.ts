@@ -1,7 +1,7 @@
-import { assert } from '@midscene/shared/utils';
+import { assert } from 'misoai-shared/utils';
 import yaml from 'js-yaml';
 
-import type { MidsceneYamlScript } from '@midscene/core';
+import type { MidsceneYamlScript } from 'misoai-core';
 
 function interpolateEnvVars(content: string): string {
   return content.replace(/\$\{([^}]+)\}/g, (_, envVar) => {

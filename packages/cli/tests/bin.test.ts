@@ -2,11 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { getTmpFile } from '@midscene/core/utils';
+import { getTmpFile } from 'misoai-core/utils';
 import { execa } from 'execa';
 import { describe, expect, test, vi } from 'vitest';
 
-const cliBin = require.resolve('../bin/midscene');
+const cliBin = require.resolve('../bin/misoai');
 vi.setConfig({
   testTimeout: 120 * 1000,
 });

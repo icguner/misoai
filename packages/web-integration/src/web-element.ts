@@ -1,5 +1,5 @@
-import type { BaseElement, Rect } from '@midscene/core';
-import type { NodeType } from '@midscene/shared/constants';
+import type { BaseElement, Rect } from 'misoai-core';
+import type { NodeType } from 'misoai-shared/constants';
 export interface WebElementInfoType extends BaseElement {
   id: string;
   locator: string;

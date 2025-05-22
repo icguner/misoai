@@ -8,10 +8,10 @@
 import type { WebKeyInput } from '@/common/page';
 import { limitOpenNewTabScript } from '@/common/ui-utils';
 import type { AbstractPage, ChromePageDestroyOptions } from '@/page';
-import type { ElementTreeNode, Point, Size } from '@midscene/core';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { treeToList } from '@midscene/shared/extractor';
-import { assert } from '@midscene/shared/utils';
+import type { ElementTreeNode, Point, Size } from 'misoai-core';
+import type { ElementInfo } from 'misoai-shared/extractor';
+import { treeToList } from 'misoai-shared/extractor';
+import { assert } from 'misoai-shared/utils';
 import type { Protocol as CDPTypes } from 'devtools-protocol';
 import { CdpKeyboard } from './cdpInput';
 import {

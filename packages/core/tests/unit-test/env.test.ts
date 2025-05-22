@@ -10,7 +10,7 @@ import {
   getAIConfigInJson,
   overrideAIConfig,
   vlLocateMode,
-} from '@midscene/shared/env';
+} from 'misoai-shared/env';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 describe('env', () => {

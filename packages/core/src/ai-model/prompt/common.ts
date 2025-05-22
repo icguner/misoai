@@ -1,4 +1,4 @@
-import type { vlLocateMode } from '@midscene/shared/env';
+import type { vlLocateMode } from 'misoai-shared/env';
 export function bboxDescription(vlMode: ReturnType<typeof vlLocateMode>) {
   if (vlMode === 'gemini') {
     return '2d bounding box as [ymin, xmin, ymax, xmax]';

@@ -10,8 +10,8 @@ import {
   getAIConfig,
   uiTarsModelVersion,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { uuid } from '@midscene/shared/utils';
+} from 'misoai-shared/env';
+import { uuid } from 'misoai-shared/utils';
 
 export function emitInsightDump(
   data: PartialInsightDumpFromSDK,

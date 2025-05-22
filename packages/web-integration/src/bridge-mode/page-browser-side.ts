@@ -3,7 +3,7 @@ import type {
   KeyboardAction,
   MouseAction,
 } from '@/page';
-import { assert } from '@midscene/shared/utils';
+import { assert } from 'misoai-shared/utils';
 import ChromeExtensionProxyPage from '../chrome-extension/page';
 import {
   type BridgeConnectTabOptions,

@@ -1,17 +1,17 @@
 {
-  "name": "@midscene/android",
-  "version": "0.17.1",
-  "description": "Android automation library for Midscene",
-  "keywords": [
-    "Android UI automation",
-    "Android AI testing",
-    "Android automation library",
-    "Android automation tool",
-    "Android use"
-  ],
+  "name": "misoai-android",
+  "version": "3.0.5",
+  "description": "Appium-based Android automation library for misoAI",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
-  "files": ["bin", "dist", "README.md"],
+  "files": [
+    "bin",
+    "dist",
+    "examples",
+    "README.md",
+    "CHANGELOG.md",
+    "MIGRATION.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
@@ -24,20 +24,45 @@
     "build:watch": "modern build -w -c ./modern.config.ts",
     "test": "vitest --run",
     "test:u": "vitest --run -u",
-    "test:ai": "MIDSCENE_CACHE=true npm run test"
+    "test:ai": "MIDSCENE_CACHE=true npm run test",
+    "example:basic": "ts-node examples/basic-usage.ts",
+    "example:sauce": "ts-node examples/sauce-labs.ts",
+    "example:ai": "ts-node examples/ai-automation.ts",
+    "example:w3c": "ts-node examples/w3c-actions.ts",
+    "example:metrics": "ts-node examples/performance-metrics.ts",
+    "example:monitoring": "ts-node examples/performance-monitoring.ts",
+    "example:media": "ts-node examples/media-utils.ts"
   },
   "dependencies": {
-    "@midscene/core": "workspace:*",
-    "@midscene/shared": "workspace:*",
-    "@midscene/web": "workspace:*",
-    "appium-adb": "12.12.1"
+    "misoai-core": "1.0.2",
+    "misoai-shared": "1.0.0",
+    "misoai-web": "1.0.2",
+    "webdriverio": "^8.32.3"
   },
   "devDependencies": {
     "@modern-js/module-tools": "2.60.6",
     "@types/node": "^18.0.0",
     "dotenv": "16.4.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.2",
     "vitest": "3.0.5"
   },
-  "license": "MIT"
+  "keywords": [
+    "android",
+    "automation",
+    "testing",
+    "ai",
+    "misoai",
+    "appium",
+    "webdriverio",
+    "mobile"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "webdriverio": "^8.32.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
 }

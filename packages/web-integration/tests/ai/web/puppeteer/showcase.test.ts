@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { PuppeteerAgent } from '@/puppeteer';
-import { sleep } from '@midscene/core/utils';
-import { vlLocateMode } from '@midscene/shared/env';
+import { sleep } from 'misoai-core/utils';
+import { vlLocateMode } from 'misoai-shared/env';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { launchPage } from './utils';
 

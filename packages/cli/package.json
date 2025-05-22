@@ -1,15 +1,19 @@
 {
-  "name": "@midscene/cli",
+  "name": "misoai-cli",
   "description": "An AI-powered automation SDK can control the page, perform assertions, and extract data in JSON format using natural language. See https://midscenejs.com/ for details.",
-  "version": "0.17.1",
+  "version": "1.0.0",
   "repository": "https://github.com/web-infra-dev/midscene",
   "homepage": "https://midscenejs.com/",
   "jsnext:source": "./src/index.ts",
   "main": "./dist/lib/index.js",
   "bin": {
-    "midscene": "./bin/midscene"
+    "misoai": "./bin/misoai"
   },
-  "files": ["dist", "README.md", "bin"],
+  "files": [
+    "dist",
+    "README.md",
+    "bin"
+  ],
   "scripts": {
     "dev": "modern dev",
     "build": "modern build",
@@ -21,9 +25,9 @@
     "test:ai:temp": "AITEST=true BRIDGE_MODE=true vitest tests/bridge.test.ts"
   },
   "dependencies": {
-    "@midscene/android": "workspace:*",
-    "@midscene/core": "workspace:*",
-    "@midscene/web": "workspace:*",
+    "misoai-android": "3.0.4",
+    "misoai-core": "1.0.2",
+    "misoai-web": "1.0.2",
     "puppeteer": "24.2.0",
     "http-server": "14.1.1"
   },

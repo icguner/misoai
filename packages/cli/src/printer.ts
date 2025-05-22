@@ -2,8 +2,8 @@ import { basename, dirname, relative } from 'node:path';
 import type {
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
-} from '@midscene/core';
-import type { ScriptPlayer } from '@midscene/web/yaml';
+} from 'misoai-core';
+import type { ScriptPlayer } from 'misoai-web/yaml';
 import chalk from 'chalk';
 
 export interface MidsceneYamlFileContext {
@@ -11,7 +11,7 @@ export interface MidsceneYamlFileContext {
   player: ScriptPlayer;
 }
 
-export const isTTY = process.env.MIDSCENE_CLI_LOG_ON_NON_TTY
+export const isTTY = process.env.MISOAI_CLI_LOG_ON_NON_TTY
   ? false
   : process.stdout.isTTY;
 export const indent = '  ';

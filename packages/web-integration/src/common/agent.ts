@@ -1,24 +1,107 @@
 import type { WebPage } from '@/common/page';
-import {
-  type AgentAssertOpt,
-  type AgentDescribeElementAtPointResult,
-  type AgentWaitForOpt,
-  type DetailedLocateParam,
-  type ExecutionDump,
-  type ExecutionTask,
-  type Executor,
-  type GroupedActionDump,
-  Insight,
-  type InsightAction,
-  type LocateOption,
-  type LocateResultElement,
-  type LocateValidatorResult,
-  type LocatorValidatorOption,
-  type MidsceneYamlScript,
-  type OnTaskStartTip,
-  type PlanningActionParamScroll,
-  type Rect,
-} from '@midscene/core';
+import type {
+  AgentAssertOpt,
+  AgentDescribeElementAtPointResult,
+  AgentWaitForOpt,
+  AICaptchaResponse,
+  AIUsageInfo,
+  DetailedLocateParam,
+  ExecutionDump,
+  ExecutionTask,
+  Executor,
+  GroupedActionDump,
+  InsightAction,
+  LocateOption,
+  LocateResultElement,
+  LocateValidatorResult,
+  LocatorValidatorOption,
+  OnTaskStartTip,
+  PlanningActionParamScroll,
+  Rect,
+} from 'misoai-core';
+import { Insight } from 'misoai-core';
+
+/**
+ * Metadata for AI task execution
+ */
+export interface AITaskMetadata {
+  /** Status of the task (pending, running, finished, failed, cancelled) */
+  status?: string;
+  /** Timestamp when the task started */
+  start?: number;
+  /** Timestamp when the task ended */
+  end?: number;
+  /** Total time taken to execute the task in milliseconds */
+  totalTime?: number;
+  /** Cache information */
+  cache?: { hit: boolean };
+  /** Token usage information */
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    [key: string]: any;
+  };
+  /** DeepThink information */
+  deepthink?: {
+    used: boolean;
+    mode: string;
+    [key: string]: any;
+  };
+  /** AI's thought process */
+  thought?: string;
+  /** Element location information */
+  locate?: any;
+  /** Action plans */
+  plan?: any;
+  /** Planning information */
+  planning?: {
+    type: string;
+    description: string;
+    steps: string[];
+  };
+  /** Insight information */
+  insight?: {
+    type: string;
+    description: string;
+    elements: string[];
+  };
+  /** Action information */
+  action?: {
+    type: string;
+    description: string;
+    result: any;
+  };
+  /** Action details */
+  actionDetails?: Array<{
+    type: string;
+    subType?: string;
+    status: string;
+    thought?: string;
+  }>;
+  /** Task details */
+  tasks?: Array<{
+    type: string;
+    subType?: string;
+    status: string;
+    thought?: string;
+    locate?: any;
+    timing?: any;
+    usage?: any;
+    cache?: any;
+    error?: string;
+  }>;
+}
+
+/**
+ * Result of an AI task with metadata
+ */
+export interface AITaskResult<T = any> {
+  /** The actual result of the operation */
+  result: T;
+  /** Metadata about the task execution */
+  metadata: AITaskMetadata;
+}
 
 import yaml from 'js-yaml';
 
@@ -28,14 +111,14 @@ import {
   reportHTMLContent,
   stringifyDumpData,
   writeLogFile,
-} from '@midscene/core/utils';
+} from 'misoai-core/utils';
 import {
   DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT,
   DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT,
-} from '@midscene/shared/constants';
-import { getAIConfigInBoolean, vlLocateMode } from '@midscene/shared/env';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-shared/constants';
+import { getAIConfigInBoolean, vlLocateMode } from 'misoai-shared/env';
+import { getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
 import { PageTaskExecutor } from '../common/tasks';
 import type { PuppeteerWebPage } from '../puppeteer';
 import type { WebElementInfo } from '../web-element';
@@ -157,7 +240,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   async getUIContext(action?: InsightAction): Promise<WebUIContext> {
-    if (action && (action === 'extract' || action === 'assert')) {
+    if (action && (action === 'extract' || action === 'assert' || action === 'captcha')) {
       return await parseContextFromWebPage(this.page, {
         ignoreMarker: true,
       });
@@ -165,6 +248,21 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     return await parseContextFromWebPage(this.page, {
       ignoreMarker: !!vlLocateMode(),
     });
+  }
+
+  // Helper method to call the insight.captcha method
+  private async _callInsightCaptcha(options?: { deepThink?: boolean }): Promise<{ content: AICaptchaResponse; usage?: AIUsageInfo; deepThink?: boolean }> {
+    // This is a workaround for TypeScript type checking
+    // We know that insight.captcha exists because we added it
+    const context = await this.getUIContext();
+
+    // Include the current page URL in the context for better CAPTCHA analysis
+    if (this.page.url) {
+      const url = await this.page.url();
+      context.url = url;
+    }
+
+    return (this.insight as any).captcha(context, options);
   }
 
   async setAIActionContext(prompt: string) {
@@ -222,13 +320,98 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   private afterTaskRunning(executor: Executor, doNotThrowError = false) {
+    // Always collect execution data for metadata
     this.appendExecutionDump(executor.dump());
+
+    // Only write out dumps if not using Puppeteer
     this.writeOutActionDumps();
 
     if (executor.isInErrorState() && !doNotThrowError) {
       const errorTask = executor.latestErrorTask();
-      throw new Error(`${errorTask?.error}\n${errorTask?.errorStack}`);
+      throw new Error(`${errorTask?.error}`);
     }
+
+    // Extract metadata from the executor
+    const lastTask = executor.tasks[executor.tasks.length - 1];
+
+    // Collect all tasks' thoughts and plans
+    const allThoughts = executor.tasks
+      .filter(task => task.thought)
+      .map(task => task.thought);
+
+    // Collect all locate information
+    const allLocates = executor.tasks
+      .filter(task => task.locate)
+      .map(task => task.locate);
+
+    // Collect all plans
+    const allPlans = executor.tasks
+      .filter(task => task.param?.plans)
+      .map(task => task.param?.plans);
+
+    // Collect tasks by type
+    const planningTasks = executor.tasks.filter(task => task.type === 'Planning');
+    const insightTasks = executor.tasks.filter(task => task.type === 'Insight');
+    const actionTasks = executor.tasks.filter(task => task.type === 'Action');
+
+    // Create planning, insight, and action information
+    const planning = planningTasks.length > 0 ? {
+      type: "Planning",
+      description: `Planning for task execution`,
+      steps: planningTasks.map(task => task.thought || 'Planning step')
+    } : undefined;
+
+    const insight = insightTasks.length > 0 ? {
+      type: "Insight",
+      description: `Insight for task execution`,
+      elements: insightTasks.map(task => task.thought || 'Insight element')
+    } : undefined;
+
+    const action = actionTasks.length > 0 ? {
+      type: "Action",
+      description: `Action for task execution`,
+      result: lastTask?.output
+    } : undefined;
+
+    // Create action details
+    const actionDetails = executor.tasks.map(task => ({
+      type: task.type,
+      subType: task.subType,
+      status: task.status,
+      thought: task.thought
+    }));
+
+    // Extract detailed information from all tasks
+    const metadata: AITaskMetadata = {
+      status: lastTask?.status,
+      start: lastTask?.timing?.start,
+      end: lastTask?.timing?.end,
+      totalTime: lastTask?.timing?.cost,
+      cache: lastTask?.cache,
+      usage: lastTask?.usage,
+      thought: allThoughts.length > 0 ? allThoughts.join('\n') : lastTask?.thought,
+      locate: allLocates.length > 0 ? allLocates : lastTask?.locate,
+      plan: allPlans.length > 0 ? allPlans : lastTask?.param?.plans,
+      // Add planning, insight, and action information
+      planning,
+      insight,
+      action,
+      actionDetails,
+      // Include raw tasks for debugging
+      tasks: executor.tasks.map(task => ({
+        type: task.type,
+        subType: task.subType,
+        status: task.status,
+        thought: task.thought,
+        locate: task.locate,
+        timing: task.timing,
+        usage: task.usage,
+        cache: task.cache,
+        error: task.error
+      }))
+    };
+
+    return metadata;
   }
 
   private buildDetailedLocateParam(
@@ -251,7 +434,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async aiTap(locatePrompt: string, opt?: LocateOption) {
+  async aiTap(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     const detailedLocateParam = this.buildDetailedLocateParam(
       locatePrompt,
       opt,
@@ -261,11 +444,15 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Tap', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
   }
 
-  async aiHover(locatePrompt: string, opt?: LocateOption) {
+  async aiHover(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     const detailedLocateParam = this.buildDetailedLocateParam(
       locatePrompt,
       opt,
@@ -275,11 +462,15 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Hover', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
   }
 
-  async aiInput(value: string, locatePrompt: string, opt?: LocateOption) {
+  async aiInput(value: string, locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     assert(
       typeof value === 'string',
       'input value must be a string, use empty string if you want to clear the input',
@@ -296,15 +487,19 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Input', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
   }
 
   async aiKeyboardPress(
     keyName: string,
     locatePrompt?: string,
     opt?: LocateOption,
-  ) {
+  ): Promise<AITaskResult> {
     assert(keyName, 'missing keyName for keyboard press');
     const detailedLocateParam = locatePrompt
       ? this.buildDetailedLocateParam(locatePrompt, opt)
@@ -316,15 +511,19 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('KeyboardPress', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
   }
 
   async aiScroll(
     scrollParam: PlanningActionParamScroll,
     locatePrompt?: string,
     opt?: LocateOption,
-  ) {
+  ): Promise<AITaskResult> {
     const detailedLocateParam = locatePrompt
       ? this.buildDetailedLocateParam(locatePrompt, opt)
       : undefined;
@@ -336,8 +535,12 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Scroll', paramInTitle),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
   }
 
   async aiAction(
@@ -345,7 +548,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     opt?: {
       cacheable?: boolean;
     },
-  ) {
+  ): Promise<AITaskResult> {
     const cacheable = opt?.cacheable;
     // if vlm-ui-tars, plan cache is not used
     const isVlmUiTars = vlLocateMode() === 'vlm-ui-tars';
@@ -360,11 +563,15 @@ export class PageAgent<PageType extends WebPage = WebPage> {
         matchedCache.cacheContent?.yamlWorkflow,
       );
 
-      await this.afterTaskRunning(executor);
+      const metadata = this.afterTaskRunning(executor);
 
       debug('matched cache, will call .runYaml to run the action');
       const yaml = matchedCache.cacheContent?.yamlWorkflow;
-      return this.runYaml(yaml);
+      const result = await this.runYaml(yaml);
+      return {
+        result: result.result,
+        metadata
+      };
     }
 
     const { output, executor } = await (isVlmUiTars
@@ -373,7 +580,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
     // update cache
     if (this.taskCache && output?.yamlFlow && cacheable !== false) {
-      const yamlContent: MidsceneYamlScript = {
+      const yamlContent = {
         tasks: [
           {
             name: taskPrompt,
@@ -392,32 +599,47 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       );
     }
 
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiQuery(demand: any) {
+  async aiQuery(demand: any): Promise<AITaskResult> {
     const { output, executor } = await this.taskExecutor.query(demand);
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiBoolean(prompt: string) {
+  async aiBoolean(prompt: string): Promise<AITaskResult<boolean>> {
     const { output, executor } = await this.taskExecutor.boolean(prompt);
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiNumber(prompt: string) {
+  async aiNumber(prompt: string): Promise<AITaskResult<number>> {
     const { output, executor } = await this.taskExecutor.number(prompt);
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiString(prompt: string) {
+  async aiString(prompt: string): Promise<AITaskResult<string>> {
     const { output, executor } = await this.taskExecutor.string(prompt);
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
   async describeElementAtPoint(
@@ -483,10 +705,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   ): Promise<LocateValidatorResult> {
     debug('verifyLocator', prompt, locateOpt, expectCenter, verifyLocateOption);
 
-    const { center: verifyCenter, rect: verifyRect } = await this.aiLocate(
-      prompt,
-      locateOpt,
-    );
+    const locateResult = await this.aiLocate(prompt, locateOpt);
+    const { center: verifyCenter, rect: verifyRect } = locateResult.result;
+
     const distance = distanceOfTwoPoints(expectCenter, verifyCenter);
     const included = includedInRect(expectCenter, verifyRect);
     const pass =
@@ -502,29 +723,51 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     return verifyResult;
   }
 
-  async aiLocate(prompt: string, opt?: LocateOption) {
+  async aiLocate(prompt: string, opt?: LocateOption): Promise<AITaskResult<Pick<LocateResultElement, 'rect' | 'center'>>> {
     const detailedLocateParam = this.buildDetailedLocateParam(prompt, opt);
     const plans = buildPlans('Locate', detailedLocateParam);
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Locate', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
+    const metadata = this.afterTaskRunning(executor);
 
     const { element } = output;
-
-    return {
+    const result = {
       rect: element?.rect,
       center: element?.center,
     } as Pick<LocateResultElement, 'rect' | 'center'>;
+
+    return {
+      result,
+      metadata
+    };
   }
 
-  async aiAssert(assertion: string, msg?: string, opt?: AgentAssertOpt) {
-    const { output, executor } = await this.taskExecutor.assert(assertion);
-    this.afterTaskRunning(executor, true);
+  async aiAssert(assertion: string, msg?: string, opt?: AgentAssertOpt): Promise<AITaskResult<any>> {
+    // Get the current page URL to include in the assertion context
+    let currentUrl = "";
+    if (this.page.url) {
+      try {
+        currentUrl = await this.page.url();
+      } catch (e) {
+        // Ignore errors getting URL
+      }
+    }
+
+    // Add URL context to the assertion if available
+    const assertionWithContext = currentUrl
+      ? `For the page at URL "${currentUrl}", ${assertion}`
+      : assertion;
+
+    const { output, executor } = await this.taskExecutor.assert(assertionWithContext);
+    const metadata = this.afterTaskRunning(executor, true);
 
     if (output && opt?.keepRawResponse) {
-      return output;
+      return {
+        result: output,
+        metadata,
+      };
     }
 
     if (!output?.pass) {
@@ -534,14 +777,170 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       }`;
       throw new Error(`${errMsg}\n${reasonMsg}`);
     }
+
+    return {
+      result: true,
+      metadata
+    };
   }
 
-  async aiWaitFor(assertion: string, opt?: AgentWaitForOpt) {
+  async aiCaptcha(options?: { deepThink?: boolean; autoDetectComplexity?: boolean }): Promise<AITaskResult<any>> {
+    const { deepThink = false, autoDetectComplexity = true } = options || {};
+
+    // First, do a preliminary analysis to determine if this is a complex CAPTCHA
+    // that would benefit from deep thinking
+    let shouldUseDeepThink = deepThink;
+
+    if (autoDetectComplexity && !deepThink) {
+      // Get a screenshot to analyze
+      const context = await this.getUIContext();
+      const { screenshotBase64 } = context;
+
+      // Simple analysis to determine if this is likely a complex CAPTCHA
+      try {
+        const complexityAnalysisPrompt = `
+Analyze this screenshot and determine if it contains a complex CAPTCHA that would benefit from deep thinking.
+A complex CAPTCHA typically has one or more of these characteristics:
+- Distorted or overlapping text that is hard to read
+- Multiple images that need to be selected based on a specific criteria
+- Puzzles that require spatial reasoning
+- Multiple steps or verification methods
+- Small or hard-to-distinguish elements
+
+Return only "complex" or "simple" based on your analysis.
+`;
+
+        const complexityMsgs = [
+          { role: 'system', content: 'You are an AI assistant that analyzes screenshots to determine CAPTCHA complexity.' },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: {
+                  url: screenshotBase64,
+                  detail: 'high',
+                },
+              },
+              {
+                type: 'text',
+                text: complexityAnalysisPrompt,
+              },
+            ],
+          },
+        ];
+
+        // Use a simple call to determine complexity
+        // Using any here to avoid type issues since we're just checking the response text
+        const complexityResult = await (this.insight as any).aiVendorFn(
+          complexityMsgs,
+          { type: 'extract_data' }
+        );
+
+        // Check if the response indicates a complex CAPTCHA
+        const responseText = typeof complexityResult.content === 'string'
+          ? complexityResult.content.toLowerCase()
+          : JSON.stringify(complexityResult.content).toLowerCase();
+
+        shouldUseDeepThink = responseText.includes('complex');
+
+        debug('CAPTCHA complexity analysis:', responseText, 'Using deep think:', shouldUseDeepThink);
+      } catch (error) {
+        // If analysis fails, default to not using deep think
+        debug('Failed to analyze CAPTCHA complexity:', error);
+      }
+    }
+
+    // Call the AiCaptcha function to analyze the CAPTCHA with the determined deepThink setting
+    const captchaResponse = await this._callInsightCaptcha({
+      deepThink: shouldUseDeepThink
+    });
+
+    const captchaResult = captchaResponse.content;
+    const usage = captchaResponse.usage;
+    // Get the actual deepThink value that was used (may be different due to global settings)
+    const actualDeepThink = captchaResponse.deepThink || false;
+
+    // Process the CAPTCHA solution based on its type
+    if (captchaResult.captchaType === 'text') {
+      // For text-based CAPTCHAs, find the input field and enter the solution
+      for (const action of captchaResult.actions) {
+        if (action.type === 'click' && action.target) {
+          // Click on the input field
+          await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
+        } else if (action.type === 'input' && action.value) {
+          // Enter the text solution
+          if (action.target) {
+            await this.aiInput(action.value, action.target, { deepThink: shouldUseDeepThink });
+          }
+        } else if (action.type === 'verify' && action.target) {
+          // Click on the verify/submit button
+          await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
+        }
+      }
+    } else if (captchaResult.captchaType === 'image') {
+      // For image-based CAPTCHAs, click on the required elements
+      for (const action of captchaResult.actions) {
+        if (action.type === 'click') {
+          if (action.coordinates) {
+            // Click at specific coordinates using aiTap with coordinates
+            const x = action.coordinates[0];
+            const y = action.coordinates[1];
+            await this.aiTap(`element at coordinates (${x}, ${y})`, { deepThink: shouldUseDeepThink });
+          } else if (action.target) {
+            // Click on described element
+            await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
+          }
+        } else if (action.type === 'verify' && action.target) {
+          // Click on the verify/submit button
+          await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
+        }
+      }
+    }
+
+    // Wait a few seconds after completing the CAPTCHA
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Return the result with metadata
+    const metadata: AITaskMetadata = {
+      status: 'finished',
+      usage,
+      thought: captchaResult.thought,
+    };
+
+    // Add additional metadata properties using type assertion
+    (metadata as any).deepThink = actualDeepThink;
+    if (autoDetectComplexity && !deepThink) {
+      (metadata as any).autoDetectedComplexity = shouldUseDeepThink;
+    }
+
+    return {
+      result: captchaResult,
+      metadata
+    };
+  }
+
+  async aiWaitFor(assertion: string, opt?: AgentWaitForOpt): Promise<AITaskResult> {
+    const startTime = Date.now();
     const { executor } = await this.taskExecutor.waitFor(assertion, {
       timeoutMs: opt?.timeoutMs || 15 * 1000,
       checkIntervalMs: opt?.checkIntervalMs || 3 * 1000,
       assertion,
     });
+    const metadata: AITaskMetadata = {
+      status: executor.isInErrorState() ? 'failed' : 'finished',
+      start: startTime,
+      end: Date.now(),
+      totalTime: Date.now() - startTime,
+      thought: executor.latestErrorTask()?.thought,
+      actionDetails: executor.tasks.map(task => ({
+        type: task.type,
+        subType: task.subType,
+        status: task.status,
+        thought: task.thought,
+      })),
+    };
+
     this.appendExecutionDump(executor.dump());
     this.writeOutActionDumps();
 
@@ -549,9 +948,18 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       const errorTask = executor.latestErrorTask();
       throw new Error(`${errorTask?.error}\n${errorTask?.errorStack}`);
     }
+
+    return {
+      result: true, // Successfully waited
+      metadata,
+    };
   }
 
-  async ai(taskPrompt: string, type = 'action') {
+  async ai(
+    taskPrompt: string,
+    type = 'action',
+    options?: { deepThink?: boolean; autoDetectComplexity?: boolean }
+  ): Promise<AITaskResult> {
     if (type === 'action') {
       return this.aiAction(taskPrompt);
     }
@@ -564,22 +972,39 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     }
 
     if (type === 'tap') {
-      return this.aiTap(taskPrompt);
+      return this.aiTap(taskPrompt, options);
+    }
+
+    if (type === 'captcha') {
+      return this.aiCaptcha(options);
     }
 
     throw new Error(
-      `Unknown type: ${type}, only support 'action', 'query', 'assert', 'tap'`,
+      `Unknown type: ${type}, only support 'action', 'query', 'assert', 'tap', 'captcha'`,
     );
   }
 
-  async runYaml(yamlScriptContent: string): Promise<{
-    result: Record<string, any>;
-  }> {
+  async runYaml(yamlScriptContent: string): Promise<AITaskResult<Record<string, any>>> {
+    const startTime = Date.now();
     const script = parseYamlScript(yamlScriptContent, 'yaml', true);
-    const player = new ScriptPlayer(script, async (target) => {
+    const player = new ScriptPlayer(script, async () => {
       return { agent: this, freeFn: [] };
     });
     await player.run();
+
+    const endTime = Date.now();
+    const metadata: AITaskMetadata = {
+      status: player.status,
+      start: startTime,
+      end: endTime,
+      totalTime: endTime - startTime,
+      tasks: player.taskStatusList.map(task => ({
+        type: 'yaml-task',
+        subType: task.name,
+        status: task.status,
+        error: task.error?.message,
+      })),
+    };
 
     if (player.status === 'error') {
       const errors = player.taskStatusList
@@ -593,15 +1018,19 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
     return {
       result: player.result,
+      metadata
     };
   }
 
-  async evaluateJavaScript(script: string) {
+  async evaluateJavaScript(script: string): Promise<any> {
     assert(
       this.page.evaluateJavaScript,
       'evaluateJavaScript is not supported in current agent',
     );
-    return this.page.evaluateJavaScript(script);
+    if (this.page.evaluateJavaScript) {
+      return this.page.evaluateJavaScript(script);
+    }
+    throw new Error('evaluateJavaScript is not supported in current agent');
   }
 
   async destroy() {

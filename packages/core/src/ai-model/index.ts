@@ -12,6 +12,7 @@ export {
   AiExtractElementInfo,
   AiAssert,
   AiLocateSection,
+  AiCaptcha,
 } from './inspect';
 
 export { plan } from './llm-planning';

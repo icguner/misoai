@@ -3,11 +3,11 @@ import {
   UITarsModelVersion,
   uiTarsModelVersion,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { resizeImgBase64 } from '@midscene/shared/img';
-import { transformHotkeyInput } from '@midscene/shared/keyboard-layout';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-shared/env';
+import { resizeImgBase64 } from 'misoai-shared/img';
+import { transformHotkeyInput } from 'misoai-shared/keyboard-layout';
+import { getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
 import { actionParser } from '@ui-tars/action-parser';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import { AIActionType, buildYamlFlowFromPlans } from './common';

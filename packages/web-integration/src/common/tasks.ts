@@ -31,19 +31,19 @@ import {
   type PlanningActionParamTap,
   type PlanningActionParamWaitFor,
   plan,
-} from '@midscene/core';
+} from 'misoai-core';
 import {
   type ChatCompletionMessageParam,
   elementByPositionWithElementInfo,
   resizeImageForUiTars,
   vlmPlanning,
-} from '@midscene/core/ai-model';
-import { sleep } from '@midscene/core/utils';
-import { NodeType } from '@midscene/shared/constants';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { getElementInfosScriptContent } from '@midscene/shared/fs';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-core/ai-model';
+import { sleep } from 'misoai-core/utils';
+import { NodeType } from 'misoai-shared/constants';
+import type { ElementInfo } from 'misoai-shared/extractor';
+import { getElementInfosScriptContent } from 'misoai-shared/fs';
+import { getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
 import type { WebElementInfo } from '../web-element';
 import type { TaskCache } from './task-cache';
 import { getKeyCommands, taskTitleStr } from './ui-utils';

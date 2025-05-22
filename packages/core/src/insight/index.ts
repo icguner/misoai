@@ -9,9 +9,10 @@ import {
   AiLocateElement,
   callToGetJSONObject,
 } from '@/ai-model/index';
-import { AiAssert, AiLocateSection } from '@/ai-model/inspect';
+import { AiAssert, AiCaptcha, AiLocateSection } from '@/ai-model/inspect';
 import { elementDescriberInstruction } from '@/ai-model/prompt/describe';
 import type {
+  AICaptchaResponse,
   AIDescribeElementResponse,
   AIElementResponse,
   AISingleElementResponse,
@@ -34,10 +35,10 @@ import {
   MIDSCENE_USE_QWEN_VL,
   getAIConfigInBoolean,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { compositeElementInfoImg, cropByRect } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-shared/env';
+import { compositeElementInfoImg, cropByRect } from 'misoai-shared/img';
+import { getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
 import { emitInsightDump } from './utils';
 
 export interface LocateOpts {
@@ -339,6 +340,46 @@ export default class Insight<
       thought,
       usage: assertResult.usage,
     };
+  }
+
+  async captcha(options?: { deepThink?: boolean }): Promise<{ content: AICaptchaResponse; usage?: AIUsageInfo; deepThink?: boolean }> {
+    const dumpSubscriber = this.onceDumpUpdatedFn;
+    this.onceDumpUpdatedFn = undefined;
+    const { deepThink = false } = options || {};
+
+    const context = await this.contextRetrieverFn('captcha');
+    const startTime = Date.now();
+    const captchaResult = await AiCaptcha({
+      context,
+      deepThink,
+    });
+
+    const timeCost = Date.now() - startTime;
+    const taskInfo: InsightTaskInfo = {
+      ...(this.taskInfo ? this.taskInfo : {}),
+      durationMs: timeCost,
+      rawResponse: JSON.stringify(captchaResult.content),
+      deepThink: captchaResult.deepThink,
+    };
+
+    const { thought, captchaType, solution } = captchaResult.content;
+    const dumpData: PartialInsightDumpFromSDK = {
+      type: 'captcha',
+      userQuery: {
+        captcha: true,
+        deepThink: captchaResult.deepThink,
+      },
+      matchedElement: [],
+      data: {
+        captchaType,
+        solution,
+      },
+      taskInfo,
+      error: undefined,
+    };
+    emitInsightDump(dumpData, dumpSubscriber);
+
+    return captchaResult;
   }
   async describe(
     target: Rect | [number, number],

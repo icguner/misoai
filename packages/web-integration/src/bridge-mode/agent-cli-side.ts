@@ -1,6 +1,6 @@
 import { PageAgent, type PageAgentOpt } from '@/common/agent';
 import type { KeyboardAction, MouseAction } from '@/page';
-import { assert } from '@midscene/shared/utils';
+import { assert } from 'misoai-shared/utils';
 import {
   type BridgeConnectTabOptions,
   BridgeEvent,

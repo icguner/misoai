@@ -33,10 +33,10 @@ import {
   getAIConfigInJson,
   uiTarsModelVersion,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { enableDebug, getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
-import { ifInBrowser } from '@midscene/shared/utils';
+} from 'misoai-shared/env';
+import { enableDebug, getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
+import { ifInBrowser } from 'misoai-shared/utils';
 import dJSON from 'dirty-json';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import OpenAI, { AzureOpenAI } from 'openai';
@@ -364,6 +364,7 @@ export async function callToGetJSONObject<T>(
         break;
       case AIActionType.EXTRACT_DATA:
       case AIActionType.DESCRIBE_ELEMENT:
+      case AIActionType.CAPTCHA:
         responseFormat = { type: AIResponseFormat.JSON };
         break;
     }

@@ -4,7 +4,7 @@ import {
   type PlanningCache,
   TaskCache,
 } from '@/common/task-cache';
-import { uuid } from '@midscene/shared/utils';
+import { uuid } from 'misoai-shared/utils';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../package.json', () => {

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { assert, ifInBrowser } from '@midscene/shared/utils';
+import { assert, ifInBrowser } from 'misoai-shared/utils';
 
 import type { PageAgent } from '@/common/agent';
 import type {
@@ -24,8 +24,8 @@ import type {
   MidsceneYamlScriptEnv,
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
-} from '@midscene/core';
-import { getMidsceneRunSubDir } from '@midscene/shared/common';
+} from 'misoai-core';
+import { getMidsceneRunSubDir } from 'misoai-shared/common';
 
 export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
   public currentTaskIndex?: number;

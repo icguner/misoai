@@ -1,4 +1,4 @@
-import { sleep } from '@midscene/core/utils';
+import { sleep } from 'misoai-core/utils';
 import { test } from './fixture';
 
 test.beforeEach(async ({ page }) => {

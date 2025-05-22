@@ -1,6 +1,6 @@
 import { PageAgent, type PageAgentOpt } from '@/common/agent';
 import { forceClosePopup } from '@/common/utils';
-import { getDebug } from '@midscene/shared/logger';
+import { getDebug } from 'misoai-shared/logger';
 import type { Page as PuppeteerPage } from 'puppeteer';
 import { WebPage as PuppeteerWebPage } from './page';
 const debug = getDebug('puppeteer:agent');
@@ -20,7 +20,7 @@ export class PuppeteerAgent extends PageAgent<PuppeteerWebPage> {
   }
 }
 
-export { overrideAIConfig } from '@midscene/shared/env';
+export { overrideAIConfig } from 'misoai-shared/env';
 
 // Do NOT export this since it requires puppeteer
 // export { puppeteerAgentForTarget } from './agent-launcher';

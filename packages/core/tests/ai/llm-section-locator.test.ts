@@ -2,7 +2,7 @@ import { AiLocateElement } from '@/ai-model';
 import { AiLocateSection } from '@/ai-model/inspect';
 import { saveBase64Image } from '@/image';
 import { getTmpFile } from '@/utils';
-import { vlLocateMode } from '@midscene/shared/env';
+import { vlLocateMode } from 'misoai-shared/env';
 import { getContextFromFixture } from 'tests/evaluation';
 import { expect, test } from 'vitest';
 

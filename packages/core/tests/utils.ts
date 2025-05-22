@@ -8,7 +8,7 @@ import {
 } from '@/image';
 import Insight from '@/insight';
 import type { AIElementLocatorResponse, BaseElement, UIContext } from '@/types';
-import { NodeType } from '@midscene/shared/constants';
+import { NodeType } from 'misoai-shared/constants';
 import { vi } from 'vitest';
 
 export function getFixture(name: string) {

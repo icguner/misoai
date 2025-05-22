@@ -7,11 +7,11 @@ import { version } from './package.json';
 // The file copying functionality in modern.js is not operating correctly.
 const files = [
   [
-    'node_modules/@midscene/shared/dist/script/htmlElement.js',
+    'node_modules/misoai-shared/dist/script/htmlElement.js',
     'iife-script/htmlElement.js',
   ],
   [
-    'node_modules/@midscene/shared/dist/script/htmlElementDebug.js',
+    'node_modules/misoai-shared/dist/script/htmlElementDebug.js',
     'iife-script/htmlElementDebug.js',
   ],
 ];
@@ -47,8 +47,8 @@ export default defineConfig({
       agent: 'src/common/agent.ts',
     },
     externals: [
-      '@midscene/core',
-      '@midscene/shared',
+      'misoai-core',
+      'misoai-shared',
       'puppeteer',
       'bufferutil',
       'utf-8-validate',

@@ -10,8 +10,8 @@ import {
   type KeyDefinition,
   type KeyInput,
   _keyDefinitions,
-} from '@midscene/shared/keyboard-layout';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-shared/keyboard-layout';
+import { assert } from 'misoai-shared/utils';
 
 type KeyDescription = Required<
   Pick<KeyDefinition, 'keyCode' | 'key' | 'text' | 'code' | 'location'>

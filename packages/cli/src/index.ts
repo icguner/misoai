@@ -8,7 +8,7 @@ Promise.resolve(
   (async () => {
     const { options, path } = await parseProcessArgs();
 
-    const welcome = '\nWelcome to @midscene/cli\n';
+    const welcome = '\nWelcome to misoai-cli\n';
     console.log(welcome);
 
     const dotEnvConfigFile = join(process.cwd(), '.env');

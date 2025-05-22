@@ -6,4 +6,4 @@ export {
   transformImgPathToBase64,
   saveBase64Image,
   zoomForGPT4o,
-} from '@midscene/shared/img';
+} from 'misoai-shared/img';

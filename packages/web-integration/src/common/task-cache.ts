@@ -1,9 +1,9 @@
 import assert from 'node:assert';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getMidsceneRunSubDir } from '@midscene/shared/common';
-import { getDebug } from '@midscene/shared/logger';
-import { ifInBrowser } from '@midscene/shared/utils';
+import { getMidsceneRunSubDir } from 'misoai-shared/common';
+import { getDebug } from 'misoai-shared/logger';
+import { ifInBrowser } from 'misoai-shared/utils';
 import yaml from 'js-yaml';
 import semver from 'semver';
 import { version } from '../../package.json';

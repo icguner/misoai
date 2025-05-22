@@ -1,13 +1,18 @@
 {
-  "name": "@midscene/android-playground",
+  "name": "misoai-android-playground",
   "version": "0.17.1",
-  "description": "Android playground for Midscene",
+  "description": "Android playground for MisoAI",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
-  "files": ["dist", "static", "bin", "README.md"],
+  "files": [
+    "dist",
+    "static",
+    "bin",
+    "README.md"
+  ],
   "bin": {
-    "midscene-android-playground": "./bin/android-playground",
-    "@midscene/android-playground": "./bin/android-playground"
+    "misoai-android-playground": "./bin/android-playground",
+    "midscene-android-playground": "./bin/android-playground"
   },
   "scripts": {
     "postinstall": "fetch-scrcpy-server 3.1",
@@ -17,9 +22,9 @@
     "build:watch": "modern build -w -c ./modern.config.ts"
   },
   "dependencies": {
-    "@midscene/android": "workspace:*",
-    "@midscene/shared": "workspace:*",
-    "@midscene/web": "workspace:*",
+    "misoai-android": "3.0.4",
+    "misoai-shared": "1.0.0",
+    "misoai-web": "1.0.2",
     "@yume-chan/adb": "^1.1.0",
     "@yume-chan/adb-scrcpy": "^1.1.0",
     "@yume-chan/adb-server-node-tcp": "^1.1.0",

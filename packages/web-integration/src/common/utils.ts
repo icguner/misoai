@@ -5,20 +5,20 @@ import type {
   PlanningLocateParam,
   PlaywrightParserOpt,
   UIContext,
-} from '@midscene/core';
-import { elementByPositionWithElementInfo } from '@midscene/core/ai-model';
-import { uploadTestInfoToServer } from '@midscene/core/utils';
-import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from '@midscene/shared/env';
-import type { ElementInfo } from '@midscene/shared/extractor';
+} from 'misoai-core';
+import { elementByPositionWithElementInfo } from 'misoai-core/ai-model';
+import { uploadTestInfoToServer } from 'misoai-core/utils';
+import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from 'misoai-shared/env';
+import type { ElementInfo } from 'misoai-shared/extractor';
 import {
   generateElementByPosition,
   getNodeFromCacheList,
   traverseTree,
   treeToList,
-} from '@midscene/shared/extractor';
-import { resizeImgBase64 } from '@midscene/shared/img';
-import type { DebugFunction } from '@midscene/shared/logger';
-import { assert, logMsg, uuid } from '@midscene/shared/utils';
+} from 'misoai-shared/extractor';
+import { resizeImgBase64 } from 'misoai-shared/img';
+import type { DebugFunction } from 'misoai-shared/logger';
+import { assert, logMsg, uuid } from 'misoai-shared/utils';
 import dayjs from 'dayjs';
 import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';

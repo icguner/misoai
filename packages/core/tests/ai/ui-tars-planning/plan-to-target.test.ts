@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { vlmPlanning } from '@/ai-model/ui-tars-planning';
-import { savePositionImg } from '@midscene/shared/img';
+import { savePositionImg } from 'misoai-shared/img';
 import { getContextFromFixture } from 'tests/evaluation';
 import { assert, describe, expect, it, test } from 'vitest';
 

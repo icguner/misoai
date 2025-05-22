@@ -1,10 +1,10 @@
-import { getPreferredLanguage } from '@midscene/shared/env';
+import { getPreferredLanguage } from 'misoai-shared/env';
 import type { ResponseFormatJSONSchema } from 'openai/resources';
 
 const preferredLanguage = getPreferredLanguage();
 
 const defaultAssertionPrompt =
-  'You are a senior testing engineer. User will give an assertion and a screenshot of a page. By carefully viewing the screenshot, please tell whether the assertion is truthy.';
+  'You are a senior testing engineer. User will give an assertion and a screenshot of a page. By carefully viewing the screenshot, please tell whether the assertion is truthy. For URL-related assertions, the current page URL will be provided in the prompt.';
 
 const defaultAssertionResponseJsonFormat = `Return in the following JSON format:
 {
@@ -15,7 +15,7 @@ const defaultAssertionResponseJsonFormat = `Return in the following JSON format:
 const uiTarsAssertionResponseJsonFormat = `## Output Json String Format
 \`\`\`
 "{
-  "pass": <<is a boolean value from the enum [true, false], true means the assertion is truthy>>, 
+  "pass": <<is a boolean value from the enum [true, false], true means the assertion is truthy>>,
   "thought": "<<is a string, give the reason why the assertion is falsy or truthy. Otherwise.>>"
 }"
 \`\`\`

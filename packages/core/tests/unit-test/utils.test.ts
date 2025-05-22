@@ -11,7 +11,7 @@ import {
   preprocessDoubaoBboxJson,
   safeParseJson,
 } from '@/ai-model/service-caller';
-import { getAIConfig, overrideAIConfig } from '@midscene/shared/env';
+import { getAIConfig, overrideAIConfig } from 'misoai-shared/env';
 import { describe, expect, it } from 'vitest';
 import {
   getLogDir,

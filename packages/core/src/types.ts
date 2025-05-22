@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { NodeType } from '@midscene/shared/constants';
+import type { NodeType } from 'misoai-shared/constants';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import type {
   DetailedLocateParam,
@@ -119,6 +119,18 @@ export interface AIAssertionResponse {
   thought: string;
 }
 
+export interface AICaptchaResponse {
+  captchaType: 'text' | 'image' | 'unknown';
+  solution: string;
+  thought: string;
+  actions: {
+    type: 'click' | 'input' | 'verify';
+    target?: string;
+    value?: string;
+    coordinates?: [number, number];
+  }[];
+}
+
 export interface AIDescribeElementResponse {
   description: string;
   error?: string;
@@ -179,7 +191,7 @@ export interface InsightOptions {
 
 export type EnsureObject<T> = { [K in keyof T]: any };
 
-export type InsightAction = 'locate' | 'extract' | 'assert' | 'describe';
+export type InsightAction = 'locate' | 'extract' | 'assert' | 'describe' | 'captcha';
 
 export type InsightExtractParam = string | Record<string, string>;
 
@@ -208,6 +220,7 @@ export interface InsightTaskInfo {
   searchArea?: Rect;
   searchAreaRawResponse?: string;
   searchAreaUsage?: AIUsageInfo;
+  deepThink?: boolean;
 }
 
 export interface DumpMeta {
@@ -223,12 +236,14 @@ export interface ReportDumpWithAttributes {
 }
 
 export interface InsightDump extends DumpMeta {
-  type: 'locate' | 'extract' | 'assert';
+  type: 'locate' | 'extract' | 'assert' | 'captcha';
   logId: string;
   userQuery: {
     element?: string;
     dataDemand?: InsightExtractParam;
     assertion?: string;
+    captcha?: boolean;
+    deepThink?: boolean;
   };
   matchedElement: BaseElement[];
   matchedRect?: Rect;
@@ -520,7 +535,7 @@ export type ExecutionTaskInsightAssertion =
   ExecutionTask<ExecutionTaskInsightAssertionApply>;
 
 /*
-task - action (i.e. interact) 
+task - action (i.e. interact)
 */
 export type ExecutionTaskActionApply<ActionParam = any> = ExecutionTaskApply<
   'Action',

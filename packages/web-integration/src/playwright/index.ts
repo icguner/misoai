@@ -4,10 +4,10 @@ import { WebPage as PlaywrightWebPage } from './page';
 
 export type { PlayWrightAiFixtureType } from './ai-fixture';
 export { PlaywrightAiFixture } from './ai-fixture';
-export { overrideAIConfig } from '@midscene/shared/env';
+export { overrideAIConfig } from 'misoai-shared/env';
 export { WebPage as PlaywrightWebPage } from './page';
 import { forceClosePopup } from '@/common/utils';
-import { getDebug } from '@midscene/shared/logger';
+import { getDebug } from 'misoai-shared/logger';
 
 const debug = getDebug('playwright:agent');
 

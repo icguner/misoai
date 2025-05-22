@@ -1,5 +1,6 @@
 import type {
   AIAssertionResponse,
+  AICaptchaResponse,
   AIDataExtractionResponse,
   AIElementLocatorResponse,
   AIElementResponse,
@@ -17,12 +18,13 @@ import type {
 import {
   MIDSCENE_USE_QWEN_VL,
   MIDSCENE_USE_VLM_UI_TARS,
+  MIDSCENE_FORCE_DEEP_THINK,
   getAIConfigInBoolean,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { cropByRect, paddingToMatchBlockByBase64 } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from 'misoai-shared/env';
+import { cropByRect, paddingToMatchBlockByBase64 } from 'misoai-shared/img';
+import { getDebug } from 'misoai-shared/logger';
+import { assert } from 'misoai-shared/utils';
 import type {
   ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,
@@ -369,6 +371,9 @@ export async function AiAssert<
 
   const { screenshotBase64 } = context;
 
+  // Get the URL from the context if available (WebUIContext has a url property)
+  const url = (context as any).url || '';
+
   const systemPrompt = systemPromptToAssert({
     isUITars: getAIConfigInBoolean(MIDSCENE_USE_VLM_UI_TARS),
   });
@@ -389,6 +394,7 @@ export async function AiAssert<
           type: 'text',
           text: `
 Here is the assertion. Please tell whether it is truthy according to the screenshot.
+${url ? `Current page URL: ${url}` : ''}
 =====================================
 ${assertion}
 =====================================
@@ -405,5 +411,154 @@ ${assertion}
   return {
     content: assertResult,
     usage,
+  };
+}
+
+export async function AiCaptcha<
+  ElementType extends BaseElement = BaseElement,
+>(options: { context: UIContext<ElementType>; deepThink?: boolean }) {
+  const { context, deepThink = false } = options;
+  const { screenshotBase64, size } = context;
+
+  // Get the URL from the context if available (WebUIContext has a url property)
+  const url = (context as any).url || '';
+
+  // Check for global deep think setting
+  const globalDeepThinkSwitch = getAIConfigInBoolean(MIDSCENE_FORCE_DEEP_THINK);
+  const shouldUseDeepThink = deepThink || globalDeepThinkSwitch;
+
+  const systemPrompt = `
+You are an AI assistant specialized in solving CAPTCHAs. Your task is to:
+1. Analyze the screenshot to identify the type of CAPTCHA present
+2. Determine the solution or required actions to complete the CAPTCHA
+3. Provide a detailed plan for solving the CAPTCHA
+
+For text-based CAPTCHAs:
+- Identify the text in the CAPTCHA image
+- Determine where to input the text
+- Provide the text solution
+
+For image-based CAPTCHAs:
+- Identify what elements need to be clicked
+- Provide coordinates or descriptions of where to click
+- Determine the sequence of clicks if needed
+
+Return your response in the following JSON format:
+{
+  "captchaType": "text" | "image" | "unknown",
+  "solution": "The solution text or description of required actions",
+  "thought": "Your reasoning process for identifying and solving the CAPTCHA",
+  "actions": [
+    {
+      "type": "click" | "input" | "verify",
+      "target": "Description of the target element",
+      "value": "Text to input (for input actions)",
+      "coordinates": [x, y] // Coordinates for click actions
+    }
+  ]
+}
+
+Be precise and thorough in your analysis. The goal is to successfully complete the CAPTCHA challenge.
+${shouldUseDeepThink ? 'Take your time to carefully analyze the CAPTCHA. Pay close attention to details and ensure your solution is accurate.' : ''}
+`;
+
+  // Process the image based on deepThink setting
+  let imagePayload = screenshotBase64;
+
+  if (shouldUseDeepThink && vlLocateMode()) {
+    // For deep thinking, we want to focus on the CAPTCHA area
+    // First, try to identify the CAPTCHA area using a preliminary analysis
+    const preliminarySystemPrompt = `
+You are an AI assistant that helps identify CAPTCHA elements in screenshots.
+Your task is to locate the CAPTCHA area in the screenshot.
+Provide the coordinates of the CAPTCHA area as [x1, y1, x2, y2] where:
+- x1, y1 are the top-left coordinates
+- x2, y2 are the bottom-right coordinates
+`;
+
+    const preliminaryMsgs: AIArgs = [
+      { role: 'system', content: preliminarySystemPrompt },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: {
+              url: screenshotBase64,
+              detail: 'high',
+            },
+          },
+          {
+            type: 'text',
+            text: 'Locate the CAPTCHA area in this screenshot. Return only the coordinates as [x1, y1, x2, y2].',
+          },
+        ],
+      },
+    ];
+
+    try {
+      // Try to get CAPTCHA area coordinates
+      const preliminaryResult = await callAiFn<{ coordinates: [number, number, number, number] }>(
+        preliminaryMsgs,
+        AIActionType.INSPECT_ELEMENT,
+      );
+
+      if (preliminaryResult.content?.coordinates) {
+        const [x1, y1, x2, y2] = preliminaryResult.content.coordinates;
+        const captchaRect: Rect = {
+          left: x1,
+          top: y1,
+          width: x2 - x1,
+          height: y2 - y1,
+        };
+
+        // Expand the area slightly to ensure we capture the full CAPTCHA
+        const searchArea = expandSearchArea(captchaRect, size);
+        imagePayload = await cropByRect(
+          screenshotBase64,
+          searchArea,
+          getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL),
+        );
+      }
+    } catch (error) {
+      // If preliminary analysis fails, use the full screenshot
+      console.warn('Failed to identify CAPTCHA area for deep thinking, using full screenshot', error);
+    }
+  }
+
+  const msgs: AIArgs = [
+    { role: 'system', content: systemPrompt },
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'image_url',
+          image_url: {
+            url: imagePayload,
+            detail: 'high',
+          },
+        },
+        {
+          type: 'text',
+          text: `
+Please analyze this CAPTCHA and provide a solution.
+${url ? `Current page URL: ${url}` : ''}
+${shouldUseDeepThink ? 'Use deep thinking to carefully analyze this CAPTCHA.' : ''}
+`,
+        },
+      ],
+    },
+  ];
+
+  const { content: captchaResult, usage } = await callAiFn<AICaptchaResponse>(
+    msgs,
+    AIActionType.CAPTCHA,
+  );
+
+  // Add deepThink information to the result
+  return {
+    content: captchaResult,
+    usage,
+    deepThink: shouldUseDeepThink,
   };
 }

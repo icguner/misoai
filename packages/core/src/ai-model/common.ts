@@ -10,7 +10,7 @@ import type {
   Rect,
   Size,
 } from '@/types';
-import { assert } from '@midscene/shared/utils';
+import { assert } from 'misoai-shared/utils';
 
 import type {
   ChatCompletionSystemMessageParam,
@@ -23,11 +23,11 @@ import {
 } from './service-caller/index';
 
 import type { PlanningLocateParam } from '@/types';
-import { NodeType } from '@midscene/shared/constants';
-import { vlLocateMode } from '@midscene/shared/env';
-import { treeToList } from '@midscene/shared/extractor';
-import { compositeElementInfoImg } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
+import { NodeType } from 'misoai-shared/constants';
+import { vlLocateMode } from 'misoai-shared/env';
+import { treeToList } from 'misoai-shared/extractor';
+import { compositeElementInfoImg } from 'misoai-shared/img';
+import { getDebug } from 'misoai-shared/logger';
 
 export type AIArgs = [
   ChatCompletionSystemMessageParam,
@@ -40,6 +40,7 @@ export enum AIActionType {
   EXTRACT_DATA = 2,
   PLAN = 3,
   DESCRIBE_ELEMENT = 4,
+  CAPTCHA = 5,
 }
 
 export async function callAiFn<T>(

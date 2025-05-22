@@ -1,11 +1,11 @@
 import { join } from 'node:path';
-import { assert } from '@midscene/shared/utils';
+import { assert } from 'misoai-shared/utils';
 
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { puppeteerAgentForTarget } from '@/puppeteer/agent-launcher';
 import { ScriptPlayer, buildYaml, parseYamlScript } from '@/yaml';
-import type { MidsceneYamlScriptWebEnv } from '@midscene/core';
+import type { MidsceneYamlScriptWebEnv } from 'misoai-core';
 import { describe, expect, test, vi } from 'vitest';
 
 const serverRoot = join(__dirname, 'server_root');

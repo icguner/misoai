@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describeUserPage } from '@/index';
-import { vlLocateMode } from '@midscene/shared/env';
-import { base64Encoded, imageInfoOfBase64 } from '@midscene/shared/img';
+import { vlLocateMode } from 'misoai-shared/env';
+import { base64Encoded, imageInfoOfBase64 } from 'misoai-shared/img';
 
 export async function buildContext(targetDir: string): Promise<{
   context: {

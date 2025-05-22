@@ -3,8 +3,8 @@ import {
   replaceIllegalPathCharsAndSpace,
   reportFileName,
 } from '@/common/utils';
-import type { ReportDumpWithAttributes } from '@midscene/core';
-import { writeDumpReport } from '@midscene/core/utils';
+import type { ReportDumpWithAttributes } from 'misoai-core';
+import { writeDumpReport } from 'misoai-core/utils';
 import type {
   FullConfig,
   FullResult,

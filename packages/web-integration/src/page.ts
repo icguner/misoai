@@ -1,5 +1,5 @@
-import type { Point, Size } from '@midscene/core';
-import type { ElementInfo, ElementNode } from '@midscene/shared/extractor';
+import type { Point, Size } from 'misoai-core';
+import type { ElementInfo, ElementNode } from 'misoai-shared/extractor';
 import type { WebKeyInput } from './common/page';
 import type { WebUIContext } from './common/utils';
 

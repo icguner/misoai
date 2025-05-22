@@ -7,7 +7,7 @@ import type {
   ExecutionTaskInsightQuery,
   ExecutionTaskPlanning,
   PlanningActionParamScroll,
-} from '@midscene/core';
+} from 'misoai-core';
 
 export function typeStr(task: ExecutionTask) {
   return task.subType && task.subType !== 'Plan'
