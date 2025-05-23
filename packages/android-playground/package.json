@@ -1,6 +1,6 @@
 {
   "name": "misoai-android-playground",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "Android playground for MisoAI",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",

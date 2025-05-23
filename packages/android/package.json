@@ -2,6 +2,13 @@
   "name": "misoai-android",
   "version": "3.0.5",
   "description": "Appium-based Android automation library for misoAI",
+  "keywords": [
+    "Android UI automation",
+    "Android AI testing",
+    "Android automation library",
+    "Android automation tool",
+    "Android use"
+  ],
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
   "files": [
