@@ -420,9 +420,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   ): DetailedLocateParam {
     assert(locatePrompt, 'missing locate prompt');
     if (typeof opt === 'object') {
-      const prompt = opt.prompt || locatePrompt;
-      const deepThink = opt.deepThink || false;
-      const cacheable = opt.cacheable || true;
+      const prompt = opt.prompt ?? locatePrompt;
+      const deepThink = opt.deepThink ?? false;
+      const cacheable = opt.cacheable ?? true;
       return {
         prompt,
         deepThink,
@@ -443,6 +443,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Tap', locateParamStr(detailedLocateParam)),
       plans,
+      { cacheable: opt?.cacheable },
     );
     const metadata = this.afterTaskRunning(executor);
 
@@ -461,6 +462,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Hover', locateParamStr(detailedLocateParam)),
       plans,
+      { cacheable: opt?.cacheable },
     );
     const metadata = this.afterTaskRunning(executor);
 
@@ -486,6 +488,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Input', locateParamStr(detailedLocateParam)),
       plans,
+      { cacheable: opt?.cacheable },
     );
     const metadata = this.afterTaskRunning(executor);
 
@@ -510,6 +513,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('KeyboardPress', locateParamStr(detailedLocateParam)),
       plans,
+      { cacheable: opt?.cacheable },
     );
     const metadata = this.afterTaskRunning(executor);
 
@@ -534,6 +538,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Scroll', paramInTitle),
       plans,
+      { cacheable: opt?.cacheable },
     );
     const metadata = this.afterTaskRunning(executor);
 
@@ -575,8 +580,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     }
 
     const { output, executor } = await (isVlmUiTars
-      ? this.taskExecutor.actionToGoal(taskPrompt)
-      : this.taskExecutor.action(taskPrompt, this.opts.aiActionContext));
+      ? this.taskExecutor.actionToGoal(taskPrompt, { cacheable })
+      : this.taskExecutor.action(taskPrompt, this.opts.aiActionContext, {
+          cacheable,
+        }));
 
     // update cache
     if (this.taskCache && output?.yamlFlow && cacheable !== false) {
@@ -729,6 +736,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Locate', locateParamStr(detailedLocateParam)),
       plans,
+      { cacheable: opt?.cacheable },
     );
     const metadata = this.afterTaskRunning(executor);
 

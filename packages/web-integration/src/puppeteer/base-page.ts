@@ -3,7 +3,10 @@ import { sleep } from 'misoai-core/utils';
 import { DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT } from 'misoai-shared/constants';
 import type { ElementInfo } from 'misoai-shared/extractor';
 import { treeToList } from 'misoai-shared/extractor';
-import { getExtraReturnLogic } from 'misoai-shared/fs';
+import {
+  getElementInfosScriptContent,
+  getExtraReturnLogic,
+} from 'misoai-shared/fs';
 import { getDebug } from 'misoai-shared/logger';
 import { assert } from 'misoai-shared/utils';
 import type { Page as PlaywrightPage } from 'playwright';
@@ -92,6 +95,22 @@ export class Page<
     const tree = await this.getElementsNodeTree();
     debugPage('getElementsInfo end');
     return treeToList(tree);
+  }
+
+  async getXpathsById(id: string) {
+    const elementInfosScriptContent = getElementInfosScriptContent();
+
+    return this.evaluateJavaScript(
+      `${elementInfosScriptContent}midscene_element_inspector.getXpathsById('${id}')`,
+    );
+  }
+
+  async getElementInfoByXpath(xpath: string) {
+    const elementInfosScriptContent = getElementInfosScriptContent();
+
+    return this.evaluateJavaScript(
+      `${elementInfosScriptContent}midscene_element_inspector.getElementInfoByXpath('${xpath}')`,
+    );
   }
 
   async getElementsNodeTree() {
