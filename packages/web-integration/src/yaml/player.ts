@@ -48,10 +48,12 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
   ) {
     this.result = {};
 
+    const target = script.target || script.web || script.android;
+
     if (ifInBrowser) {
       this.output = undefined;
-    } else if (script.target?.output) {
-      this.output = resolve(process.cwd(), script.target.output);
+    } else if (target?.output) {
+      this.output = resolve(process.cwd(), target.output);
     } else {
       this.output = join(getMidsceneRunSubDir('output'), `${process.pid}.json`);
     }
@@ -146,12 +148,13 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
       } else if ('aiAssert' in (flowItem as MidsceneYamlFlowItemAIAssert)) {
         const assertTask = flowItem as MidsceneYamlFlowItemAIAssert;
         const prompt = assertTask.aiAssert;
+        const msg = assertTask.errorMessage;
         assert(prompt, 'missing prompt for aiAssert');
         assert(
           typeof prompt === 'string',
           'prompt for aiAssert must be a string',
         );
-        await agent.aiAssert(prompt);
+        await agent.aiAssert(prompt, msg);
       } else if ('aiQuery' in (flowItem as MidsceneYamlFlowItemAIQuery)) {
         const queryTask = flowItem as MidsceneYamlFlowItemAIQuery;
         const prompt = queryTask.aiQuery;

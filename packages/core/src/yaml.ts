@@ -23,6 +23,7 @@ export interface scrollParam {
 }
 
 export interface MidsceneYamlScript {
+  // @deprecated
   target?: MidsceneYamlScriptWebEnv;
   web?: MidsceneYamlScriptWebEnv;
   android?: MidsceneYamlScriptAndroidEnv;
@@ -85,6 +86,7 @@ export interface MidsceneYamlFlowItemAIAction {
 
 export interface MidsceneYamlFlowItemAIAssert {
   aiAssert: string;
+  errorMessage?: string;
 }
 
 export interface MidsceneYamlFlowItemAIQuery {

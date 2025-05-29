@@ -15,7 +15,6 @@ import type {
   AICaptchaResponse,
   AIDescribeElementResponse,
   AIElementResponse,
-  AISingleElementResponse,
   AIUsageInfo,
   BaseElement,
   DetailedLocateParam,
