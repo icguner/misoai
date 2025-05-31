@@ -333,12 +333,11 @@ export class AppiumDevice implements AndroidDevicePage {
    */
   public async closeApp(): Promise<void> {
     debugDevice('Closing app');
-    const driver = await this.getDriver();
 
     try {
-      // Using background app as closeApp is deprecated
-      await driver.background(0);
-      debugDevice('Successfully closed app');
+      // Use home button to close the current app
+      await this.home();
+      debugDevice('Successfully closed app by pressing home button');
     } catch (error: any) {
       debugDevice('Error closing app: %s', error.message);
       throw new Error(`Failed to close app: ${error.message}`, {
@@ -472,12 +471,13 @@ export class AppiumDevice implements AndroidDevicePage {
    */
   public async getScreenOrientation(): Promise<'PORTRAIT' | 'LANDSCAPE'> {
     debugDevice('Getting screen orientation');
-    const driver = await this.getDriver();
 
     try {
-      const orientation = await driver.getOrientation();
-      debugDevice('Screen orientation: %s', orientation);
-      return orientation as 'PORTRAIT' | 'LANDSCAPE';
+      const size = await this.size();
+      // Determine orientation based on screen dimensions
+      const orientation = size.width > size.height ? 'LANDSCAPE' : 'PORTRAIT';
+      debugDevice('Screen orientation: %s (based on dimensions %dx%d)', orientation, size.width, size.height);
+      return orientation;
     } catch (error: any) {
       debugDevice('Error getting screen orientation: %s', error.message);
       throw new Error(`Failed to get screen orientation: ${error.message}`, {
@@ -496,13 +496,30 @@ export class AppiumDevice implements AndroidDevicePage {
     const driver = await this.getDriver();
 
     try {
-      await driver.setOrientation(orientation);
+      // Use device rotation instead of deprecated setOrientation
+      if (orientation === 'LANDSCAPE') {
+        await driver.rotateDevice(0, 0, 90); // Rotate to landscape
+      } else {
+        await driver.rotateDevice(0, 0, 0); // Rotate to portrait
+      }
       debugDevice('Successfully set screen orientation to: %s', orientation);
     } catch (error: any) {
       debugDevice('Error setting screen orientation to %s: %s', orientation, error.message);
-      throw new Error(`Failed to set screen orientation to ${orientation}: ${error.message}`, {
-        cause: error,
-      });
+      // Fallback: try using key events to rotate screen
+      try {
+        // Some devices support rotation via key events
+        if (orientation === 'LANDSCAPE') {
+          await driver.pressKeyCode(168); // KEYCODE_ROTATE_LANDSCAPE
+        } else {
+          await driver.pressKeyCode(169); // KEYCODE_ROTATE_PORTRAIT
+        }
+        debugDevice('Successfully set screen orientation using key events');
+      } catch (keyError) {
+        debugDevice('Key event rotation also failed: %s', (keyError as Error).message);
+        throw new Error(`Failed to set screen orientation to ${orientation}: ${error.message}`, {
+          cause: error,
+        });
+      }
     }
   }
 
@@ -897,16 +914,24 @@ export class AppiumDevice implements AndroidDevicePage {
    * Scrolls right by a specified distance
    *
    * @param distance - Distance to scroll (default: 200)
+   * @param startingPoint - Optional starting point for the scroll
    */
-  public async scrollRight(distance: number = 200): Promise<void> {
+  public async scrollRight(distance: number = 200, startingPoint?: Point): Promise<void> {
     debugDevice('Scrolling right by %d pixels', distance);
     const size = await this.size();
 
     try {
-      // Scroll from middle of screen
-      const startX = size.width / 2;
-      const endX = Math.min(size.width, startX + distance);
-      await this.swipe(startX, size.height / 2, endX, size.height / 2);
+      if (startingPoint) {
+        const start = { x: startingPoint.left, y: startingPoint.top };
+        const endX = Math.min(size.width, start.x + distance);
+        const end = { x: endX, y: start.y };
+        await this.swipe(start.x, start.y, end.x, end.y);
+      } else {
+        // Scroll from middle of screen
+        const startX = size.width / 2;
+        const endX = Math.min(size.width, startX + distance);
+        await this.swipe(startX, size.height / 2, endX, size.height / 2);
+      }
       debugDevice('Successfully scrolled right');
     } catch (error: any) {
       debugDevice('Error scrolling right: %s', error.message);
@@ -1076,23 +1101,54 @@ export class AppiumDevice implements AndroidDevicePage {
     return {
       type: async (text: string) => {
         debugDevice('Keyboard type: %s', text);
-        const driver = await this.getDriver();
+        if (!text) return;
 
-        // Use W3C Actions API for typing text
-        const actions = [];
-        for (const char of text) {
-          actions.push({
-            type: 'key',
-            id: 'keyboard',
-            actions: [
-              { type: 'keyDown', value: char },
-              { type: 'keyUp', value: char }
-            ]
-          });
+        const driver = await this.getDriver();
+        const isChinese = /[\p{Script=Han}\p{sc=Hani}]/u.test(text);
+
+        // For pure ASCII characters, use sendKeys which is more reliable
+        if (!isChinese) {
+          try {
+            // Use driver.keys for simple text input
+            await driver.keys(text);
+          } catch (error) {
+            // Fallback to using W3C Actions API
+            await driver.performActions([{
+              type: 'key',
+              id: 'keyboard',
+              actions: text.split('').flatMap(char => [
+                { type: 'keyDown', value: char },
+                { type: 'keyUp', value: char }
+              ])
+            }]);
+          }
+        } else {
+          // For non-ASCII characters (like Chinese), use keys which handles IME better
+          try {
+            await driver.keys(text);
+          } catch (error) {
+            debugDevice('Error typing Chinese text: %s', (error as Error).message);
+            // Try alternative approach with setValue on a found input element
+            try {
+              const inputElements = await driver.$$('//android.widget.EditText');
+              if (inputElements.length > 0) {
+                await inputElements[0].setValue(text);
+              } else {
+                throw new Error('No input elements found');
+              }
+            } catch (setValueError) {
+              debugDevice('setValue also failed: %s', (setValueError as Error).message);
+              throw error; // Re-throw original error
+            }
+          }
         }
 
-        if (actions.length > 0) {
-          await driver.performActions(actions);
+        // Hide keyboard after typing
+        try {
+          await this.hideKeyboard();
+        } catch (error) {
+          // Ignore keyboard hide errors as it might not be visible
+          debugDevice('Could not hide keyboard: %s', (error as Error).message);
         }
       },
       press: async (action: { key: string; command?: string } | { key: string; command?: string }[]) => {
@@ -1154,23 +1210,51 @@ export class AppiumDevice implements AndroidDevicePage {
     debugDevice('Clearing input in element: %s', element.id);
 
     try {
-      // Find the element using resource-id or other appropriate selector
       const driver = await this.getDriver();
-      const selector = `[resource-id="${element.id}"]`;
 
-      // Use a different approach to clear the element
       // First, tap on the element to focus it
-      const elem = driver.$(selector);
-      await elem.click();
+      await this.tap(element.center[0], element.center[1]);
 
-      // Then use key events to clear the text
-      // Send Ctrl+A to select all text
-      await driver.pressKeyCode(29, 1); // 29 is 'a', 1 is META_SHIFT_ON
+      // Try multiple approaches to clear the input
+      try {
+        // Method 1: Try to find the element and clear it directly
+        if (element.attributes['resource-id']) {
+          const elem = await driver.$(`[resource-id="${element.attributes['resource-id']}"]`);
+          if (await elem.isExisting()) {
+            await elem.clearValue();
+            debugDevice('Successfully cleared input using clearValue');
+            return;
+          }
+        }
+      } catch (error) {
+        debugDevice('clearValue method failed: %s', (error as Error).message);
+      }
 
-      // Then send Delete to clear the selection
-      await driver.pressKeyCode(67); // 67 is DELETE/BACKSPACE
+      // Method 2: Use key events to select all and delete
+      try {
+        // Send Ctrl+A to select all text (using META key for Android)
+        await driver.pressKeyCode(29, 1); // 29 is 'A', 1 is META_SHIFT_ON for Ctrl+A
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
 
-      debugDevice('Successfully cleared input');
+        // Then send Delete to clear the selection
+        await driver.pressKeyCode(67); // 67 is DELETE/BACKSPACE
+        debugDevice('Successfully cleared input using key events');
+      } catch (error) {
+        debugDevice('Key events method failed: %s', (error as Error).message);
+
+        // Method 3: Fallback - send multiple backspace keys
+        try {
+          // Send backspace multiple times to clear the field
+          for (let i = 0; i < 50; i++) { // Arbitrary limit to prevent infinite loop
+            await driver.pressKeyCode(67); // BACKSPACE
+          }
+          debugDevice('Successfully cleared input using multiple backspaces');
+        } catch (backspaceError) {
+          debugDevice('Backspace method also failed: %s', (backspaceError as Error).message);
+          throw new Error('All clear input methods failed');
+        }
+      }
+
     } catch (error: any) {
       debugDevice('Error clearing input: %s', error.message);
       throw new Error(`Failed to clear input: ${error.message}`, {
@@ -1206,6 +1290,247 @@ export class AppiumDevice implements AndroidDevicePage {
     } catch (error: any) {
       debugDevice('Error tapping at (%d, %d): %s', x, y, error.message);
       throw new Error(`Failed to tap at (${x}, ${y}): ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Gets XPaths for elements with the specified ID
+   *
+   * @param id - Element ID to search for
+   */
+  public async getXpathsById(id: string): Promise<string[]> {
+    debugDevice('Getting XPaths for ID: %s', id);
+    const driver = await this.getDriver();
+
+    try {
+      // Find elements by resource-id
+      const elements = await driver.$$(`[resource-id="${id}"]`);
+
+      // Generate XPaths for found elements
+      const xpaths: string[] = [];
+      for (let i = 0; i < elements.length; i++) {
+        // For Android, we can use the resource-id as a simple XPath
+        xpaths.push(`//*[@resource-id="${id}"][${i + 1}]`);
+      }
+
+      debugDevice('Found %d XPaths for ID %s', xpaths.length, id);
+      return xpaths;
+    } catch (error: any) {
+      debugDevice('Error getting XPaths for ID %s: %s', id, error.message);
+      throw new Error(`Failed to get XPaths for ID ${id}: ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Gets element info by XPath
+   *
+   * @param xpath - XPath to search for
+   */
+  public async getElementInfoByXpath(xpath: string): Promise<ElementInfo> {
+    debugDevice('Getting element info for XPath: %s', xpath);
+    const driver = await this.getDriver();
+
+    try {
+      const element = await driver.$(xpath);
+
+      if (!await element.isExisting()) {
+        throw new Error(`Element not found for XPath: ${xpath}`);
+      }
+
+      // Get element properties using WebdriverIO methods
+      const location = await element.getLocation();
+      const size = await element.getSize();
+      const text = await element.getText();
+      const resourceId = await element.getAttribute('resource-id');
+      const className = await element.getAttribute('class');
+      const contentDesc = await element.getAttribute('content-desc');
+
+      // Create ElementInfo object
+      const elementInfo: ElementInfo = {
+        id: resourceId || `xpath-${Date.now()}`,
+        indexId: 0,
+        nodeHashId: resourceId || xpath,
+        locator: xpath,
+        attributes: {
+          nodeType: this.getNodeTypeFromClassName(className),
+          'resource-id': resourceId,
+          'class': className,
+          'content-desc': contentDesc,
+        },
+        nodeType: this.getNodeTypeFromClassName(className),
+        content: text || contentDesc || '',
+        rect: {
+          left: location.x,
+          top: location.y,
+          width: size.width,
+          height: size.height
+        },
+        center: [location.x + size.width / 2, location.y + size.height / 2]
+      };
+
+      debugDevice('Successfully got element info for XPath: %s', xpath);
+      return elementInfo;
+    } catch (error: any) {
+      debugDevice('Error getting element info for XPath %s: %s', xpath, error.message);
+      throw new Error(`Failed to get element info for XPath ${xpath}: ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Helper method to determine node type from class name
+   */
+  private getNodeTypeFromClassName(className: string | null): NodeType {
+    if (!className) return NodeType.CONTAINER;
+
+    const lowerClassName = className.toLowerCase();
+
+    if (lowerClassName.includes('button')) return NodeType.BUTTON;
+    if (lowerClassName.includes('text') || lowerClassName.includes('edit')) return NodeType.TEXT;
+    if (lowerClassName.includes('image')) return NodeType.IMG;
+    if (lowerClassName.includes('input') || lowerClassName.includes('edit')) return NodeType.FORM_ITEM;
+
+    return NodeType.CONTAINER;
+  }
+
+  /**
+   * Gets device information including screen size and orientation
+   */
+  public async getDeviceInfo(): Promise<{
+    screenSize: Size;
+    orientation: 'PORTRAIT' | 'LANDSCAPE';
+    deviceTime: string;
+    currentPackage: string;
+    currentActivity: string;
+  }> {
+    debugDevice('Getting device information');
+
+    try {
+      const [screenSize, orientation, deviceTime, currentPackage, currentActivity] = await Promise.all([
+        this.size(),
+        this.getScreenOrientation(),
+        this.getDeviceTime(),
+        this.getCurrentPackage(),
+        this.getCurrentActivity()
+      ]);
+
+      const deviceInfo = {
+        screenSize,
+        orientation,
+        deviceTime,
+        currentPackage,
+        currentActivity
+      };
+
+      debugDevice('Device info: %O', deviceInfo);
+      return deviceInfo;
+    } catch (error: any) {
+      debugDevice('Error getting device info: %s', error.message);
+      throw new Error(`Failed to get device info: ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Waits for an element to appear on screen
+   *
+   * @param selector - Element selector
+   * @param timeout - Timeout in milliseconds (default: 10000)
+   */
+  public async waitForElement(selector: string, timeout: number = 10000): Promise<WebdriverIO.Element> {
+    debugDevice('Waiting for element: %s (timeout: %dms)', selector, timeout);
+    const driver = await this.getDriver();
+
+    try {
+      const element = await driver.$(selector);
+      await element.waitForExist({ timeout });
+      debugDevice('Element found: %s', selector);
+      return element;
+    } catch (error: any) {
+      debugDevice('Element not found within timeout: %s', selector);
+      throw new Error(`Element not found within ${timeout}ms: ${selector}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Waits for an element to disappear from screen
+   *
+   * @param selector - Element selector
+   * @param timeout - Timeout in milliseconds (default: 10000)
+   */
+  public async waitForElementToDisappear(selector: string, timeout: number = 10000): Promise<void> {
+    debugDevice('Waiting for element to disappear: %s (timeout: %dms)', selector, timeout);
+    const driver = await this.getDriver();
+
+    try {
+      const element = await driver.$(selector);
+      await element.waitForExist({ timeout, reverse: true });
+      debugDevice('Element disappeared: %s', selector);
+    } catch (error: any) {
+      debugDevice('Element did not disappear within timeout: %s', selector);
+      throw new Error(`Element did not disappear within ${timeout}ms: ${selector}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Performs a long press at the specified coordinates
+   *
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   * @param duration - Duration of the long press in milliseconds (default: 1000)
+   */
+  public async longPress(x: number, y: number, duration: number = 1000): Promise<void> {
+    debugDevice('Long pressing at (%d, %d) for %dms', x, y, duration);
+    const driver = await this.getDriver();
+
+    try {
+      await driver.performActions([{
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          { type: 'pointerMove', duration: 0, x, y },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration },
+          { type: 'pointerUp', button: 0 }
+        ]
+      }]);
+      debugDevice('Successfully performed long press at (%d, %d)', x, y);
+    } catch (error: any) {
+      debugDevice('Error performing long press at (%d, %d): %s', x, y, error.message);
+      throw new Error(`Failed to perform long press at (${x}, ${y}): ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Performs a double tap at the specified coordinates
+   *
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   */
+  public async doubleTap(x: number, y: number): Promise<void> {
+    debugDevice('Double tapping at (%d, %d)', x, y);
+
+    try {
+      await this.tap(x, y);
+      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between taps
+      await this.tap(x, y);
+      debugDevice('Successfully performed double tap at (%d, %d)', x, y);
+    } catch (error: any) {
+      debugDevice('Error performing double tap at (%d, %d): %s', x, y, error.message);
+      throw new Error(`Failed to perform double tap at (${x}, ${y}): ${error.message}`, {
         cause: error,
       });
     }
