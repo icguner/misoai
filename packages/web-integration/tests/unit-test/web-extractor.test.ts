@@ -107,6 +107,7 @@ describe(
         width: 20,
         height: 20,
         zoom: 1,
+        isVisible: true,
       });
 
       await reset();
@@ -179,30 +180,6 @@ describe(
       await reset();
     });
 
-    // it('scroll', async () => {
-    //   const { page, reset } = await launchPage(`file://${pagePath}`, {
-    //     viewport: {
-    //       width: 1080,
-    //       height: 200,
-    //       deviceScaleFactor: 1,
-    //     },
-    //   });
-    //   await page.scrollDown();
-    //   await new Promise((resolve) => setTimeout(resolve, 1000));
-    //   await generateExtractData(
-    //     page,
-    //     path.join(__dirname, 'fixtures/web-extractor/scroll'),
-    //     {
-    //       disableInputImage: false,
-    //       disableOutputImage: false,
-    //       disableOutputWithoutTextImg: true,
-    //       disableResizeOutputImg: true,
-    //       disableSnapshot: true,
-    //     },
-    //   );
-    //   await reset();
-    // });
-
     it('profiling', async () => {
       const { page, reset } = await launchPage('https://www.bytedance.com');
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -272,6 +249,42 @@ describe(
         `${elementInfosScriptContent}midscene_element_inspector.getElementInfoByXpath('/html/body/div[3]/div')`,
       );
       expect(element).toBe(null);
+      await reset();
+    });
+
+    it('descriptionOfTree with visibleOnly true', async () => {
+      const { page, reset } = await launchPage(`http://127.0.0.1:${port}`, {
+        viewport: {
+          width: 1080,
+          height: 100,
+          deviceScaleFactor: 1,
+        },
+      });
+
+      const elementInfosScriptContent = getElementInfosScriptContent();
+      const description = await page.evaluateJavaScript?.(
+        `${elementInfosScriptContent}midscene_element_inspector.webExtractNodeTreeAsString(document, true)`,
+      );
+      expect(description).not.toContain('This should be collected');
+      expect(description.split('\n').length).toBeLessThan(100);
+      await reset();
+    });
+
+    it('descriptionOfTree with visibleOnly false', async () => {
+      const { page, reset } = await launchPage(`http://127.0.0.1:${port}`, {
+        viewport: {
+          width: 1080,
+          height: 100,
+          deviceScaleFactor: 1,
+        },
+      });
+
+      const elementInfosScriptContent = getElementInfosScriptContent();
+      const description = await page.evaluateJavaScript?.(
+        `${elementInfosScriptContent}midscene_element_inspector.webExtractNodeTreeAsString(document, false)`,
+      );
+      expect(description).toContain('This should be collected');
+      expect(description.split('\n').length).toBeGreaterThan(300);
       await reset();
     });
   },

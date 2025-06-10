@@ -1,10 +1,14 @@
 import { PageAgent, type PageAgentOpt } from 'misoai-web/agent';
+import { AndroidDevice, type AndroidDeviceOpt } from '../page';
 import { vlLocateMode } from 'misoai-shared/env';
-import { AppiumDevice } from '../page/appium-device';
-import { debugDevice } from '../page/appium-device';
+import { getConnectedDevices } from '../utils';
 
-export class AndroidAgent extends PageAgent<AppiumDevice> {
-  constructor(page: AppiumDevice, opts?: PageAgentOpt) {
+import { debugPage } from '../page';
+
+type AndroidAgentOpt = PageAgentOpt;
+
+export class AndroidAgent extends PageAgent<AndroidDevice> {
+  constructor(page: AndroidDevice, opts?: AndroidAgentOpt) {
     super(page, opts);
 
     if (!vlLocateMode()) {
@@ -21,6 +25,13 @@ export class AndroidAgent extends PageAgent<AppiumDevice> {
 }
 
 import { AppiumServerConfig, AppiumBaseCapabilities, SauceLabsConfig, SauceLabsCapabilities } from '../types';
+
+export async function agentFromAdbDevice(
+  deviceId?: string,
+  opts?: AndroidAgentOpt & AndroidDeviceOpt,
+) {
+  if (!deviceId) {
+    const devices = await getConnectedDevices();
 
 /**
  * Creates an AndroidAgent from an Appium server
@@ -96,6 +107,13 @@ export async function agentFromSauceLabs(
 
   capabilities['sauce:options'].username = slConfig.user;
   capabilities['sauce:options'].accessKey = slConfig.key;
+
+  const page = new AndroidDevice(deviceId, {
+    autoDismissKeyboard: opts?.autoDismissKeyboard,
+    androidAdbPath: opts?.androidAdbPath,
+    remoteAdbHost: opts?.remoteAdbHost,
+    remoteAdbPort: opts?.remoteAdbPort,
+  });
 
   return agentFromAppiumServer(sauceServerConfig, capabilities, agentOpts);
 }

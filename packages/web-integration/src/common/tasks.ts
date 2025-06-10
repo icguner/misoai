@@ -16,6 +16,7 @@ import {
   type Insight,
   type InsightAssertionResponse,
   type InsightDump,
+  type InsightExtractOption,
   type InsightExtractParam,
   type LocateResultElement,
   type MidsceneYamlFlowItem,
@@ -181,7 +182,9 @@ export class PageTaskExecutor {
 
   public async convertPlanToExecutable(
     plans: PlanningAction[],
-    opts?: { cacheable?: boolean },
+    opts?: {
+      cacheable?: boolean;
+    },
   ) {
     const tasks: ExecutionTaskApply[] = [];
     plans.forEach((plan) => {
@@ -392,11 +395,11 @@ export class PageTaskExecutor {
                 if (!taskParam || !taskParam.value) {
                   return;
                 }
-
-                await this.page.keyboard.type(taskParam.value);
-              } else {
-                await this.page.keyboard.type(taskParam.value);
               }
+
+              await this.page.keyboard.type(taskParam.value, {
+                autoDismissKeyboard: taskParam.autoDismissKeyboard,
+              });
             },
           };
         tasks.push(taskActionInput);
@@ -428,6 +431,23 @@ export class PageTaskExecutor {
             },
           };
         tasks.push(taskActionTap);
+      } else if (plan.type === 'RightClick') {
+        const taskActionRightClick: ExecutionTaskActionApply<PlanningActionParamTap> =
+          {
+            type: 'Action',
+            subType: 'RightClick',
+            thought: plan.thought,
+            locate: plan.locate,
+            executor: async (param, { element }) => {
+              assert(element, 'Element not found, cannot right click');
+              await this.page.mouse.click(
+                element.center[0],
+                element.center[1],
+                { button: 'right' },
+              );
+            },
+          };
+        tasks.push(taskActionRightClick);
       } else if (plan.type === 'Drag') {
         const taskActionDrag: ExecutionTaskActionApply<{
           start_box: { x: number; y: number };
@@ -890,7 +910,9 @@ export class PageTaskExecutor {
   async runPlans(
     title: string,
     plans: PlanningAction[],
-    opts?: { cacheable?: boolean },
+    opts?: {
+      cacheable?: boolean;
+    },
   ): Promise<ExecutionResult> {
     const taskExecutor = new Executor(title, {
       onTaskStart: this.onTaskStartCallback,
@@ -1066,6 +1088,7 @@ export class PageTaskExecutor {
   private async createTypeQueryTask<T>(
     type: 'Query' | 'Boolean' | 'Number' | 'String',
     demand: InsightExtractParam,
+    opt?: InsightExtractOption,
   ): Promise<ExecutionResult<T>> {
     const taskExecutor = new Executor(
       taskTitleStr(
@@ -1099,7 +1122,10 @@ export class PageTaskExecutor {
           };
         }
 
-        const { data, usage } = await this.insight.extract<any>(demandInput);
+        const { data, usage } = await this.insight.extract<any>(
+          demandInput,
+          opt,
+        );
 
         let outputResult = data;
         if (ifTypeRestricted) {
@@ -1123,20 +1149,32 @@ export class PageTaskExecutor {
     };
   }
 
-  async query(demand: InsightExtractParam): Promise<ExecutionResult> {
-    return this.createTypeQueryTask('Query', demand);
+  async query(
+    demand: InsightExtractParam,
+    opt?: InsightExtractOption,
+  ): Promise<ExecutionResult> {
+    return this.createTypeQueryTask('Query', demand, opt);
   }
 
-  async boolean(prompt: string): Promise<ExecutionResult<boolean>> {
-    return this.createTypeQueryTask<boolean>('Boolean', prompt);
+  async boolean(
+    prompt: string,
+    opt?: InsightExtractOption,
+  ): Promise<ExecutionResult<boolean>> {
+    return this.createTypeQueryTask<boolean>('Boolean', prompt, opt);
   }
 
-  async number(prompt: string): Promise<ExecutionResult<number>> {
-    return this.createTypeQueryTask<number>('Number', prompt);
+  async number(
+    prompt: string,
+    opt?: InsightExtractOption,
+  ): Promise<ExecutionResult<number>> {
+    return this.createTypeQueryTask<number>('Number', prompt, opt);
   }
 
-  async string(prompt: string): Promise<ExecutionResult<string>> {
-    return this.createTypeQueryTask<string>('String', prompt);
+  async string(
+    prompt: string,
+    opt?: InsightExtractOption,
+  ): Promise<ExecutionResult<string>> {
+    return this.createTypeQueryTask<string>('String', prompt, opt);
   }
 
   async assert(

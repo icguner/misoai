@@ -14,9 +14,12 @@ vi.mock('misoai-shared/env', async () => {
 
 describe.skipIf(vlLocateMode())('prompt utils', () => {
   let lengthOfDescription: number;
-  it('describe context', async () => {
+  it('describe context ', async () => {
     const context = await getContextFromFixture('taobao');
-    const { description } = await describeUserPage(context.context);
+    const { description } = await describeUserPage(context.context, {
+      domIncluded: true,
+      visibleOnly: false,
+    });
 
     lengthOfDescription = description.length;
     const stringLengthOfEachItem =
@@ -25,21 +28,20 @@ describe.skipIf(vlLocateMode())('prompt utils', () => {
     expect(stringLengthOfEachItem).toBeLessThan(250);
   });
 
-  it('describe context, length = 100, filterNonTextContent = true', async () => {
+  it('describe context, truncateTextLength = 100, filterNonTextContent = true', async () => {
     const context = await getContextFromFixture('taobao');
 
     const { description } = await describeUserPage(context.context, {
       truncateTextLength: 100,
       filterNonTextContent: true,
+      domIncluded: true,
+      visibleOnly: false,
     });
 
     const stringLengthOfEachItem =
       description.length / context.context.content.length;
     expect(description).toBeTruthy();
     expect(stringLengthOfEachItem).toBeLessThan(160);
-
-    if (!vlLocateMode()) {
-      expect(description.length).toBeLessThan(lengthOfDescription * 0.8);
-    }
+    expect(description.length).toBeLessThan(lengthOfDescription * 0.8);
   });
 });

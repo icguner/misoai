@@ -15,10 +15,12 @@ import type {
   MidsceneYamlFlowItemAINString,
   MidsceneYamlFlowItemAINumber,
   MidsceneYamlFlowItemAIQuery,
+  MidsceneYamlFlowItemAIRightClick,
   MidsceneYamlFlowItemAIScroll,
   MidsceneYamlFlowItemAITap,
   MidsceneYamlFlowItemAIWaitFor,
   MidsceneYamlFlowItemEvaluateJavaScript,
+  MidsceneYamlFlowItemLogScreenshot,
   MidsceneYamlFlowItemSleep,
   MidsceneYamlScript,
   MidsceneYamlScriptEnv,
@@ -158,42 +160,58 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
       } else if ('aiQuery' in (flowItem as MidsceneYamlFlowItemAIQuery)) {
         const queryTask = flowItem as MidsceneYamlFlowItemAIQuery;
         const prompt = queryTask.aiQuery;
+        const options = {
+          domIncluded: queryTask.domIncluded,
+          screenshotIncluded: queryTask.screenshotIncluded,
+        };
         assert(prompt, 'missing prompt for aiQuery');
         assert(
           typeof prompt === 'string',
           'prompt for aiQuery must be a string',
         );
-        const queryResult = await agent.aiQuery(prompt);
+        const queryResult = await agent.aiQuery(prompt, options);
         this.setResult(queryTask.name, queryResult);
       } else if ('aiNumber' in (flowItem as MidsceneYamlFlowItemAINumber)) {
         const numberTask = flowItem as MidsceneYamlFlowItemAINumber;
         const prompt = numberTask.aiNumber;
+        const options = {
+          domIncluded: numberTask.domIncluded,
+          screenshotIncluded: numberTask.screenshotIncluded,
+        };
         assert(prompt, 'missing prompt for number');
         assert(
           typeof prompt === 'string',
           'prompt for number must be a string',
         );
-        const numberResult = await agent.aiNumber(prompt);
+        const numberResult = await agent.aiNumber(prompt, options);
         this.setResult(numberTask.name, numberResult);
       } else if ('aiString' in (flowItem as MidsceneYamlFlowItemAINString)) {
         const stringTask = flowItem as MidsceneYamlFlowItemAINString;
         const prompt = stringTask.aiString;
+        const options = {
+          domIncluded: stringTask.domIncluded,
+          screenshotIncluded: stringTask.screenshotIncluded,
+        };
         assert(prompt, 'missing prompt for string');
         assert(
           typeof prompt === 'string',
           'prompt for string must be a string',
         );
-        const stringResult = await agent.aiString(prompt);
+        const stringResult = await agent.aiString(prompt, options);
         this.setResult(stringTask.name, stringResult);
       } else if ('aiBoolean' in (flowItem as MidsceneYamlFlowItemAIBoolean)) {
         const booleanTask = flowItem as MidsceneYamlFlowItemAIBoolean;
         const prompt = booleanTask.aiBoolean;
+        const options = {
+          domIncluded: booleanTask.domIncluded,
+          screenshotIncluded: booleanTask.screenshotIncluded,
+        };
         assert(prompt, 'missing prompt for boolean');
         assert(
           typeof prompt === 'string',
           'prompt for boolean must be a string',
         );
-        const booleanResult = await agent.aiBoolean(prompt);
+        const booleanResult = await agent.aiBoolean(prompt, options);
         this.setResult(booleanTask.name, booleanResult);
       } else if ('aiLocate' in (flowItem as MidsceneYamlFlowItemAILocate)) {
         const locateTask = flowItem as MidsceneYamlFlowItemAILocate;
@@ -230,6 +248,11 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
       } else if ('aiTap' in (flowItem as MidsceneYamlFlowItemAITap)) {
         const tapTask = flowItem as MidsceneYamlFlowItemAITap;
         await agent.aiTap(tapTask.aiTap, tapTask);
+      } else if (
+        'aiRightClick' in (flowItem as MidsceneYamlFlowItemAIRightClick)
+      ) {
+        const rightClickTask = flowItem as MidsceneYamlFlowItemAIRightClick;
+        await agent.aiRightClick(rightClickTask.aiRightClick, rightClickTask);
       } else if ('aiHover' in (flowItem as MidsceneYamlFlowItemAIHover)) {
         const hoverTask = flowItem as MidsceneYamlFlowItemAIHover;
         await agent.aiHover(hoverTask.aiHover, hoverTask);
@@ -260,6 +283,13 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           evaluateJavaScriptTask.javascript,
         );
         this.setResult(evaluateJavaScriptTask.name, result);
+      } else if (
+        'logScreenshot' in (flowItem as MidsceneYamlFlowItemLogScreenshot)
+      ) {
+        const logScreenshotTask = flowItem as MidsceneYamlFlowItemLogScreenshot;
+        await agent.logScreenshot(logScreenshotTask.logScreenshot, {
+          content: logScreenshotTask.content || '',
+        });
       } else {
         throw new Error(`unknown flowItem: ${JSON.stringify(flowItem)}`);
       }
