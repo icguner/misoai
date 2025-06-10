@@ -169,7 +169,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           typeof prompt === 'string',
           'prompt for aiQuery must be a string',
         );
-        const queryResult = await agent.aiQuery(prompt, options);
+        const queryResult = await agent.aiQuery(prompt);
         this.setResult(queryTask.name, queryResult);
       } else if ('aiNumber' in (flowItem as MidsceneYamlFlowItemAINumber)) {
         const numberTask = flowItem as MidsceneYamlFlowItemAINumber;
@@ -183,7 +183,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           typeof prompt === 'string',
           'prompt for number must be a string',
         );
-        const numberResult = await agent.aiNumber(prompt, options);
+        const numberResult = await agent.aiNumber(prompt);
         this.setResult(numberTask.name, numberResult);
       } else if ('aiString' in (flowItem as MidsceneYamlFlowItemAINString)) {
         const stringTask = flowItem as MidsceneYamlFlowItemAINString;
@@ -197,7 +197,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           typeof prompt === 'string',
           'prompt for string must be a string',
         );
-        const stringResult = await agent.aiString(prompt, options);
+        const stringResult = await agent.aiString(prompt);
         this.setResult(stringTask.name, stringResult);
       } else if ('aiBoolean' in (flowItem as MidsceneYamlFlowItemAIBoolean)) {
         const booleanTask = flowItem as MidsceneYamlFlowItemAIBoolean;
@@ -211,7 +211,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           typeof prompt === 'string',
           'prompt for boolean must be a string',
         );
-        const booleanResult = await agent.aiBoolean(prompt, options);
+        const booleanResult = await agent.aiBoolean(prompt);
         this.setResult(booleanTask.name, booleanResult);
       } else if ('aiLocate' in (flowItem as MidsceneYamlFlowItemAILocate)) {
         const locateTask = flowItem as MidsceneYamlFlowItemAILocate;

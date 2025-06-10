@@ -20,7 +20,7 @@ export type {
   Rect,
   Size,
   Point,
-} from '@midscene/shared/types';
+} from 'misoai-shared/types';
 export * from './yaml';
 
 export type AIUsageInfo = Record<string, any> & {

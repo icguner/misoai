@@ -472,6 +472,25 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
+  async aiRightClick(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
+    const detailedLocateParam = this.buildDetailedLocateParam(
+      locatePrompt,
+      opt,
+    );
+    const plans = buildPlans('RightClick', detailedLocateParam);
+    const { executor, output } = await this.taskExecutor.runPlans(
+      taskTitleStr('RightClick', locateParamStr(detailedLocateParam)),
+      plans,
+      { cacheable: opt?.cacheable },
+    );
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
+  }
+
   async aiInput(value: string, locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     assert(
       typeof value === 'string',
@@ -1039,6 +1058,45 @@ Return only "complex" or "simple" based on your analysis.
       return this.page.evaluateJavaScript(script);
     }
     throw new Error('evaluateJavaScript is not supported in current agent');
+  }
+
+  async logScreenshot(title?: string, options?: { content?: string }): Promise<void> {
+    const screenshotTitle = title || 'untitled';
+    const content = options?.content || '';
+
+    // Take a screenshot and add it to the report
+    const screenshot = await this.page.screenshotBase64?.();
+    if (screenshot) {
+      // Create a simple execution dump for the screenshot
+      const executionDump: ExecutionDump = {
+        name: screenshotTitle,
+        description: content,
+        tasks: [{
+          type: 'Screenshot',
+          subType: 'log',
+          status: 'finished',
+          executor: null,
+          param: {
+            title: screenshotTitle,
+            content,
+          },
+          output: {
+            screenshot,
+          },
+          thought: `Logged screenshot: ${screenshotTitle}`,
+          timing: {
+            start: Date.now(),
+            end: Date.now(),
+            cost: 0,
+          },
+        } as any],
+        sdkVersion: '1.0.0',
+        logTime: Date.now(),
+        model_name: 'screenshot',
+      };
+
+      this.appendExecutionDump(executionDump);
+    }
   }
 
   async destroy() {

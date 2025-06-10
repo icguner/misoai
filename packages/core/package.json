@@ -1,7 +1,7 @@
 {
   "name": "misoai-core",
   "description": "Automate browser actions, extract data, and perform assertions using AI. It offers JavaScript SDK, Chrome extension, and support for scripting in YAML. See https://midscenejs.com/ for details.",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "repository": "https://github.com/web-infra-dev/midscene",
   "homepage": "https://midscenejs.com/",
   "jsnext:source": "./src/index.ts",
@@ -49,7 +49,7 @@
     "@anthropic-ai/sdk": "0.33.1",
     "@azure/identity": "4.5.0",
     "@langchain/core": "0.3.26",
-    "misoai-shared": "1.0.0",
+    "misoai-shared": "1.0.3",
     "@ui-tars/action-parser": "1.2.0",
     "dirty-json": "0.9.2",
     "dotenv": "16.4.5",
