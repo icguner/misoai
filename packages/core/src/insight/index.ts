@@ -230,19 +230,22 @@ export default class Insight<
     };
   }
 
-  async extract<T = any>(input: string, opt?: InsightExtractOption): Promise<T>;
+  async extract<T = any>(input: string, opt?: InsightExtractOption, memoryContext?: string): Promise<T>;
   async extract<T extends Record<string, string>>(
     input: T,
     opt?: InsightExtractOption,
+    memoryContext?: string,
   ): Promise<Record<keyof T, any>>;
   async extract<T extends object>(
     input: Record<keyof T, string>,
     opt?: InsightExtractOption,
+    memoryContext?: string,
   ): Promise<T>;
 
   async extract<T>(
     dataDemand: InsightExtractParam,
     opt?: InsightExtractOption,
+    memoryContext?: string, // YENİ: Hafıza bağlamı
   ): Promise<any> {
     assert(
       typeof dataDemand === 'object' || typeof dataDemand === 'string',
@@ -258,6 +261,7 @@ export default class Insight<
       context,
       dataQuery: dataDemand,
       extractOption: opt,
+      memoryContext, // YENİ: Hafıza bağlamını geç
     });
 
     const timeCost = Date.now() - startTime;
@@ -304,7 +308,7 @@ export default class Insight<
     };
   }
 
-  async assert(assertion: string): Promise<InsightAssertionResponse> {
+  async assert(assertion: string, memoryContext?: string): Promise<InsightAssertionResponse> {
     if (typeof assertion !== 'string') {
       throw new Error(
         'This is the assert method for Midscene, the first argument should be a string. If you want to use the assert method from Node.js, please import it from the Node.js assert module.',
@@ -319,6 +323,7 @@ export default class Insight<
     const assertResult = await AiAssert({
       assertion,
       context,
+      memoryContext, // YENİ: Hafıza bağlamını geç
     });
 
     const timeCost = Date.now() - startTime;

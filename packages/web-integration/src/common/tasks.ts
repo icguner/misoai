@@ -32,6 +32,10 @@ import {
   type PlanningActionParamTap,
   type PlanningActionParamWaitFor,
   plan,
+  // YENİ: Hafıza sistemi tipleri
+  type MemoryItem,
+  type MemoryConfig,
+  type MemoryStats,
 } from 'misoai-core';
 import {
   type ChatCompletionMessageParam,
@@ -55,6 +59,51 @@ interface ExecutionResult<OutputType = any> {
   executor: Executor;
 }
 
+// YENİ: Gelişmiş hafıza sistemi için tipler
+interface SessionContext {
+  sessionId: string;
+  workflowId?: string;
+  startTime: number;
+  pageInfo: {
+    url: string;
+    title: string;
+  };
+}
+
+interface WorkflowMemoryData {
+  workflowId: string;
+  steps: WorkflowStep[];
+  memory: MemoryItem[];
+  context: WorkflowContext;
+  metadata: WorkflowMetadata;
+}
+
+interface WorkflowStep {
+  stepId: string;
+  stepName: string;
+  timestamp: number;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  memoryItems: string[]; // Memory item IDs
+}
+
+interface WorkflowContext {
+  currentStep?: string;
+  pageInfo: {
+    url: string;
+    title: string;
+  };
+  timestamp: number;
+}
+
+interface WorkflowMetadata {
+  totalSteps: number;
+  completedSteps: number;
+  failedSteps: number;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+}
+
 const debug = getDebug('page-task-executor');
 
 const replanningCountLimit = 10;
@@ -62,6 +111,114 @@ const replanningCountLimit = 10;
 const isAndroidPage = (page: WebPage): page is AndroidDevicePage => {
   return page.pageType === 'android';
 };
+
+// WorkflowMemory sınıfı implementasyonu
+class WorkflowMemory {
+  private workflows: Map<string, WorkflowMemoryData> = new Map();
+  private config: MemoryConfig;
+
+  constructor(config: MemoryConfig) {
+    this.config = config;
+  }
+
+  /**
+   * İş akışı hafızasını getirir
+   */
+  getWorkflowMemory(workflowId: string = 'default'): MemoryItem[] {
+    const workflow = this.workflows.get(workflowId);
+    return workflow?.memory || [];
+  }
+
+  /**
+   * İş akışı verilerini getirir
+   */
+  getWorkflowData(workflowId: string = 'default'): WorkflowMemoryData {
+    return this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId);
+  }
+
+  /**
+   * İş akışı hafızasını kaydeder
+   */
+  saveWorkflowMemory(memory: readonly MemoryItem[], workflowId: string = 'default'): void {
+    const workflow = this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId);
+    workflow.memory = [...memory];
+    workflow.metadata.totalSteps = workflow.steps.length;
+    workflow.metadata.completedSteps = workflow.steps.filter(s => s.status === 'completed').length;
+    workflow.metadata.failedSteps = workflow.steps.filter(s => s.status === 'failed').length;
+
+    this.workflows.set(workflowId, workflow);
+    this.enforceRetentionPolicy();
+  }
+
+  /**
+   * İş akışı bağlamını günceller
+   */
+  updateWorkflowContext(context: WorkflowContext, workflowId: string = 'default'): void {
+    const workflow = this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId);
+    workflow.context = { ...workflow.context, ...context };
+
+    // Yeni adım ekle
+    if (context.currentStep) {
+      const existingStep = workflow.steps.find(s => s.stepName === context.currentStep);
+      if (!existingStep) {
+        workflow.steps.push({
+          stepId: `step_${workflow.steps.length + 1}`,
+          stepName: context.currentStep,
+          timestamp: context.timestamp,
+          status: 'running',
+          memoryItems: []
+        });
+      }
+    }
+
+    this.workflows.set(workflowId, workflow);
+  }
+
+  /**
+   * İş akışını temizler
+   */
+  clearWorkflow(workflowId: string = 'default'): void {
+    this.workflows.delete(workflowId);
+  }
+
+  /**
+   * Tüm iş akışlarını temizler
+   */
+  clearAll(): void {
+    this.workflows.clear();
+  }
+
+  private createEmptyWorkflowData(workflowId: string): WorkflowMemoryData {
+    return {
+      workflowId,
+      steps: [],
+      memory: [],
+      context: {
+        pageInfo: { url: '', title: '' },
+        timestamp: Date.now()
+      },
+      metadata: {
+        totalSteps: 0,
+        completedSteps: 0,
+        failedSteps: 0,
+        startTime: Date.now()
+      }
+    };
+  }
+
+  private enforceRetentionPolicy(): void {
+    const maxWorkflows = 10; // Maksimum iş akışı sayısı
+
+    if (this.workflows.size > maxWorkflows) {
+      const sortedWorkflows = Array.from(this.workflows.entries())
+        .sort(([, a], [, b]) => (b.metadata.endTime || b.metadata.startTime) - (a.metadata.endTime || a.metadata.startTime));
+
+      // En eski iş akışlarını sil
+      const toDelete = sortedWorkflows.slice(maxWorkflows);
+      toDelete.forEach(([workflowId]) => this.workflows.delete(workflowId));
+    }
+  }
+}
 
 export class PageTaskExecutor {
   page: WebPage;
@@ -74,12 +231,21 @@ export class PageTaskExecutor {
 
   onTaskStartCallback?: ExecutionTaskProgressOptions['onTaskStart'];
 
+  // YENİ: Gelişmiş hafıza sistemi
+  private persistentExecutor?: Executor;
+  private memoryConfig: MemoryConfig;
+  private sessionContext: SessionContext;
+  private workflowMemory: WorkflowMemory;
+
   constructor(
     page: WebPage,
     insight: Insight<WebElementInfo, WebUIContext>,
     opts: {
       taskCache?: TaskCache;
       onTaskStart?: ExecutionTaskProgressOptions['onTaskStart'];
+      memoryConfig?: Partial<MemoryConfig>; // YENİ: Hafıza konfigürasyonu
+      sessionId?: string; // YENİ: Oturum ID'si
+      workflowId?: string; // YENİ: İş akışı ID'si
     },
   ) {
     this.page = page;
@@ -88,6 +254,30 @@ export class PageTaskExecutor {
     this.taskCache = opts.taskCache;
 
     this.onTaskStartCallback = opts?.onTaskStart;
+
+    // Hafıza konfigürasyonu
+    this.memoryConfig = {
+      maxItems: 100,
+      maxAge: 2 * 60 * 60 * 1000, // 2 saat
+      enablePersistence: true,
+      enableAnalytics: true,
+      filterStrategy: 'hybrid',
+      ...opts?.memoryConfig
+    };
+
+    // Oturum bağlamı
+    this.sessionContext = {
+      sessionId: opts?.sessionId || this.generateSessionId(),
+      workflowId: opts?.workflowId,
+      startTime: Date.now(),
+      pageInfo: {
+        url: '',
+        title: ''
+      }
+    };
+
+    // İş akışı hafızası
+    this.workflowMemory = new WorkflowMemory(this.memoryConfig);
   }
 
   private async recordScreenshot(timing: ExecutionRecorderItem['timing']) {
@@ -352,8 +542,12 @@ export class PageTaskExecutor {
               insightDump = dump;
             };
             this.insight.onceDumpUpdatedFn = dumpCollector;
+            // YENİ: Hafıza bağlamını al
+            const memoryContext = this.getMemoryAsContext();
+
             const assertion = await this.insight.assert(
               assertPlan.param.assertion,
+              memoryContext, // Hafıza bağlamını geç
             );
 
             if (!assertion.pass) {
@@ -907,19 +1101,159 @@ export class PageTaskExecutor {
     return task;
   }
 
+  /**
+   * Persistent executor'ı getirir veya oluşturur
+   */
+  public getPersistentExecutor(): Executor {
+    if (!this.persistentExecutor || this.persistentExecutor.status === 'error') {
+      // Önceki hafızayı yükle
+      const previousMemory = this.workflowMemory.getWorkflowMemory(this.sessionContext.workflowId);
+
+      this.persistentExecutor = new Executor('Persistent Task Executor', {
+        onTaskStart: this.onTaskStartCallback,
+        initialMemory: previousMemory
+      });
+    }
+    return this.persistentExecutor;
+  }
+
+  /**
+   * Sayfa bağlamını günceller
+   */
+  private async updatePageContext(): Promise<void> {
+    try {
+      if (this.page.url) {
+        this.sessionContext.pageInfo.url = await this.page.url();
+      }
+
+      if (this.page.pageType === 'puppeteer' || this.page.pageType === 'playwright') {
+        this.sessionContext.pageInfo.title = await (this.page as any).title();
+      }
+    } catch (e) {
+      // Sayfa bilgisi alınamadı, devam et
+    }
+  }
+
+  /**
+   * Hafızayı temizler
+   */
+  public clearMemory(): void {
+    if (this.persistentExecutor) {
+      this.persistentExecutor.clearMemory();
+    }
+    this.workflowMemory.clearWorkflow(this.sessionContext.workflowId || 'default');
+  }
+
+  /**
+   * Mevcut hafızayı döndürür
+   */
+  public getMemory(): readonly MemoryItem[] {
+    return this.persistentExecutor?.getMemory() || [];
+  }
+
+  /**
+   * İş akışı hafızasını döndürür
+   */
+  public getWorkflowMemory(): WorkflowMemoryData {
+    return this.workflowMemory.getWorkflowData(this.sessionContext.workflowId || 'default');
+  }
+
+  /**
+   * Hafıza istatistiklerini döndürür
+   */
+  public getMemoryStats(): MemoryStats {
+    return this.persistentExecutor?.getMemoryStats() || {
+      totalItems: 0,
+      analytics: { totalTasks: 0, memoryHits: 0, memoryMisses: 0, averageMemorySize: 0, memoryEffectiveness: 0 },
+      config: this.memoryConfig
+    };
+  }
+
+  /**
+   * Hafıza konfigürasyonunu günceller
+   */
+  public updateMemoryConfig(config: Partial<MemoryConfig>): void {
+    this.memoryConfig = { ...this.memoryConfig, ...config };
+    if (this.persistentExecutor) {
+      this.persistentExecutor.updateMemoryConfig(this.memoryConfig);
+    }
+  }
+
+  /**
+   * Oturum ID'sini oluşturur
+   */
+  private generateSessionId(): string {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+  }
+
+  /**
+   * Hafızayı bağlam olarak formatlar
+   */
+  private getMemoryAsContext(): string {
+    const memory = this.getMemory();
+    if (memory.length === 0) {
+      return '';
+    }
+
+    // Son 5 hafıza öğesini al ve özetlerini birleştir
+    const recentMemory = memory.slice(-5);
+    return recentMemory.map(item => `- ${item.summary}`).join('\n');
+  }
+
   async runPlans(
     title: string,
     plans: PlanningAction[],
     opts?: {
       cacheable?: boolean;
+      useMemory?: boolean; // Bu görev için hafıza kullanılsın mı?
     },
   ): Promise<ExecutionResult> {
-    const taskExecutor = new Executor(title, {
-      onTaskStart: this.onTaskStartCallback,
-    });
+    // Sayfa bağlamını güncelle
+    await this.updatePageContext();
+
+    const useMemory = opts?.useMemory !== false; // Default: true
+    let taskExecutor: Executor;
+
+    if (useMemory) {
+      // Persistent executor kullan
+      taskExecutor = this.getPersistentExecutor();
+
+      // İş akışı bağlamını güncelle
+      this.workflowMemory.updateWorkflowContext({
+        currentStep: title,
+        pageInfo: this.sessionContext.pageInfo,
+        timestamp: Date.now()
+      }, this.sessionContext.workflowId || 'default');
+    } else {
+      // Geleneksel yöntem: yeni executor
+      taskExecutor = new Executor(title, {
+        onTaskStart: this.onTaskStartCallback
+      });
+    }
+
     const { tasks } = await this.convertPlanToExecutable(plans, opts);
+
+    // Görevlere bağlam bilgisi ekle
+    tasks.forEach(task => {
+      (task as any).context = {
+        ...(task as any).context,
+        ...this.sessionContext.pageInfo,
+        workflowId: this.sessionContext.workflowId,
+        sessionId: this.sessionContext.sessionId
+      };
+    });
+
     await taskExecutor.append(tasks);
     const result = await taskExecutor.flush();
+
+    // İş akışı hafızasını güncelle
+    if (useMemory) {
+      this.workflowMemory.saveWorkflowMemory(
+        taskExecutor.getMemory(),
+        this.sessionContext.workflowId || 'default'
+      );
+    }
+
     return {
       output: result,
       executor: taskExecutor,
@@ -940,14 +1274,32 @@ export class PageTaskExecutor {
       | undefined
     >
   > {
-    const taskExecutor = new Executor(taskTitleStr('Action', userPrompt), {
-      onTaskStart: this.onTaskStartCallback,
-    });
+    // Hafıza kullanımını kontrol et
+    const useMemory = true; // Action'lar için hafıza her zaman kullanılsın
+    let taskExecutor: Executor;
+
+    if (useMemory) {
+      // Persistent executor kullan
+      taskExecutor = this.getPersistentExecutor();
+    } else {
+      taskExecutor = new Executor(taskTitleStr('Action', userPrompt), {
+        onTaskStart: this.onTaskStartCallback,
+      });
+    }
+
+    // YENİ: Hafıza bağlamını al ve log olarak kullan
+    const memoryContext = this.getMemoryAsContext();
+    const initialLog = memoryContext ? memoryContext : undefined;
 
     let planningTask: ExecutionTaskPlanningApply | null =
-      this.planningTaskFromPrompt(userPrompt, undefined, actionContext);
+      this.planningTaskFromPrompt(userPrompt, initialLog, actionContext);
     let replanCount = 0;
     const logList: string[] = [];
+
+    // Hafıza bağlamını log listesine ekle
+    if (memoryContext) {
+      logList.push(memoryContext);
+    }
 
     const yamlFlow: MidsceneYamlFlowItem[] = [];
     while (planningTask) {
@@ -1090,15 +1442,24 @@ export class PageTaskExecutor {
     demand: InsightExtractParam,
     opt?: InsightExtractOption,
   ): Promise<ExecutionResult<T>> {
-    const taskExecutor = new Executor(
-      taskTitleStr(
-        type,
-        typeof demand === 'string' ? demand : JSON.stringify(demand),
-      ),
-      {
-        onTaskStart: this.onTaskStartCallback,
-      },
-    );
+    // Hafıza kullanımını kontrol et
+    const useMemory = true; // Query'ler için hafıza her zaman kullanılsın
+    let taskExecutor: Executor;
+
+    if (useMemory) {
+      // Persistent executor kullan
+      taskExecutor = this.getPersistentExecutor();
+    } else {
+      taskExecutor = new Executor(
+        taskTitleStr(
+          type,
+          typeof demand === 'string' ? demand : JSON.stringify(demand),
+        ),
+        {
+          onTaskStart: this.onTaskStartCallback,
+        },
+      );
+    }
 
     const queryTask: ExecutionTaskInsightQueryApply = {
       type: 'Insight',
@@ -1122,9 +1483,13 @@ export class PageTaskExecutor {
           };
         }
 
+        // YENİ: Hafıza bağlamını al
+        const memoryContext = this.getMemoryAsContext();
+
         const { data, usage } = await this.insight.extract<any>(
           demandInput,
           opt,
+          memoryContext, // Hafıza bağlamını geç
         );
 
         let outputResult = data;
@@ -1179,11 +1544,22 @@ export class PageTaskExecutor {
 
   async assert(
     assertion: string,
+    memoryContext?: string, // YENİ: Hafıza bağlamı
   ): Promise<ExecutionResult<InsightAssertionResponse>> {
     const description = `assert: ${assertion}`;
-    const taskExecutor = new Executor(taskTitleStr('Assert', description), {
-      onTaskStart: this.onTaskStartCallback,
-    });
+
+    // Hafıza kullanımını kontrol et
+    const useMemory = true; // Assertion'lar için hafıza her zaman kullanılsın
+    let taskExecutor: Executor;
+
+    if (useMemory) {
+      // Persistent executor kullan
+      taskExecutor = this.getPersistentExecutor();
+    } else {
+      taskExecutor = new Executor(taskTitleStr('Assert', description), {
+        onTaskStart: this.onTaskStartCallback,
+      });
+    }
     const assertionPlan: PlanningAction<PlanningActionParamAssert> = {
       type: 'Assert',
       param: {
@@ -1258,9 +1634,19 @@ export class PageTaskExecutor {
     opt: PlanningActionParamWaitFor,
   ): Promise<ExecutionResult<void>> {
     const description = `waitFor: ${assertion}`;
-    const taskExecutor = new Executor(taskTitleStr('WaitFor', description), {
-      onTaskStart: this.onTaskStartCallback,
-    });
+
+    // YENİ: Hafıza kullanımını kontrol et
+    const useMemory = true; // WaitFor için hafıza her zaman kullanılsın
+    let taskExecutor: Executor;
+
+    if (useMemory) {
+      // Persistent executor kullan
+      taskExecutor = this.getPersistentExecutor();
+    } else {
+      taskExecutor = new Executor(taskTitleStr('WaitFor', description), {
+        onTaskStart: this.onTaskStartCallback,
+      });
+    }
     const { timeoutMs, checkIntervalMs } = opt;
 
     assert(assertion, 'No assertion for waitFor');
@@ -1321,5 +1707,26 @@ export class PageTaskExecutor {
       taskExecutor,
       `waitFor timeout: ${errorThought}`,
     );
+  }
+
+  /**
+   * Hafızaya yeni bir öğe ekler
+   */
+  public addToMemory(memoryItem: MemoryItem): void {
+    // Persistent executor'ı al ve hafızaya ekle
+    if (!this.persistentExecutor || this.persistentExecutor.status === 'error') {
+      // Önceki hafızayı yükle
+      const previousMemory = this.workflowMemory.getWorkflowMemory(this.sessionContext.workflowId);
+
+      this.persistentExecutor = new Executor('Persistent Task Executor', {
+        onTaskStart: this.onTaskStartCallback,
+        initialMemory: previousMemory
+      });
+    }
+
+    // Hafızaya direkt ekle - executor'un internal metodunu kullanmak yerine
+    // memory store'a direkt erişim sağla
+    (this.persistentExecutor as any).memoryStore?.add(memoryItem);
+    (this.persistentExecutor as any).memoryAnalytics?.recordMemoryOperation('add', memoryItem);
   }
 }

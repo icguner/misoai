@@ -81,12 +81,15 @@ export function collectElementInfo(
     const tagName = (node as HTMLElement).tagName.toLowerCase();
     if ((node as HTMLElement).tagName.toLowerCase() === 'select') {
       // Get the selected option using the selectedIndex property
-      const selectedOption = (node as HTMLSelectElement).options[
-        (node as HTMLSelectElement).selectedIndex
-      ];
+      const selectElement = node as HTMLSelectElement;
+      const selectedIndex = selectElement.selectedIndex;
 
-      // Retrieve the text content of the selected option
-      valueContent = selectedOption.textContent || '';
+      // Check if selectedIndex is valid and options exist
+      if (selectedIndex >= 0 && selectElement.options && selectElement.options[selectedIndex]) {
+        const selectedOption = selectElement.options[selectedIndex];
+        // Retrieve the text content of the selected option
+        valueContent = selectedOption.textContent || '';
+      }
     }
 
     if (

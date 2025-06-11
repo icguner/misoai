@@ -82,6 +82,7 @@ By viewing the screenshot and page contents, you can extract the following data:
 export const extractDataQueryPrompt = async (
   pageDescription: string,
   dataQuery: string | Record<string, string>,
+  memoryContext?: string, // YENİ: Hafıza bağlamı
 ) => {
   let dataQueryText = '';
   if (typeof dataQuery === 'string') {
@@ -94,6 +95,18 @@ export const extractDataQueryPrompt = async (
 <PageDescription>
 {pageDescription}
 </PageDescription>
+
+${memoryContext ? `
+<PreviousWorkflowSteps>
+${memoryContext}
+</PreviousWorkflowSteps>
+
+IMPORTANT INSTRUCTIONS:
+- Consider the previous workflow steps when extracting data
+- If the data request relates to actions completed in previous steps, factor that context into your response
+- If previous steps involved form submissions, navigation, or data entry, use that context to better understand the current page state
+- Extract data that builds upon or relates to the previous workflow actions
+` : ''}
 
 <DATA_DEMAND>
 {dataQuery}

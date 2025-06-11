@@ -380,11 +380,17 @@ Here is the user's instruction:
   ${userInstruction}
 </instruction>
 
-These are the logs from previous executions, which indicate what was done in the previous actions.
-Do NOT repeat these actions.
-<previous_logs>
+WORKFLOW CONTEXT - Previous steps completed:
+<previous_workflow_steps>
 ${log}
-</previous_logs>
+</previous_workflow_steps>
+
+IMPORTANT PLANNING INSTRUCTIONS:
+- Consider the previous workflow steps when planning the next actions
+- Do NOT repeat actions that have already been completed successfully
+- Build upon the previous steps to continue the workflow logically
+- If the current instruction relates to data or state from previous steps, factor that into your planning
+- Plan actions that make sense in the context of the entire workflow, not just the current instruction
 `;
   }
 

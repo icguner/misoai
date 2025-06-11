@@ -310,8 +310,9 @@ export async function AiExtractElementInfo<
   dataQuery: string | Record<string, string>;
   context: UIContext<ElementType>;
   extractOption?: InsightExtractOption;
+  memoryContext?: string; // YENİ: Hafıza bağlamı
 }) {
-  const { dataQuery, context, extractOption } = options;
+  const { dataQuery, context, extractOption, memoryContext } = options;
   const systemPrompt = systemPromptToExtract();
 
   const { screenshotBase64 } = context;
@@ -325,6 +326,7 @@ export async function AiExtractElementInfo<
   const extractDataPromptText = await extractDataQueryPrompt(
     description,
     dataQuery,
+    memoryContext,
   );
 
   const userContent: ChatCompletionUserMessageParam['content'] = [];
@@ -365,8 +367,12 @@ export async function AiExtractElementInfo<
 
 export async function AiAssert<
   ElementType extends BaseElement = BaseElement,
->(options: { assertion: string; context: UIContext<ElementType> }) {
-  const { assertion, context } = options;
+>(options: {
+  assertion: string;
+  context: UIContext<ElementType>;
+  memoryContext?: string; // YENİ: Hafıza bağlamı
+}) {
+  const { assertion, context, memoryContext } = options;
 
   assert(assertion, 'assertion should be a string');
 
@@ -396,7 +402,16 @@ export async function AiAssert<
           text: `
 Here is the assertion. Please tell whether it is truthy according to the screenshot.
 ${url ? `Current page URL: ${url}` : ''}
+
+${memoryContext ? `
+IMPORTANT: Previous workflow steps have been completed:
+${memoryContext}
+
+Please consider these previous actions when evaluating the assertion. The assertion should be evaluated in the context of the entire workflow, not just the current screenshot. If the assertion refers to actions that were completed in previous steps, take that into account.
+` : ''}
+
 =====================================
+ASSERTION TO EVALUATE:
 ${assertion}
 =====================================
   `,

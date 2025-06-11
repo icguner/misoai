@@ -15,6 +15,11 @@ import type {
   LocateResultElement,
   LocateValidatorResult,
   LocatorValidatorOption,
+  MemoryConfig,
+  MemoryItem,
+  MemoryReport,
+  MemoryStats,
+  MemorySummary,
   OnTaskStartTip,
   PlanningActionParamScroll,
   Rect,
@@ -162,6 +167,12 @@ export interface PageAgentOpt {
   aiActionContext?: string;
   waitForNavigationTimeout?: number;
   waitForNetworkIdleTimeout?: number;
+  /* memory configuration for workflow context */
+  memoryConfig?: Partial<MemoryConfig>;
+  /* session ID for memory tracking */
+  sessionId?: string;
+  /* workflow ID for memory tracking */
+  workflowId?: string;
 }
 
 export class PageAgent<PageType extends WebPage = WebPage> {
@@ -232,6 +243,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     this.taskExecutor = new PageTaskExecutor(this.page, this.insight, {
       taskCache: this.taskCache,
       onTaskStart: this.callbackOnTaskStartTip.bind(this),
+      memoryConfig: opts?.memoryConfig,
+      sessionId: opts?.sessionId,
+      workflowId: opts?.workflowId,
     });
     this.dump = this.resetDump();
     this.reportFileName = reportFileName(
@@ -598,9 +612,15 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       };
     }
 
+    // YENİ: Hafıza bağlamını al ve action context'e ekle
+    const memoryContext = this.getMemoryAsContext();
+    const enhancedActionContext = this.opts.aiActionContext
+      ? `${this.opts.aiActionContext}\n\nPrevious workflow steps:\n${memoryContext}`
+      : memoryContext ? `Previous workflow steps:\n${memoryContext}` : undefined;
+
     const { output, executor } = await (isVlmUiTars
       ? this.taskExecutor.actionToGoal(taskPrompt, { cacheable })
-      : this.taskExecutor.action(taskPrompt, this.opts.aiActionContext, {
+      : this.taskExecutor.action(taskPrompt, enhancedActionContext, {
           cacheable,
         }));
 
@@ -782,12 +802,15 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       }
     }
 
+    // YENİ: Hafıza bağlamını al
+    const memoryContext = this.getMemoryAsContext();
+
     // Add URL context to the assertion if available
     const assertionWithContext = currentUrl
       ? `For the page at URL "${currentUrl}", ${assertion}`
       : assertion;
 
-    const { output, executor } = await this.taskExecutor.assert(assertionWithContext);
+    const { output, executor } = await this.taskExecutor.assert(assertionWithContext, memoryContext);
     const metadata = this.afterTaskRunning(executor, true);
 
     if (output && opt?.keepRawResponse) {
@@ -813,6 +836,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
   async aiCaptcha(options?: { deepThink?: boolean; autoDetectComplexity?: boolean }): Promise<AITaskResult<any>> {
     const { deepThink = false, autoDetectComplexity = true } = options || {};
+
+    // YENİ: Hafıza bağlamını al
+    const memoryContext = this.getMemoryAsContext();
 
     // First, do a preliminary analysis to determine if this is a complex CAPTCHA
     // that would benefit from deep thinking
@@ -928,6 +954,29 @@ Return only "complex" or "simple" based on your analysis.
     // Wait a few seconds after completing the CAPTCHA
     await new Promise(resolve => setTimeout(resolve, 3000));
 
+    // YENİ: Memory'ye kayıt için CAPTCHA çözümünü kaydet
+    const captchaMemoryItem = {
+      id: `captcha_${Date.now()}`,
+      timestamp: Date.now(),
+      taskType: 'Action' as const,
+      summary: `Solved ${captchaResult.captchaType} CAPTCHA: ${captchaResult.thought}`,
+      context: {
+        url: await this.page.url?.() || '',
+        captchaType: captchaResult.captchaType,
+        actions: captchaResult.actions,
+        deepThink: actualDeepThink
+      },
+      metadata: {
+        executionTime: Date.now() - Date.now(), // Will be updated
+        success: true,
+        confidence: 0.9
+      },
+      tags: ['captcha', 'action', captchaResult.captchaType]
+    };
+
+    // Memory'ye kaydet
+    this.taskExecutor.addToMemory(captchaMemoryItem);
+
     // Return the result with metadata
     const metadata: AITaskMetadata = {
       status: 'finished',
@@ -949,10 +998,19 @@ Return only "complex" or "simple" based on your analysis.
 
   async aiWaitFor(assertion: string, opt?: AgentWaitForOpt): Promise<AITaskResult> {
     const startTime = Date.now();
-    const { executor } = await this.taskExecutor.waitFor(assertion, {
+
+    // YENİ: Hafıza bağlamını al
+    const memoryContext = this.getMemoryAsContext();
+
+    // Add memory context to assertion if available
+    const assertionWithContext = memoryContext
+      ? `${assertion}\n\nPrevious workflow steps:\n${memoryContext}`
+      : assertion;
+
+    const { executor } = await this.taskExecutor.waitFor(assertionWithContext, {
       timeoutMs: opt?.timeoutMs || 15 * 1000,
       checkIntervalMs: opt?.checkIntervalMs || 3 * 1000,
-      assertion,
+      assertion: assertionWithContext,
     });
     const metadata: AITaskMetadata = {
       status: executor.isInErrorState() ? 'failed' : 'finished',
@@ -1101,5 +1159,155 @@ Return only "complex" or "simple" based on your analysis.
 
   async destroy() {
     await this.page.destroy();
+  }
+
+  /**
+   * Hafızayı bağlam olarak formatlar
+   */
+  private getMemoryAsContext(): string {
+    const memory = this.taskExecutor.getMemory();
+    if (memory.length === 0) {
+      return '';
+    }
+
+    // Son 5 hafıza öğesini al ve özetlerini birleştir
+    const recentMemory = memory.slice(-5);
+    return recentMemory.map(item => `- ${item.summary}`).join('\n');
+  }
+
+  /**
+   * Mevcut hafızayı döndürür
+   */
+  public getMemory(): readonly MemoryItem[] {
+    return this.taskExecutor.getMemory();
+  }
+
+  /**
+   * Hafıza istatistiklerini döndürür
+   */
+  public getMemoryStats(): MemoryStats {
+    return this.taskExecutor.getMemoryStats();
+  }
+
+  /**
+   * Hafızayı temizler
+   */
+  public clearMemory(): void {
+    this.taskExecutor.clearMemory();
+  }
+
+  /**
+   * Test sonunda kullanım için detaylı hafıza raporu döndürür (JSON formatında)
+   */
+  public getMemoryReport(): MemoryReport {
+    const memory = this.getMemory();
+    const stats = this.getMemoryStats();
+
+    return {
+      summary: {
+        totalItems: memory.length,
+        totalTasks: stats.analytics.totalTasks,
+        memoryHits: stats.analytics.memoryHits,
+        memoryMisses: stats.analytics.memoryMisses,
+        memoryEffectiveness: Math.round(stats.analytics.memoryEffectiveness * 100),
+        averageMemorySize: Math.round(stats.analytics.averageMemorySize * 100) / 100
+      },
+      config: stats.config,
+      items: memory.map(item => ({
+        id: item.id,
+        timestamp: item.timestamp,
+        taskType: item.taskType,
+        summary: item.summary,
+        context: item.context,
+        metadata: item.metadata,
+        tags: item.tags,
+        relativeTime: this.formatRelativeTime(item.timestamp)
+      })),
+      analytics: {
+        taskTypeDistribution: this.getTaskTypeDistribution(memory),
+        successRate: this.calculateSuccessRate(memory),
+        averageExecutionTime: this.calculateAverageExecutionTime(memory),
+        dataExtractionCount: this.countDataExtractions(memory),
+        workflowSteps: this.extractWorkflowSteps(memory)
+      }
+    };
+  }
+
+  /**
+   * Test sonunda kullanım için basit hafıza özeti döndürür (JSON formatında)
+   */
+  public getMemorySummary(): MemorySummary {
+    const memory = this.getMemory();
+    const stats = this.getMemoryStats();
+
+    return {
+      totalItems: memory.length,
+      memoryEffectiveness: `${Math.round(stats.analytics.memoryEffectiveness * 100)}%`,
+      taskTypes: this.getTaskTypeDistribution(memory),
+      recentSteps: memory.slice(-5).map(item => ({
+        step: item.summary,
+        type: item.taskType,
+        success: item.metadata?.success || false,
+        time: this.formatRelativeTime(item.timestamp)
+      })),
+      dataExtracted: this.getExtractedDataSummary(memory)
+    };
+  }
+
+  private formatRelativeTime(timestamp: number): string {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) return `${hours}h ${minutes % 60}m ago`;
+    if (minutes > 0) return `${minutes}m ${seconds % 60}s ago`;
+    return `${seconds}s ago`;
+  }
+
+  private getTaskTypeDistribution(memory: readonly MemoryItem[]): Record<string, number> {
+    const distribution: Record<string, number> = {};
+    memory.forEach(item => {
+      distribution[item.taskType] = (distribution[item.taskType] || 0) + 1;
+    });
+    return distribution;
+  }
+
+  private calculateSuccessRate(memory: readonly MemoryItem[]): number {
+    if (memory.length === 0) return 0;
+    const successCount = memory.filter(item => item.metadata?.success !== false).length;
+    return Math.round((successCount / memory.length) * 100);
+  }
+
+  private calculateAverageExecutionTime(memory: readonly MemoryItem[]): number {
+    const executionTimes = memory
+      .map(item => item.metadata?.executionTime)
+      .filter(time => typeof time === 'number') as number[];
+
+    if (executionTimes.length === 0) return 0;
+    const average = executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length;
+    return Math.round(average);
+  }
+
+  private countDataExtractions(memory: readonly MemoryItem[]): number {
+    return memory.filter(item =>
+      item.context?.dataExtracted ||
+      item.taskType === 'Insight' && item.summary.includes('Extracted')
+    ).length;
+  }
+
+  private extractWorkflowSteps(memory: readonly MemoryItem[]): string[] {
+    return memory.map(item => item.summary);
+  }
+
+  private getExtractedDataSummary(memory: readonly MemoryItem[]): Record<string, any> {
+    const extractedData: Record<string, any> = {};
+    memory.forEach((item, index) => {
+      if (item.context?.dataExtracted) {
+        extractedData[`step_${index + 1}`] = item.context.dataExtracted;
+      }
+    });
+    return extractedData;
   }
 }

@@ -79,6 +79,9 @@ export type AIElementResponse =
 export interface AIDataExtractionResponse<DataDemand> {
   data: DataDemand;
   errors?: string[];
+  memory?: MemoryItem; // YENİ: Extraction hafıza öğesi
+  summary?: string; // Geriye dönük uyumluluk için
+  dataRelations?: DataRelation[]; // Çıkarılan veriler arası ilişkiler
 }
 
 export interface AISectionLocatorResponse {
@@ -90,6 +93,9 @@ export interface AISectionLocatorResponse {
 export interface AIAssertionResponse {
   pass: boolean;
   thought: string;
+  memory?: MemoryItem; // YENİ: Assertion hafıza öğesi
+  summary?: string; // Geriye dönük uyumluluk için
+  contextUsed?: string[]; // Kullanılan hafıza öğeleri
 }
 
 export interface AICaptchaResponse {
@@ -304,6 +310,8 @@ export interface PlanningAIResponse {
   actions?: PlanningAction[];
   more_actions_needed_by_instruction: boolean;
   log: string;
+  memory?: MemoryItem; // YENİ: Planlama hafıza öğesi
+  summary?: string; // Geriye dönük uyumluluk için
   sleep?: number;
   error?: string;
   usage?: AIUsageInfo;
@@ -418,6 +426,8 @@ export interface ExecutionTaskReturn<TaskOutput = unknown, TaskLog = unknown> {
   log?: TaskLog;
   recorder?: ExecutionRecorderItem[];
   cache?: TaskCacheInfo;
+  memory?: MemoryItem; // YENİ: Yapılandırılmış hafıza öğesi
+  summary?: string; // Geriye dönük uyumluluk için
 }
 
 export type ExecutionTask<
@@ -496,6 +506,113 @@ export type ExecutionTaskInsightQueryApply = ExecutionTaskApply<
 
 export type ExecutionTaskInsightQuery =
   ExecutionTask<ExecutionTaskInsightQueryApply>;
+
+/*
+ * Enhanced Memory System Types
+ */
+
+// Hafıza öğesi için basit yapı
+export interface MemoryItem {
+  id: string;
+  timestamp: number;
+  taskType: 'Action' | 'Insight' | 'Planning' | 'Assertion' | 'Extraction';
+  summary: string;
+  context?: MemoryContext;
+  metadata?: MemoryMetadata;
+  tags?: string[];
+}
+
+// Hafıza bağlamı - sadece temel bilgiler
+export interface MemoryContext {
+  url?: string;
+  pageTitle?: string;
+  dataExtracted?: Record<string, any>;
+  elementInfo?: string;
+  userAction?: string;
+  errorInfo?: string;
+  assertionResult?: boolean;
+  assertionDetails?: string;
+
+}
+
+// Hafıza metadata'sı
+export interface MemoryMetadata {
+  executionTime: number;
+  success: boolean;
+  confidence?: number;
+  relatedMemoryIds?: string[];
+  sessionId?: string;
+}
+
+// Hafıza deposu konfigürasyonu - basitleştirilmiş
+export interface MemoryConfig {
+  maxItems: number;
+  maxAge: number; // milliseconds
+  enablePersistence: boolean;
+  enableAnalytics: boolean;
+  filterStrategy: 'relevance' | 'recency' | 'hybrid'; // priority kaldırıldı
+}
+
+// Veri ilişkileri için yeni tip
+export interface DataRelation {
+  sourceField: string;
+  targetField: string;
+  relationType: 'reference' | 'dependency' | 'correlation';
+  confidence: number;
+}
+
+// Hafıza analitikleri
+export interface MemoryMetrics {
+  totalTasks: number;
+  memoryHits: number;
+  memoryMisses: number;
+  averageMemorySize: number;
+  memoryEffectiveness: number;
+}
+
+// Hafıza istatistikleri
+export interface MemoryStats {
+  totalItems: number;
+  analytics: MemoryMetrics;
+  config: MemoryConfig;
+}
+
+// Test raporlaması için hafıza raporu
+export interface MemoryReport {
+  summary: {
+    totalItems: number;
+    totalTasks: number;
+    memoryHits: number;
+    memoryMisses: number;
+    memoryEffectiveness: number; // percentage
+    averageMemorySize: number;
+  };
+  config: MemoryConfig;
+  items: Array<MemoryItem & {
+    relativeTime: string;
+  }>;
+  analytics: {
+    taskTypeDistribution: Record<string, number>;
+    successRate: number; // percentage
+    averageExecutionTime: number; // milliseconds
+    dataExtractionCount: number;
+    workflowSteps: string[];
+  };
+}
+
+// Test raporlaması için basit hafıza özeti
+export interface MemorySummary {
+  totalItems: number;
+  memoryEffectiveness: string; // percentage as string
+  taskTypes: Record<string, number>;
+  recentSteps: Array<{
+    step: string;
+    type: string;
+    success: boolean;
+    time: string;
+  }>;
+  dataExtracted: Record<string, any>;
+}
 
 /*
 task - assertion
