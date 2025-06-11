@@ -19,7 +19,8 @@ You are an expert in software testing.
 \`\`\`json
 {
   "bbox": [number, number, number, number],  // ${bboxComment}
-  "errors"?: string[]
+  "errors"?: string[],
+  "summary": string // Summarize what element was located in one sentence (e.g., "Located login button on the page", "Found search input field")
 }
 \`\`\`
 
@@ -31,7 +32,8 @@ For example, when an element is found:
 \`\`\`json
 {
   "bbox": [100, 100, 200, 200],
-  "errors": []
+  "errors": [],
+  "summary": "Located target element successfully"
 }
 \`\`\`
 
@@ -39,7 +41,8 @@ When no element is found:
 \`\`\`json
 {
   "bbox": [],
-  "errors": ["I can see ..., but {some element} is not found"]
+  "errors": ["I can see ..., but {some element} is not found"],
+  "summary": "Could not locate the requested element on the page"
 }
 \`\`\`
 `;
@@ -87,7 +90,8 @@ Please return the result in JSON format as follows:
     }
     // More elements...
   ],
-  "errors": [] // Array of strings containing any error messages
+  "errors": [], // Array of strings containing any error messages
+  "summary": "PLACEHOLDER" // Summarize what elements were located in one sentence (e.g., "Located login button on the page", "Found search input field", "Identified navigation menu items")
 }
 \`\`\`
 
@@ -175,7 +179,8 @@ Output Example:
       "id": "1231"
     }
   ],
-  "errors": []
+  "errors": [],
+  "summary": "Located shopping cart icon in the upper right corner"
 }
 \`\`\`
   
@@ -220,8 +225,12 @@ export const locatorSchema: ResponseFormatJSONSchema = {
           },
           description: 'List of error messages, if any',
         },
+        summary: {
+          type: 'string',
+          description: 'A one-sentence summary of what elements were located (e.g., "Located login button on the page", "Found search input field", "Identified navigation menu items")',
+        },
       },
-      required: ['elements', 'errors'],
+      required: ['elements', 'errors', 'summary'],
       additionalProperties: false,
     },
   },

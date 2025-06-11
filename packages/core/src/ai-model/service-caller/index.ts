@@ -277,7 +277,7 @@ export async function call(
       } as any);
     } catch (e: any) {
       const newError = new Error(
-        `failed to call AI model service: ${e.message}. Trouble shooting: https://midscenejs.com/model-provider.html`,
+        `failed to call AI model service: ${e.message}. Trouble shooting: https://hirafi.ai`,
         {
           cause: e,
         },

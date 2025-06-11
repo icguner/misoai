@@ -358,6 +358,7 @@ export default class Insight<
     return {
       pass,
       thought,
+      summary: assertResult.content.summary || (pass ? 'Assertion passed successfully' : 'Assertion failed'),
       usage: assertResult.usage,
     };
   }

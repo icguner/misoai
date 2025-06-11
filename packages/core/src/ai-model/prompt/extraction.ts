@@ -13,6 +13,7 @@ Return in the following JSON format:
 {
   data: any, // the extracted data. Make sure both the value and scheme meet the DATA_DEMAND. If you want to write some description in this field, use the same language as the DATA_DEMAND.
   errors: [], // string[], error message if any
+  summary: string // Summarize what data was extracted in one sentence (e.g., "Extracted user profile information", "Found 5 todo items from the list", "Retrieved product details from the page")
 }
 
 # Example 1
@@ -34,6 +35,8 @@ By viewing the screenshot and page contents, you can extract the following data:
     age: 30,
     isAdmin: true
   },
+  errors: [],
+  summary: "Extracted user profile information including name, age, and admin status"
 }
 
 # Example 2
@@ -47,6 +50,8 @@ By viewing the screenshot and page contents, you can extract the following data:
 
 {
   data: ["todo 1", "todo 2", "todo 3"],
+  errors: [],
+  summary: "Found 3 todo items from the list"
 }
 
 # Example 3
@@ -60,6 +65,8 @@ By viewing the screenshot and page contents, you can extract the following data:
 
 {
   data: "todo list",
+  errors: [],
+  summary: "Retrieved page title from the header"
 }
 
 # Example 4
@@ -75,6 +82,8 @@ By viewing the screenshot and page contents, you can extract the following data:
 
 {
   data: { result: true },
+  errors: [],
+  summary: "Verified that current page is the SMS page"
 }
 `;
 }
@@ -144,8 +153,12 @@ export const extractDataSchema: ResponseFormatJSONSchema = {
           },
           description: 'Error messages, if any',
         },
+        summary: {
+          type: 'string',
+          description: 'A one-sentence summary of what data was extracted (e.g., "Extracted user profile information", "Found 5 todo items from the list", "Retrieved product details from the page")',
+        },
       },
-      required: ['data', 'errors'],
+      required: ['data', 'errors', 'summary'],
       additionalProperties: false,
     },
   },

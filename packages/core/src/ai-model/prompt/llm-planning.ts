@@ -52,12 +52,13 @@ Return in JSON format:
   ${vlCoTLog}
   ${vlCurrentLog}
   ${commonOutputFields}
-  "action": 
+  "action":
     {
       // one of the supporting actions
     } | null,
   ,
   "sleep"?: number, // The sleep time after the action, in milliseconds.
+  "summary": string, // Summarize what action was planned in one sentence (e.g., "Planned to click login button", "Set up text input for search field", "Prepared scroll action to find more content")
 }
 
 For example, when the instruction is "click 'Confirm' button, and click 'Yes' in popup" and the log is "I will use action Tap to click 'Confirm' button", by viewing the screenshot and previous logs, you should consider: We have already clicked the 'Confirm' button, so next we should find and click 'Yes' in popup.
@@ -74,7 +75,8 @@ this and output the JSON:
       "bbox": [100, 100, 200, 200],
       "prompt": "The 'Yes' button in popup"
     }
-  }
+  },
+  "summary": "Planned to click 'Yes' button in confirmation popup"
 }
 `;
 
@@ -170,6 +172,7 @@ The JSON format is as follows:
   ],
   ${llmCurrentLog}
   ${commonOutputFields}
+  "summary": string, // Summarize what actions were planned in one sentence (e.g., "Planned to click login button and enter credentials", "Set up navigation to user profile page", "Prepared form submission actions")
 }}
 
 ## Examples
@@ -203,6 +206,7 @@ By viewing the page screenshot and description, you should consider this and out
   "error": null,
   "more_actions_needed_by_instruction": true,
   "log": "Click the language switch button to open the language options. Wait for 1 second",
+  "summary": "Planned to click language switch button and wait for options to appear"
 }}
 
 ### Example: What NOT to do
@@ -351,12 +355,17 @@ export const planSchema: ResponseFormatJSONSchema = {
           type: ['string', 'null'],
           description: 'Error messages about unexpected situations',
         },
+        summary: {
+          type: 'string',
+          description: 'A one-sentence summary of what actions were planned (e.g., "Planned to click login button and enter credentials", "Set up navigation to user profile page", "Prepared form submission actions")',
+        },
       },
       required: [
         'actions',
         'more_actions_needed_by_instruction',
         'log',
         'error',
+        'summary',
       ],
       additionalProperties: false,
     },

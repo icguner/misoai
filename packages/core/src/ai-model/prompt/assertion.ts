@@ -8,13 +8,15 @@ const defaultAssertionResponseJsonFormat = `Return in the following JSON format:
 {
   pass: boolean, // whether the assertion is truthy
   thought: string | null, // string, if the result is falsy, give the reason why it is falsy. Otherwise, put null.
+  summary: string // Summarize what this assertion checked in one sentence (e.g., "Verified login button is visible", "Checked that form was submitted successfully")
 }`;
 
 const getUiTarsAssertionResponseJsonFormat = () => `## Output Json String Format
 \`\`\`
 "{
   "pass": <<is a boolean value from the enum [true, false], true means the assertion is truthy>>,
-  "thought": "<<is a string, give the reason why the assertion is falsy or truthy. Otherwise.>>"
+  "thought": "<<is a string, give the reason why the assertion is falsy or truthy. Otherwise.>>",
+  "summary": "<<is a string, summarize what this assertion checked in one sentence (e.g., 'Verified login button is visible', 'Checked that form was submitted successfully')>>"
 }"
 \`\`\`
 
@@ -45,8 +47,12 @@ export const assertSchema: ResponseFormatJSONSchema = {
           type: ['string', 'null'],
           description: 'The thought process behind the assertion',
         },
+        summary: {
+          type: 'string',
+          description: 'A one-sentence summary of what this assertion checked (e.g., "Verified login button is visible", "Checked that form was submitted successfully")',
+        },
       },
-      required: ['pass', 'thought'],
+      required: ['pass', 'thought', 'summary'],
       additionalProperties: false,
     },
   },

@@ -79,8 +79,8 @@ export type AIElementResponse =
 export interface AIDataExtractionResponse<DataDemand> {
   data: DataDemand;
   errors?: string[];
+  summary: string; // LLM'den gelen summary - artık required
   memory?: MemoryItem; // YENİ: Extraction hafıza öğesi
-  summary?: string; // Geriye dönük uyumluluk için
   dataRelations?: DataRelation[]; // Çıkarılan veriler arası ilişkiler
 }
 
@@ -93,8 +93,8 @@ export interface AISectionLocatorResponse {
 export interface AIAssertionResponse {
   pass: boolean;
   thought: string;
+  summary: string; // LLM'den gelen summary - artık required
   memory?: MemoryItem; // YENİ: Assertion hafıza öğesi
-  summary?: string; // Geriye dönük uyumluluk için
   contextUsed?: string[]; // Kullanılan hafıza öğeleri
 }
 
@@ -315,8 +315,8 @@ export interface PlanningAIResponse {
   actions?: PlanningAction[];
   more_actions_needed_by_instruction: boolean;
   log: string;
+  summary: string; // LLM'den gelen summary - artık required
   memory?: MemoryItem; // YENİ: Planlama hafıza öğesi
-  summary?: string; // Geriye dönük uyumluluk için
   sleep?: number;
   error?: string;
   usage?: AIUsageInfo;
@@ -431,8 +431,8 @@ export interface ExecutionTaskReturn<TaskOutput = unknown, TaskLog = unknown> {
   log?: TaskLog;
   recorder?: ExecutionRecorderItem[];
   cache?: TaskCacheInfo;
+  summary?: string; // LLM'den gelen summary (optional çünkü tüm task'lar summary döndürmez)
   memory?: MemoryItem; // YENİ: Yapılandırılmış hafıza öğesi
-  summary?: string; // Geriye dönük uyumluluk için
 }
 
 export type ExecutionTask<
@@ -520,7 +520,7 @@ export type ExecutionTaskInsightQuery =
 export interface MemoryItem {
   id: string;
   timestamp: number;
-  taskType: 'Action' | 'Insight' | 'Planning' | 'Assertion' | 'Extraction';
+  taskType: 'Action' | 'Query' | 'Assertion' | 'Navigation' | 'Interaction';
   summary: string;
   context?: MemoryContext;
   metadata?: MemoryMetadata;

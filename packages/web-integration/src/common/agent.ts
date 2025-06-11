@@ -1377,7 +1377,7 @@ Return only "complex" or "simple" based on your analysis.
     return memory.filter(
       (item) =>
         item.context?.dataExtracted ||
-        (item.taskType === 'Insight' && item.summary.includes('Extracted')),
+        (item.taskType === 'Query' && item.summary.includes('Extracted')),
     ).length;
   }
 

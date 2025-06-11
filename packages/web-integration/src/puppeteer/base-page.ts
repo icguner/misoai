@@ -14,6 +14,17 @@ import type { Page as PuppeteerPage } from 'puppeteer';
 import type { WebKeyInput } from '../common/page';
 import type { AbstractPage } from '../page';
 import type { MouseButton } from '../page';
+import {
+  generateHumanMousePath,
+  calculateStepDelay,
+  type MouseMovementOptions,
+  type Point as MousePoint
+} from '../common/mouse-utils';
+import {
+  getMousePointerScript,
+  getClickAnimationScript,
+  type VisualFeedbackOptions
+} from '../common/visual-feedback';
 
 const debugPage = getDebug('web:page');
 
@@ -25,6 +36,20 @@ export class Page<
   underlyingPage: PageType;
   protected waitForNavigationTimeout: number;
   private viewportSize?: Size;
+  private currentMousePosition: MousePoint = { x: 0, y: 0 };
+  private mouseMovementOptions: MouseMovementOptions = {
+    steps: 15,
+    duration: 300,
+    easing: 'easeInOut',
+    showVisualFeedback: true
+  };
+  private visualFeedbackOptions: VisualFeedbackOptions = {
+    pointerSize: 16,
+    pointerColor: '#ff4444',
+    trailLength: 4,
+    showTrail: true,
+    animationDuration: 150
+  };
 
   pageType: AgentType;
 
@@ -60,10 +85,103 @@ export class Page<
     this.pageType = pageType;
     this.waitForNavigationTimeout =
       opts?.waitForNavigationTimeout ?? DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT;
+
+    // Initialize mouse position to center of viewport
+    this.initializeMousePosition();
+  }
+
+  /**
+   * Initialize mouse position to center of viewport
+   */
+  private async initializeMousePosition(): Promise<void> {
+    try {
+      const size = await this.size();
+      this.currentMousePosition = {
+        x: Math.floor(size.width / 2),
+        y: Math.floor(size.height / 2)
+      };
+    } catch (error) {
+      // Fallback to default position
+      this.currentMousePosition = { x: 400, y: 300 };
+    }
   }
 
   async evaluateJavaScript<T = any>(script: string): Promise<T> {
     return this.evaluate(script);
+  }
+
+  /**
+   * Show visual feedback for mouse pointer
+   */
+  private async showMousePointer(x: number, y: number): Promise<void> {
+    if (!this.mouseMovementOptions.showVisualFeedback) return;
+
+    const script = getMousePointerScript(x, y, this.visualFeedbackOptions);
+    try {
+      await this.evaluate(script);
+    } catch (error) {
+      // Ignore visual feedback errors to not break functionality
+      debugPage('Visual feedback error:', error);
+    }
+  }
+
+  /**
+   * Show click animation
+   */
+  private async showClickAnimation(x: number, y: number): Promise<void> {
+    if (!this.mouseMovementOptions.showVisualFeedback) return;
+
+    const script = getClickAnimationScript(x, y);
+    try {
+      await this.evaluate(script);
+    } catch (error) {
+      // Ignore visual feedback errors
+      debugPage('Click animation error:', error);
+    }
+  }
+
+  /**
+   * Move mouse with human-like movement and visual feedback
+   */
+  private async moveMouseHumanLike(
+    toX: number,
+    toY: number,
+    options?: Partial<MouseMovementOptions>
+  ): Promise<void> {
+    const moveOptions = { ...this.mouseMovementOptions, ...options };
+
+    // Generate human-like path
+    const path = generateHumanMousePath(
+      this.currentMousePosition,
+      { x: toX, y: toY },
+      moveOptions
+    );
+
+    // Move along the path
+    for (let i = 0; i < path.length; i++) {
+      const point = path[i];
+
+      // Show visual feedback
+      if (moveOptions.showVisualFeedback) {
+        await this.showMousePointer(point.x, point.y);
+      }
+
+      // Move mouse to point
+      await this.underlyingPage.mouse.move(point.x, point.y);
+
+      // Update current position
+      this.currentMousePosition = point;
+
+      // Add delay between steps (except for last step)
+      if (i < path.length - 1) {
+        const delay = calculateStepDelay(
+          moveOptions.duration || 300,
+          i,
+          path.length
+        );
+        await sleep(delay);
+      }
+    }
   }
 
   async waitForNavigation() {
@@ -78,7 +196,7 @@ export class Page<
       } catch (error) {
         // Ignore timeout error, continue execution
         console.warn(
-          '[midscene:warning] Waiting for the navigation has timed out, but Midscene will continue execution. Please check https://midscenejs.com/faq.html#customize-the-network-timeout for more information on customizing the network timeout',
+          '[hirafi:warning] Waiting for the navigation has timed out',
         );
       }
       debugPage('waitForNavigation end');
@@ -176,8 +294,14 @@ export class Page<
         y: number,
         options?: { button?: MouseButton; count?: number },
       ) => {
+        // Move with human-like movement and visual feedback
         await this.mouse.move(x, y);
-        this.underlyingPage.mouse.click(x, y, {
+
+        // Show click animation
+        await this.showClickAnimation(x, y);
+
+        // Perform the actual click
+        await this.underlyingPage.mouse.click(x, y, {
           button: options?.button || 'left',
           count: options?.count || 1,
         });
@@ -197,31 +321,28 @@ export class Page<
       },
       move: async (x: number, y: number) => {
         this.everMoved = true;
-        return this.underlyingPage.mouse.move(x, y);
+        // Use human-like movement instead of direct movement
+        await this.moveMouseHumanLike(x, y);
+        return Promise.resolve();
       },
       drag: async (
         from: { x: number; y: number },
         to: { x: number; y: number },
       ) => {
         if (this.pageType === 'puppeteer') {
-          await (this.underlyingPage as PuppeteerPage).mouse.drag(
-            {
-              x: from.x,
-              y: from.y,
-            },
-            {
-              x: to.x,
-              y: to.y,
-            },
-          );
+          // For Puppeteer, we'll use human-like movement for drag as well
+          await this.mouse.move(from.x, from.y);
+          await this.underlyingPage.mouse.down();
+          await this.moveMouseHumanLike(to.x, to.y, {
+            duration: 500, // Slower for drag operations
+            steps: 25
+          });
+          await this.underlyingPage.mouse.up();
         } else if (this.pageType === 'playwright') {
           // Playwright doesn't have a drag method, so we need to simulate it
-          await (this.underlyingPage as PlaywrightPage).mouse.move(
-            from.x,
-            from.y,
-          );
+          await this.mouse.move(from.x, from.y);
           await (this.underlyingPage as PlaywrightPage).mouse.down();
-          await (this.underlyingPage as PlaywrightPage).mouse.move(to.x, to.y);
+          await this.mouse.move(to.x, to.y);
           await (this.underlyingPage as PlaywrightPage).mouse.up();
         }
       },
@@ -296,6 +417,20 @@ export class Page<
       const targetY = Math.floor(size.height / 2);
       await this.mouse.move(targetX, targetY);
     }
+  }
+
+  /**
+   * Configure mouse movement behavior
+   */
+  public configureMouseMovement(options: Partial<MouseMovementOptions>): void {
+    this.mouseMovementOptions = { ...this.mouseMovementOptions, ...options };
+  }
+
+  /**
+   * Configure visual feedback
+   */
+  public configureVisualFeedback(options: Partial<VisualFeedbackOptions>): void {
+    this.visualFeedbackOptions = { ...this.visualFeedbackOptions, ...options };
   }
 
   async scrollUntilTop(startingPoint?: Point): Promise<void> {

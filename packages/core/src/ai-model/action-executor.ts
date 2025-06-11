@@ -384,7 +384,7 @@ export class Executor {
     const memoryItem: MemoryItem = {
       id: this.generateMemoryId(task),
       timestamp: Date.now(),
-      taskType: task.type as any,
+      taskType: this.mapTaskTypeToMemoryType(task),
       summary,
       context: this.extractContext(task, returnValue),
       metadata: {
@@ -410,8 +410,8 @@ export class Executor {
     const memoryItem: MemoryItem = {
       id: this.generateMemoryId(task, 'error'),
       timestamp: Date.now(),
-      taskType: task.type as any,
-      summary: `Failed to execute ${task.type}: ${error.message || 'Unknown error'}`,
+      taskType: this.mapTaskTypeToMemoryType(task),
+      summary: `Failed to execute ${this.getHumanReadableTaskType(task)}: ${error.message || 'Unknown error'}`,
       context: {
         ...this.extractContext(task, null),
         errorInfo: error.message || error.toString(),
@@ -428,13 +428,60 @@ export class Executor {
   }
 
   /**
+   * Technical task type'ları human-readable memory type'larına map eder
+   */
+  private mapTaskTypeToMemoryType(task: ExecutionTask): 'Action' | 'Query' | 'Assertion' | 'Navigation' | 'Interaction' {
+    switch (task.type) {
+      case 'Action':
+        return 'Action';
+      case 'Insight':
+        if (task.subType === 'Assert') return 'Assertion';
+        if (task.subType === 'Query' || task.subType === 'Boolean' || task.subType === 'Number' || task.subType === 'String') return 'Query';
+        if (task.subType === 'Locate') return 'Interaction';
+        return 'Query';
+      case 'Planning':
+        return 'Navigation';
+      case 'Assertion':
+        return 'Assertion';
+      default:
+        return 'Action';
+    }
+  }
+
+  /**
+   * Task type'ı human-readable forma çevirir
+   */
+  private getHumanReadableTaskType(task: ExecutionTask): string {
+    switch (task.type) {
+      case 'Action':
+        return 'action';
+      case 'Insight':
+        if (task.subType === 'Assert') return 'assertion';
+        if (task.subType === 'Query') return 'data query';
+        if (task.subType === 'Boolean') return 'boolean check';
+        if (task.subType === 'Number') return 'number extraction';
+        if (task.subType === 'String') return 'text extraction';
+        if (task.subType === 'Locate') return 'element location';
+        return 'query';
+      case 'Planning':
+        return 'navigation planning';
+      case 'Assertion':
+        return 'assertion';
+      default:
+        return 'operation';
+    }
+  }
+
+  /**
    * Görev ve sonuçtan özet çıkarır
    */
   private extractSummary(task: ExecutionTask, returnValue: any): string | null {
-    // Önce AI'dan gelen summary'yi kontrol et
-    if (returnValue?.memory?.summary) return returnValue.memory.summary;
-    if (returnValue?.summary) return returnValue.summary;
+    // Önce LLM'den direkt gelen summary'yi kontrol et (yeni sistem)
     if (returnValue?.output?.summary) return returnValue.output.summary;
+    if (returnValue?.summary) return returnValue.summary;
+
+    // Memory'den gelen summary (eski sistem)
+    if (returnValue?.memory?.summary) return returnValue.memory.summary;
 
     // Fallback: görev tipine göre otomatik özet oluştur
     return this.generateAutoSummary(task);
@@ -446,21 +493,32 @@ export class Executor {
   private generateAutoSummary(task: ExecutionTask): string | null {
     switch (task.type) {
       case 'Action': {
-        const actionDetail =
-          (task.param as any)?.action || task.subType || 'action';
+        const actionDetail = (task.param as any)?.action || task.subType || 'action';
         const target = (task.param as any)?.target || 'element';
-        return `Performed ${actionDetail} on ${target}`;
+
+        // Daha human-readable action descriptions
+        const actionMap: Record<string, string> = {
+          'click': 'clicked',
+          'type': 'entered text into',
+          'scroll': 'scrolled to',
+          'hover': 'hovered over',
+          'drag': 'dragged',
+          'select': 'selected'
+        };
+
+        const readableAction = actionMap[actionDetail.toLowerCase()] || `performed ${actionDetail} on`;
+        return `Successfully ${readableAction} ${target}`;
       }
 
       case 'Insight':
         if (task.subType === 'Locate') {
           const element = (task.param as any)?.prompt || 'element';
-          return `Located element: ${element}`;
+          return `Found ${element} on the page`;
         }
         if (task.subType === 'Assert') {
           const assertion = (task.param as any)?.assertion || 'condition';
-          const result = task.output?.pass ? 'passed' : 'failed';
-          return `Assertion "${assertion}" ${result}`;
+          const result = task.output?.pass ? 'verified' : 'failed to verify';
+          return `${result.charAt(0).toUpperCase() + result.slice(1)} that ${assertion}`;
         }
         if (
           task.subType === 'Query' ||
@@ -486,19 +544,31 @@ export class Executor {
             return `Extracted "${demand}": ${JSON.stringify(result)}`;
           }
 
-          return `Extracted data: ${JSON.stringify(result)}`;
+          return `Retrieved information from the page`;
         }
-        return `Performed ${task.subType} insight`;
+        if (task.subType === 'Boolean') {
+          return `Checked boolean condition on the page`;
+        }
+        if (task.subType === 'Number') {
+          return `Extracted numeric value from the page`;
+        }
+        if (task.subType === 'String') {
+          return `Retrieved text content from the page`;
+        }
+        return `Gathered information from the page`;
 
       case 'Planning': {
-        const actionCount = task.output?.actions?.length || 0;
-        const actionTypes =
-          task.output?.actions?.map((a: any) => a.type).join(', ') || '';
-        return `Planned ${actionCount} action(s): ${actionTypes}`;
+        const actions = (task.output as any)?.actions || [];
+        if (actions.length > 0) {
+          const firstAction = actions[0];
+          const actionType = firstAction.type?.toLowerCase() || 'action';
+          return `Planned to ${actionType} and ${actions.length - 1} more step(s)`;
+        }
+        return 'Planned next workflow steps';
       }
 
       default:
-        return `Executed ${task.type} task`;
+        return `Completed ${this.getHumanReadableTaskType(task)}`;
     }
   }
 

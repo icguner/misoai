@@ -921,6 +921,7 @@ export class PageTaskExecutor {
             actions: [],
             more_actions_needed_by_instruction: false,
             log: '',
+            summary: 'Loaded YAML workflow configuration',
             yamlString,
           },
           cache: {
@@ -1047,6 +1048,7 @@ export class PageTaskExecutor {
             actions: finalActions,
             more_actions_needed_by_instruction,
             log,
+            summary: planResult.summary || 'Generated action plan from user instruction',
             yamlFlow: planResult.yamlFlow,
           },
           cache: {
@@ -1109,6 +1111,7 @@ export class PageTaskExecutor {
             actionType: actions[0].type,
             more_actions_needed_by_instruction: true,
             log: '',
+            summary: action_summary || 'Generated VLM action plan',
             yamlFlow: planResult.yamlFlow,
           },
           cache: {

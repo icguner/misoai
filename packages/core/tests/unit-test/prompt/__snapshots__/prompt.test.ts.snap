@@ -6,6 +6,8 @@ exports[`extract element > extract element by extractDataPrompt - object 1`] = `
 todo title, string
 </PageDescription>
 
+
+
 <DATA_DEMAND>
 {
   "foo": "an array indicates the foo"
@@ -19,6 +21,8 @@ exports[`extract element > extract element by extractDataPrompt 1`] = `
 <PageDescription>
 todo title, string
 </PageDescription>
+
+
 
 <DATA_DEMAND>
 todo title, string
@@ -38,6 +42,7 @@ Return in the following JSON format:
 {
   data: any, // the extracted data. Make sure both the value and scheme meet the DATA_DEMAND. If you want to write some description in this field, use the same language as the DATA_DEMAND.
   errors: [], // string[], error message if any
+  summary: string // Summarize what data was extracted in one sentence (e.g., "Extracted user profile information", "Found 5 todo items from the list", "Retrieved product details from the page")
 }
 
 # Example 1
@@ -59,6 +64,8 @@ By viewing the screenshot and page contents, you can extract the following data:
     age: 30,
     isAdmin: true
   },
+  errors: [],
+  summary: "Extracted user profile information including name, age, and admin status"
 }
 
 # Example 2
@@ -72,6 +79,8 @@ By viewing the screenshot and page contents, you can extract the following data:
 
 {
   data: ["todo 1", "todo 2", "todo 3"],
+  errors: [],
+  summary: "Found 3 todo items from the list"
 }
 
 # Example 3
@@ -85,6 +94,8 @@ By viewing the screenshot and page contents, you can extract the following data:
 
 {
   data: "todo list",
+  errors: [],
+  summary: "Retrieved page title from the header"
 }
 
 # Example 4
@@ -100,6 +111,8 @@ By viewing the screenshot and page contents, you can extract the following data:
 
 {
   data: { result: true },
+  errors: [],
+  summary: "Verified that current page is the SMS page"
 }
 "
 `;
@@ -147,7 +160,8 @@ Please return the result in JSON format as follows:
     }
     // More elements...
   ],
-  "errors": [] // Array of strings containing any error messages
+  "errors": [], // Array of strings containing any error messages
+  "summary": "PLACEHOLDER" // Summarize what elements were located in one sentence (e.g., "Located login button on the page", "Found search input field", "Identified navigation menu items")
 }
 \`\`\`
 
@@ -235,7 +249,8 @@ Output Example:
       "id": "1231"
     }
   ],
-  "errors": []
+  "errors": [],
+  "summary": "Located shopping cart icon in the upper right corner"
 }
 \`\`\`
   
@@ -255,7 +270,8 @@ You are an expert in software testing.
 \`\`\`json
 {
   "bbox": [number, number, number, number],  // 2d bounding box as [ymin, xmin, ymax, xmax]
-  "errors"?: string[]
+  "errors"?: string[],
+  "summary": string // Summarize what element was located in one sentence (e.g., "Located login button on the page", "Found search input field")
 }
 \`\`\`
 
@@ -267,7 +283,8 @@ For example, when an element is found:
 \`\`\`json
 {
   "bbox": [100, 100, 200, 200],
-  "errors": []
+  "errors": [],
+  "summary": "Located target element successfully"
 }
 \`\`\`
 
@@ -275,7 +292,8 @@ When no element is found:
 \`\`\`json
 {
   "bbox": [],
-  "errors": ["I can see ..., but {some element} is not found"]
+  "errors": ["I can see ..., but {some element} is not found"],
+  "summary": "Could not locate the requested element on the page"
 }
 \`\`\`
 "
@@ -294,7 +312,8 @@ You are an expert in software testing.
 \`\`\`json
 {
   "bbox": [number, number, number, number],  // 2d bounding box as [xmin, ymin, xmax, ymax]
-  "errors"?: string[]
+  "errors"?: string[],
+  "summary": string // Summarize what element was located in one sentence (e.g., "Located login button on the page", "Found search input field")
 }
 \`\`\`
 
@@ -306,7 +325,8 @@ For example, when an element is found:
 \`\`\`json
 {
   "bbox": [100, 100, 200, 200],
-  "errors": []
+  "errors": [],
+  "summary": "Located target element successfully"
 }
 \`\`\`
 
@@ -314,7 +334,8 @@ When no element is found:
 \`\`\`json
 {
   "bbox": [],
-  "errors": ["I can see ..., but {some element} is not found"]
+  "errors": ["I can see ..., but {some element} is not found"],
+  "summary": "Could not locate the requested element on the page"
 }
 \`\`\`
 "
@@ -473,12 +494,17 @@ exports[`system prompts > planning - 4o - response format 1`] = `
           "description": "If all the actions described in the instruction have been covered by this action and logs, set this field to false.",
           "type": "boolean",
         },
+        "summary": {
+          "description": "A one-sentence summary of what actions were planned (e.g., "Planned to click login button and enter credentials", "Set up navigation to user profile page", "Prepared form submission actions")",
+          "type": "string",
+        },
       },
       "required": [
         "actions",
         "more_actions_needed_by_instruction",
         "log",
         "error",
+        "summary",
       ],
       "strict": true,
       "type": "object",
@@ -573,6 +599,7 @@ The JSON format is as follows:
   "log": string, // Log what the next actions you can do according to the screenshot and the instruction. The typical log looks like "Now i want to use action '{ action-type }' to do ..". If no action should be done, log the reason. ". Use the same language as the user's instruction.
   "error"?: string, // Error messages about unexpected situations, if any. Only think it is an error when the situation is not expected according to the instruction. Use the same language as the user's instruction.
   "more_actions_needed_by_instruction": boolean, // Consider if there is still more action(s) to do after the action in "Log" is done, according to the instruction. If so, set this field to true. Otherwise, set it to false.
+  "summary": string, // Summarize what actions were planned in one sentence (e.g., "Planned to click login button and enter credentials", "Set up navigation to user profile page", "Prepared form submission actions")
 }
 
 ## Examples
@@ -606,6 +633,7 @@ By viewing the page screenshot and description, you should consider this and out
   "error": null,
   "more_actions_needed_by_instruction": true,
   "log": "Click the language switch button to open the language options. Wait for 1 second",
+  "summary": "Planned to click language switch button and wait for options to appear"
 }
 
 ### Example: What NOT to do
@@ -667,12 +695,13 @@ Return in JSON format:
   "log": string, // Log what the next one action (ONLY ONE!) you can do according to the screenshot and the instruction. The typical log looks like "Now i want to use action '{{ action-type }}' to do .. first". If no action should be done, log the reason. ". Use the same language as the user's instruction.
   "error"?: string, // Error messages about unexpected situations, if any. Only think it is an error when the situation is not expected according to the instruction. Use the same language as the user's instruction.
   "more_actions_needed_by_instruction": boolean, // Consider if there is still more action(s) to do after the action in "Log" is done, according to the instruction. If so, set this field to true. Otherwise, set it to false.
-  "action": 
+  "action":
     {
       // one of the supporting actions
     } | null,
   ,
   "sleep"?: number, // The sleep time after the action, in milliseconds.
+  "summary": string, // Summarize what action was planned in one sentence (e.g., "Planned to click login button", "Set up text input for search field", "Prepared scroll action to find more content")
 }
 
 For example, when the instruction is "click 'Confirm' button, and click 'Yes' in popup" and the log is "I will use action Tap to click 'Confirm' button", by viewing the screenshot and previous logs, you should consider: We have already clicked the 'Confirm' button, so next we should find and click 'Yes' in popup.
@@ -689,7 +718,8 @@ this and output the JSON:
       "bbox": [100, 100, 200, 200],
       "prompt": "The 'Yes' button in popup"
     }
-  }
+  },
+  "summary": "Planned to click 'Yes' button in confirmation popup"
 }
 "
 `;
@@ -706,11 +736,17 @@ Here is the user's instruction:
   THIS IS USER INSTRUCTION
 </instruction>
 
-These are the logs from previous executions, which indicate what was done in the previous actions.
-Do NOT repeat these actions.
-<previous_logs>
+WORKFLOW CONTEXT - Previous steps completed:
+<previous_workflow_steps>
 THIS IS WHAT HAS BEEN DONE
-</previous_logs>
+</previous_workflow_steps>
+
+IMPORTANT PLANNING INSTRUCTIONS:
+- Consider the previous workflow steps when planning the next actions
+- Do NOT repeat actions that have already been completed successfully
+- Build upon the previous steps to continue the workflow logically
+- If the current instruction relates to data or state from previous steps, factor that into your planning
+- Plan actions that make sense in the context of the entire workflow, not just the current instruction
 "
 `;
 
@@ -742,12 +778,13 @@ Return in JSON format:
   "log": string, // Log what the next one action (ONLY ONE!) you can do according to the screenshot and the instruction. The typical log looks like "Now i want to use action '{{ action-type }}' to do .. first". If no action should be done, log the reason. ". Use the same language as the user's instruction.
   "error"?: string, // Error messages about unexpected situations, if any. Only think it is an error when the situation is not expected according to the instruction. Use the same language as the user's instruction.
   "more_actions_needed_by_instruction": boolean, // Consider if there is still more action(s) to do after the action in "Log" is done, according to the instruction. If so, set this field to true. Otherwise, set it to false.
-  "action": 
+  "action":
     {
       // one of the supporting actions
     } | null,
   ,
   "sleep"?: number, // The sleep time after the action, in milliseconds.
+  "summary": string, // Summarize what action was planned in one sentence (e.g., "Planned to click login button", "Set up text input for search field", "Prepared scroll action to find more content")
 }
 
 For example, when the instruction is "click 'Confirm' button, and click 'Yes' in popup" and the log is "I will use action Tap to click 'Confirm' button", by viewing the screenshot and previous logs, you should consider: We have already clicked the 'Confirm' button, so next we should find and click 'Yes' in popup.
@@ -764,7 +801,8 @@ this and output the JSON:
       "bbox": [100, 100, 200, 200],
       "prompt": "The 'Yes' button in popup"
     }
-  }
+  },
+  "summary": "Planned to click 'Yes' button in confirmation popup"
 }
 "
 `;
@@ -797,12 +835,13 @@ Return in JSON format:
   "log": string, // Log what the next one action (ONLY ONE!) you can do according to the screenshot and the instruction. The typical log looks like "Now i want to use action '{{ action-type }}' to do .. first". If no action should be done, log the reason. ". Use the same language as the user's instruction.
   "error"?: string, // Error messages about unexpected situations, if any. Only think it is an error when the situation is not expected according to the instruction. Use the same language as the user's instruction.
   "more_actions_needed_by_instruction": boolean, // Consider if there is still more action(s) to do after the action in "Log" is done, according to the instruction. If so, set this field to true. Otherwise, set it to false.
-  "action": 
+  "action":
     {
       // one of the supporting actions
     } | null,
   ,
   "sleep"?: number, // The sleep time after the action, in milliseconds.
+  "summary": string, // Summarize what action was planned in one sentence (e.g., "Planned to click login button", "Set up text input for search field", "Prepared scroll action to find more content")
 }
 
 For example, when the instruction is "click 'Confirm' button, and click 'Yes' in popup" and the log is "I will use action Tap to click 'Confirm' button", by viewing the screenshot and previous logs, you should consider: We have already clicked the 'Confirm' button, so next we should find and click 'Yes' in popup.
@@ -819,7 +858,8 @@ this and output the JSON:
       "bbox": [100, 100, 200, 200],
       "prompt": "The 'Yes' button in popup"
     }
-  }
+  },
+  "summary": "Planned to click 'Yes' button in confirmation popup"
 }
 "
 `;
