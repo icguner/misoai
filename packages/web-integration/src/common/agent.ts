@@ -1,10 +1,10 @@
 import type { WebPage } from '@/common/page';
 import type {
+  AICaptchaResponse,
+  AIUsageInfo,
   AgentAssertOpt,
   AgentDescribeElementAtPointResult,
   AgentWaitForOpt,
-  AICaptchaResponse,
-  AIUsageInfo,
   DetailedLocateParam,
   ExecutionDump,
   ExecutionTask,
@@ -254,7 +254,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   async getUIContext(action?: InsightAction): Promise<WebUIContext> {
-    if (action && (action === 'extract' || action === 'assert' || action === 'captcha')) {
+    if (
+      action &&
+      (action === 'extract' || action === 'assert' || action === 'captcha')
+    ) {
       return await parseContextFromWebPage(this.page, {
         ignoreMarker: true,
       });
@@ -265,7 +268,13 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   // Helper method to call the insight.captcha method
-  private async _callInsightCaptcha(options?: { deepThink?: boolean }): Promise<{ content: AICaptchaResponse; usage?: AIUsageInfo; deepThink?: boolean }> {
+  private async _callInsightCaptcha(options?: {
+    deepThink?: boolean;
+  }): Promise<{
+    content: AICaptchaResponse;
+    usage?: AIUsageInfo;
+    deepThink?: boolean;
+  }> {
     // This is a workaround for TypeScript type checking
     // We know that insight.captcha exists because we added it
     const context = await this.getUIContext();
@@ -350,49 +359,64 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
     // Collect all tasks' thoughts and plans
     const allThoughts = executor.tasks
-      .filter(task => task.thought)
-      .map(task => task.thought);
+      .filter((task) => task.thought)
+      .map((task) => task.thought);
 
     // Collect all locate information
     const allLocates = executor.tasks
-      .filter(task => task.locate)
-      .map(task => task.locate);
+      .filter((task) => task.locate)
+      .map((task) => task.locate);
 
     // Collect all plans
     const allPlans = executor.tasks
-      .filter(task => task.param?.plans)
-      .map(task => task.param?.plans);
+      .filter((task) => task.param?.plans)
+      .map((task) => task.param?.plans);
 
     // Collect tasks by type
-    const planningTasks = executor.tasks.filter(task => task.type === 'Planning');
-    const insightTasks = executor.tasks.filter(task => task.type === 'Insight');
-    const actionTasks = executor.tasks.filter(task => task.type === 'Action');
+    const planningTasks = executor.tasks.filter(
+      (task) => task.type === 'Planning',
+    );
+    const insightTasks = executor.tasks.filter(
+      (task) => task.type === 'Insight',
+    );
+    const actionTasks = executor.tasks.filter((task) => task.type === 'Action');
 
     // Create planning, insight, and action information
-    const planning = planningTasks.length > 0 ? {
-      type: "Planning",
-      description: `Planning for task execution`,
-      steps: planningTasks.map(task => task.thought || 'Planning step')
-    } : undefined;
+    const planning =
+      planningTasks.length > 0
+        ? {
+            type: 'Planning',
+            description: 'Planning for task execution',
+            steps: planningTasks.map((task) => task.thought || 'Planning step'),
+          }
+        : undefined;
 
-    const insight = insightTasks.length > 0 ? {
-      type: "Insight",
-      description: `Insight for task execution`,
-      elements: insightTasks.map(task => task.thought || 'Insight element')
-    } : undefined;
+    const insight =
+      insightTasks.length > 0
+        ? {
+            type: 'Insight',
+            description: 'Insight for task execution',
+            elements: insightTasks.map(
+              (task) => task.thought || 'Insight element',
+            ),
+          }
+        : undefined;
 
-    const action = actionTasks.length > 0 ? {
-      type: "Action",
-      description: `Action for task execution`,
-      result: lastTask?.output
-    } : undefined;
+    const action =
+      actionTasks.length > 0
+        ? {
+            type: 'Action',
+            description: 'Action for task execution',
+            result: lastTask?.output,
+          }
+        : undefined;
 
     // Create action details
-    const actionDetails = executor.tasks.map(task => ({
+    const actionDetails = executor.tasks.map((task) => ({
       type: task.type,
       subType: task.subType,
       status: task.status,
-      thought: task.thought
+      thought: task.thought,
     }));
 
     // Extract detailed information from all tasks
@@ -403,7 +427,8 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       totalTime: lastTask?.timing?.cost,
       cache: lastTask?.cache,
       usage: lastTask?.usage,
-      thought: allThoughts.length > 0 ? allThoughts.join('\n') : lastTask?.thought,
+      thought:
+        allThoughts.length > 0 ? allThoughts.join('\n') : lastTask?.thought,
       locate: allLocates.length > 0 ? allLocates : lastTask?.locate,
       plan: allPlans.length > 0 ? allPlans : lastTask?.param?.plans,
       // Add planning, insight, and action information
@@ -412,7 +437,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       action,
       actionDetails,
       // Include raw tasks for debugging
-      tasks: executor.tasks.map(task => ({
+      tasks: executor.tasks.map((task) => ({
         type: task.type,
         subType: task.subType,
         status: task.status,
@@ -421,8 +446,8 @@ export class PageAgent<PageType extends WebPage = WebPage> {
         timing: task.timing,
         usage: task.usage,
         cache: task.cache,
-        error: task.error
-      }))
+        error: task.error,
+      })),
     };
 
     return metadata;
@@ -467,7 +492,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async aiHover(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
+  async aiHover(
+    locatePrompt: string,
+    opt?: LocateOption,
+  ): Promise<AITaskResult> {
     const detailedLocateParam = this.buildDetailedLocateParam(
       locatePrompt,
       opt,
@@ -486,7 +514,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async aiRightClick(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
+  async aiRightClick(
+    locatePrompt: string,
+    opt?: LocateOption,
+  ): Promise<AITaskResult> {
     const detailedLocateParam = this.buildDetailedLocateParam(
       locatePrompt,
       opt,
@@ -505,7 +536,11 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async aiInput(value: string, locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
+  async aiInput(
+    value: string,
+    locatePrompt: string,
+    opt?: LocateOption,
+  ): Promise<AITaskResult> {
     assert(
       typeof value === 'string',
       'input value must be a string, use empty string if you want to clear the input',
@@ -608,7 +643,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       const result = await this.runYaml(yaml);
       return {
         result: result.result,
-        metadata
+        metadata,
       };
     }
 
@@ -616,7 +651,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const memoryContext = this.getMemoryAsContext();
     const enhancedActionContext = this.opts.aiActionContext
       ? `${this.opts.aiActionContext}\n\nPrevious workflow steps:\n${memoryContext}`
-      : memoryContext ? `Previous workflow steps:\n${memoryContext}` : undefined;
+      : memoryContext
+        ? `Previous workflow steps:\n${memoryContext}`
+        : undefined;
 
     const { output, executor } = await (isVlmUiTars
       ? this.taskExecutor.actionToGoal(taskPrompt, { cacheable })
@@ -648,7 +685,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const metadata = this.afterTaskRunning(executor);
     return {
       result: output,
-      metadata
+      metadata,
     };
   }
 
@@ -657,7 +694,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const metadata = this.afterTaskRunning(executor);
     return {
       result: output,
-      metadata
+      metadata,
     };
   }
 
@@ -666,7 +703,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const metadata = this.afterTaskRunning(executor);
     return {
       result: output,
-      metadata
+      metadata,
     };
   }
 
@@ -675,7 +712,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const metadata = this.afterTaskRunning(executor);
     return {
       result: output,
-      metadata
+      metadata,
     };
   }
 
@@ -684,7 +721,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const metadata = this.afterTaskRunning(executor);
     return {
       result: output,
-      metadata
+      metadata,
     };
   }
 
@@ -769,7 +806,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     return verifyResult;
   }
 
-  async aiLocate(prompt: string, opt?: LocateOption): Promise<AITaskResult<Pick<LocateResultElement, 'rect' | 'center'>>> {
+  async aiLocate(
+    prompt: string,
+    opt?: LocateOption,
+  ): Promise<AITaskResult<Pick<LocateResultElement, 'rect' | 'center'>>> {
     const detailedLocateParam = this.buildDetailedLocateParam(prompt, opt);
     const plans = buildPlans('Locate', detailedLocateParam);
     const { executor, output } = await this.taskExecutor.runPlans(
@@ -787,13 +827,17 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
     return {
       result,
-      metadata
+      metadata,
     };
   }
 
-  async aiAssert(assertion: string, msg?: string, opt?: AgentAssertOpt): Promise<AITaskResult<any>> {
+  async aiAssert(
+    assertion: string,
+    msg?: string,
+    opt?: AgentAssertOpt,
+  ): Promise<AITaskResult<any>> {
     // Get the current page URL to include in the assertion context
-    let currentUrl = "";
+    let currentUrl = '';
     if (this.page.url) {
       try {
         currentUrl = await this.page.url();
@@ -810,7 +854,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       ? `For the page at URL "${currentUrl}", ${assertion}`
       : assertion;
 
-    const { output, executor } = await this.taskExecutor.assert(assertionWithContext, memoryContext);
+    const { output, executor } = await this.taskExecutor.assert(
+      assertionWithContext,
+      memoryContext,
+    );
     const metadata = this.afterTaskRunning(executor, true);
 
     if (output && opt?.keepRawResponse) {
@@ -830,11 +877,14 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
     return {
       result: true,
-      metadata
+      metadata,
     };
   }
 
-  async aiCaptcha(options?: { deepThink?: boolean; autoDetectComplexity?: boolean }): Promise<AITaskResult<any>> {
+  async aiCaptcha(options?: {
+    deepThink?: boolean;
+    autoDetectComplexity?: boolean;
+  }): Promise<AITaskResult<any>> {
     const { deepThink = false, autoDetectComplexity = true } = options || {};
 
     // YENİ: Hafıza bağlamını al
@@ -864,7 +914,11 @@ Return only "complex" or "simple" based on your analysis.
 `;
 
         const complexityMsgs = [
-          { role: 'system', content: 'You are an AI assistant that analyzes screenshots to determine CAPTCHA complexity.' },
+          {
+            role: 'system',
+            content:
+              'You are an AI assistant that analyzes screenshots to determine CAPTCHA complexity.',
+          },
           {
             role: 'user',
             content: [
@@ -887,17 +941,23 @@ Return only "complex" or "simple" based on your analysis.
         // Using any here to avoid type issues since we're just checking the response text
         const complexityResult = await (this.insight as any).aiVendorFn(
           complexityMsgs,
-          { type: 'extract_data' }
+          { type: 'extract_data' },
         );
 
         // Check if the response indicates a complex CAPTCHA
-        const responseText = typeof complexityResult.content === 'string'
-          ? complexityResult.content.toLowerCase()
-          : JSON.stringify(complexityResult.content).toLowerCase();
+        const responseText =
+          typeof complexityResult.content === 'string'
+            ? complexityResult.content.toLowerCase()
+            : JSON.stringify(complexityResult.content).toLowerCase();
 
         shouldUseDeepThink = responseText.includes('complex');
 
-        debug('CAPTCHA complexity analysis:', responseText, 'Using deep think:', shouldUseDeepThink);
+        debug(
+          'CAPTCHA complexity analysis:',
+          responseText,
+          'Using deep think:',
+          shouldUseDeepThink,
+        );
       } catch (error) {
         // If analysis fails, default to not using deep think
         debug('Failed to analyze CAPTCHA complexity:', error);
@@ -906,7 +966,7 @@ Return only "complex" or "simple" based on your analysis.
 
     // Call the AiCaptcha function to analyze the CAPTCHA with the determined deepThink setting
     const captchaResponse = await this._callInsightCaptcha({
-      deepThink: shouldUseDeepThink
+      deepThink: shouldUseDeepThink,
     });
 
     const captchaResult = captchaResponse.content;
@@ -924,7 +984,9 @@ Return only "complex" or "simple" based on your analysis.
         } else if (action.type === 'input' && action.value) {
           // Enter the text solution
           if (action.target) {
-            await this.aiInput(action.value, action.target, { deepThink: shouldUseDeepThink });
+            await this.aiInput(action.value, action.target, {
+              deepThink: shouldUseDeepThink,
+            });
           }
         } else if (action.type === 'verify' && action.target) {
           // Click on the verify/submit button
@@ -939,7 +1001,9 @@ Return only "complex" or "simple" based on your analysis.
             // Click at specific coordinates using aiTap with coordinates
             const x = action.coordinates[0];
             const y = action.coordinates[1];
-            await this.aiTap(`element at coordinates (${x}, ${y})`, { deepThink: shouldUseDeepThink });
+            await this.aiTap(`element at coordinates (${x}, ${y})`, {
+              deepThink: shouldUseDeepThink,
+            });
           } else if (action.target) {
             // Click on described element
             await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
@@ -952,7 +1016,7 @@ Return only "complex" or "simple" based on your analysis.
     }
 
     // Wait a few seconds after completing the CAPTCHA
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // YENİ: Memory'ye kayıt için CAPTCHA çözümünü kaydet
     const captchaMemoryItem = {
@@ -961,17 +1025,17 @@ Return only "complex" or "simple" based on your analysis.
       taskType: 'Action' as const,
       summary: `Solved ${captchaResult.captchaType} CAPTCHA: ${captchaResult.thought}`,
       context: {
-        url: await this.page.url?.() || '',
+        url: (await this.page.url?.()) || '',
         captchaType: captchaResult.captchaType,
         actions: captchaResult.actions,
-        deepThink: actualDeepThink
+        deepThink: actualDeepThink,
       },
       metadata: {
         executionTime: Date.now() - Date.now(), // Will be updated
         success: true,
-        confidence: 0.9
+        confidence: 0.9,
       },
-      tags: ['captcha', 'action', captchaResult.captchaType]
+      tags: ['captcha', 'action', captchaResult.captchaType],
     };
 
     // Memory'ye kaydet
@@ -992,11 +1056,14 @@ Return only "complex" or "simple" based on your analysis.
 
     return {
       result: captchaResult,
-      metadata
+      metadata,
     };
   }
 
-  async aiWaitFor(assertion: string, opt?: AgentWaitForOpt): Promise<AITaskResult> {
+  async aiWaitFor(
+    assertion: string,
+    opt?: AgentWaitForOpt,
+  ): Promise<AITaskResult> {
     const startTime = Date.now();
 
     // YENİ: Hafıza bağlamını al
@@ -1018,7 +1085,7 @@ Return only "complex" or "simple" based on your analysis.
       end: Date.now(),
       totalTime: Date.now() - startTime,
       thought: executor.latestErrorTask()?.thought,
-      actionDetails: executor.tasks.map(task => ({
+      actionDetails: executor.tasks.map((task) => ({
         type: task.type,
         subType: task.subType,
         status: task.status,
@@ -1043,7 +1110,7 @@ Return only "complex" or "simple" based on your analysis.
   async ai(
     taskPrompt: string,
     type = 'action',
-    options?: { deepThink?: boolean; autoDetectComplexity?: boolean }
+    options?: { deepThink?: boolean; autoDetectComplexity?: boolean },
   ): Promise<AITaskResult> {
     if (type === 'action') {
       return this.aiAction(taskPrompt);
@@ -1069,7 +1136,9 @@ Return only "complex" or "simple" based on your analysis.
     );
   }
 
-  async runYaml(yamlScriptContent: string): Promise<AITaskResult<Record<string, any>>> {
+  async runYaml(
+    yamlScriptContent: string,
+  ): Promise<AITaskResult<Record<string, any>>> {
     const startTime = Date.now();
     const script = parseYamlScript(yamlScriptContent, 'yaml', true);
     const player = new ScriptPlayer(script, async () => {
@@ -1083,7 +1152,7 @@ Return only "complex" or "simple" based on your analysis.
       start: startTime,
       end: endTime,
       totalTime: endTime - startTime,
-      tasks: player.taskStatusList.map(task => ({
+      tasks: player.taskStatusList.map((task) => ({
         type: 'yaml-task',
         subType: task.name,
         status: task.status,
@@ -1103,7 +1172,7 @@ Return only "complex" or "simple" based on your analysis.
 
     return {
       result: player.result,
-      metadata
+      metadata,
     };
   }
 
@@ -1118,7 +1187,10 @@ Return only "complex" or "simple" based on your analysis.
     throw new Error('evaluateJavaScript is not supported in current agent');
   }
 
-  async logScreenshot(title?: string, options?: { content?: string }): Promise<void> {
+  async logScreenshot(
+    title?: string,
+    options?: { content?: string },
+  ): Promise<void> {
     const screenshotTitle = title || 'untitled';
     const content = options?.content || '';
 
@@ -1129,25 +1201,27 @@ Return only "complex" or "simple" based on your analysis.
       const executionDump: ExecutionDump = {
         name: screenshotTitle,
         description: content,
-        tasks: [{
-          type: 'Screenshot',
-          subType: 'log',
-          status: 'finished',
-          executor: null,
-          param: {
-            title: screenshotTitle,
-            content,
-          },
-          output: {
-            screenshot,
-          },
-          thought: `Logged screenshot: ${screenshotTitle}`,
-          timing: {
-            start: Date.now(),
-            end: Date.now(),
-            cost: 0,
-          },
-        } as any],
+        tasks: [
+          {
+            type: 'Screenshot',
+            subType: 'log',
+            status: 'finished',
+            executor: null,
+            param: {
+              title: screenshotTitle,
+              content,
+            },
+            output: {
+              screenshot,
+            },
+            thought: `Logged screenshot: ${screenshotTitle}`,
+            timing: {
+              start: Date.now(),
+              end: Date.now(),
+              cost: 0,
+            },
+          } as any,
+        ],
         sdkVersion: '1.0.0',
         logTime: Date.now(),
         model_name: 'screenshot',
@@ -1172,7 +1246,7 @@ Return only "complex" or "simple" based on your analysis.
 
     // Son 5 hafıza öğesini al ve özetlerini birleştir
     const recentMemory = memory.slice(-5);
-    return recentMemory.map(item => `- ${item.summary}`).join('\n');
+    return recentMemory.map((item) => `- ${item.summary}`).join('\n');
   }
 
   /**
@@ -1209,11 +1283,14 @@ Return only "complex" or "simple" based on your analysis.
         totalTasks: stats.analytics.totalTasks,
         memoryHits: stats.analytics.memoryHits,
         memoryMisses: stats.analytics.memoryMisses,
-        memoryEffectiveness: Math.round(stats.analytics.memoryEffectiveness * 100),
-        averageMemorySize: Math.round(stats.analytics.averageMemorySize * 100) / 100
+        memoryEffectiveness: Math.round(
+          stats.analytics.memoryEffectiveness * 100,
+        ),
+        averageMemorySize:
+          Math.round(stats.analytics.averageMemorySize * 100) / 100,
       },
       config: stats.config,
-      items: memory.map(item => ({
+      items: memory.map((item) => ({
         id: item.id,
         timestamp: item.timestamp,
         taskType: item.taskType,
@@ -1221,15 +1298,15 @@ Return only "complex" or "simple" based on your analysis.
         context: item.context,
         metadata: item.metadata,
         tags: item.tags,
-        relativeTime: this.formatRelativeTime(item.timestamp)
+        relativeTime: this.formatRelativeTime(item.timestamp),
       })),
       analytics: {
         taskTypeDistribution: this.getTaskTypeDistribution(memory),
         successRate: this.calculateSuccessRate(memory),
         averageExecutionTime: this.calculateAverageExecutionTime(memory),
         dataExtractionCount: this.countDataExtractions(memory),
-        workflowSteps: this.extractWorkflowSteps(memory)
-      }
+        workflowSteps: this.extractWorkflowSteps(memory),
+      },
     };
   }
 
@@ -1244,13 +1321,13 @@ Return only "complex" or "simple" based on your analysis.
       totalItems: memory.length,
       memoryEffectiveness: `${Math.round(stats.analytics.memoryEffectiveness * 100)}%`,
       taskTypes: this.getTaskTypeDistribution(memory),
-      recentSteps: memory.slice(-5).map(item => ({
+      recentSteps: memory.slice(-5).map((item) => ({
         step: item.summary,
         type: item.taskType,
         success: item.metadata?.success || false,
-        time: this.formatRelativeTime(item.timestamp)
+        time: this.formatRelativeTime(item.timestamp),
       })),
-      dataExtracted: this.getExtractedDataSummary(memory)
+      dataExtracted: this.getExtractedDataSummary(memory),
     };
   }
 
@@ -1266,9 +1343,11 @@ Return only "complex" or "simple" based on your analysis.
     return `${seconds}s ago`;
   }
 
-  private getTaskTypeDistribution(memory: readonly MemoryItem[]): Record<string, number> {
+  private getTaskTypeDistribution(
+    memory: readonly MemoryItem[],
+  ): Record<string, number> {
     const distribution: Record<string, number> = {};
-    memory.forEach(item => {
+    memory.forEach((item) => {
       distribution[item.taskType] = (distribution[item.taskType] || 0) + 1;
     });
     return distribution;
@@ -1276,32 +1355,39 @@ Return only "complex" or "simple" based on your analysis.
 
   private calculateSuccessRate(memory: readonly MemoryItem[]): number {
     if (memory.length === 0) return 0;
-    const successCount = memory.filter(item => item.metadata?.success !== false).length;
+    const successCount = memory.filter(
+      (item) => item.metadata?.success !== false,
+    ).length;
     return Math.round((successCount / memory.length) * 100);
   }
 
   private calculateAverageExecutionTime(memory: readonly MemoryItem[]): number {
     const executionTimes = memory
-      .map(item => item.metadata?.executionTime)
-      .filter(time => typeof time === 'number') as number[];
+      .map((item) => item.metadata?.executionTime)
+      .filter((time) => typeof time === 'number') as number[];
 
     if (executionTimes.length === 0) return 0;
-    const average = executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length;
+    const average =
+      executionTimes.reduce((sum, time) => sum + time, 0) /
+      executionTimes.length;
     return Math.round(average);
   }
 
   private countDataExtractions(memory: readonly MemoryItem[]): number {
-    return memory.filter(item =>
-      item.context?.dataExtracted ||
-      item.taskType === 'Insight' && item.summary.includes('Extracted')
+    return memory.filter(
+      (item) =>
+        item.context?.dataExtracted ||
+        (item.taskType === 'Insight' && item.summary.includes('Extracted')),
     ).length;
   }
 
   private extractWorkflowSteps(memory: readonly MemoryItem[]): string[] {
-    return memory.map(item => item.summary);
+    return memory.map((item) => item.summary);
   }
 
-  private getExtractedDataSummary(memory: readonly MemoryItem[]): Record<string, any> {
+  private getExtractedDataSummary(
+    memory: readonly MemoryItem[],
+  ): Record<string, any> {
     const extractedData: Record<string, any> = {};
     memory.forEach((item, index) => {
       if (item.context?.dataExtracted) {

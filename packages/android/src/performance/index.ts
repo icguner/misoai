@@ -1,7 +1,7 @@
 /**
  * Performance monitoring utilities for Android devices
  */
-import { AppiumDevice } from '../page/appium-device';
+import type { AppiumDevice } from '../page/appium-device';
 import { debugDevice } from '../page/appium-device';
 
 /**
@@ -77,7 +77,7 @@ export class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
   private monitoringInterval: NodeJS.Timeout | null = null;
   private availableMetrics: string[] = [];
-  private lastActivePackage: string = '';
+  private lastActivePackage = '';
 
   /**
    * Creates a new PerformanceMonitor instance
@@ -124,7 +124,7 @@ export class PerformanceMonitor {
    */
   public async initialize(): Promise<string[]> {
     debugDevice('Initializing performance monitor');
-    const driver = await this.device['getDriver']();
+    const driver = await this.device.getDriver();
     this.availableMetrics = await driver.getPerformanceDataTypes();
     debugDevice('Available performance metrics: %O', this.availableMetrics);
     return this.availableMetrics;
@@ -135,20 +135,31 @@ export class PerformanceMonitor {
    */
   public async getDeviceInfo(): Promise<DeviceInfo> {
     debugDevice('Getting device information');
-    const driver = await this.device['getDriver']();
+    const driver = await this.device.getDriver();
 
     const executeShellCommand = async (command: string): Promise<string> => {
-      return await driver.executeScript('mobile: shell', [{
-        command
-      }]);
+      return await driver.executeScript('mobile: shell', [
+        {
+          command,
+        },
+      ]);
     };
 
     const model = await executeShellCommand('getprop ro.product.model');
-    const manufacturer = await executeShellCommand('getprop ro.product.manufacturer');
-    const androidVersion = await executeShellCommand('getprop ro.build.version.release');
+    const manufacturer = await executeShellCommand(
+      'getprop ro.product.manufacturer',
+    );
+    const androidVersion = await executeShellCommand(
+      'getprop ro.build.version.release',
+    );
     const cpuArchitecture = await executeShellCommand('uname -m');
-    const cpuCores = parseInt(await executeShellCommand('cat /proc/cpuinfo | grep processor | wc -l'), 10);
-    const totalRam = await executeShellCommand('cat /proc/meminfo | grep MemTotal');
+    const cpuCores = Number.parseInt(
+      await executeShellCommand('cat /proc/cpuinfo | grep processor | wc -l'),
+      10,
+    );
+    const totalRam = await executeShellCommand(
+      'cat /proc/meminfo | grep MemTotal',
+    );
     const screenDensity = await executeShellCommand('wm density');
 
     const deviceInfo: DeviceInfo = {
@@ -156,9 +167,9 @@ export class PerformanceMonitor {
       manufacturer: manufacturer.trim(),
       androidVersion: androidVersion.trim(),
       cpuArchitecture: cpuArchitecture.trim(),
-      cpuCores: isNaN(cpuCores) ? 0 : cpuCores,
+      cpuCores: Number.isNaN(cpuCores) ? 0 : cpuCores,
       totalRam: totalRam.trim(),
-      screenDensity: screenDensity.trim()
+      screenDensity: screenDensity.trim(),
     };
 
     debugDevice('Device information: %O', deviceInfo);
@@ -170,20 +181,27 @@ export class PerformanceMonitor {
    */
   public async getCurrentMetrics(): Promise<PerformanceMetrics> {
     debugDevice('Getting current performance metrics');
-    const driver = await this.device['getDriver']();
+    const driver = await this.device.getDriver();
 
     // Get the active package name
     const activePackage = await this.getActivePackage();
-    debugDevice('Getting performance metrics for active package: %s', activePackage);
+    debugDevice(
+      'Getting performance metrics for active package: %s',
+      activePackage,
+    );
 
     const metrics: PerformanceMetrics = {
       timestamp: Date.now(),
-      packageName: activePackage
+      packageName: activePackage,
     };
 
     try {
       if (this.availableMetrics.includes('cpuinfo')) {
-        const cpuData = await driver.getPerformanceData(activePackage, 'cpuinfo', 1);
+        const cpuData = await driver.getPerformanceData(
+          activePackage,
+          'cpuinfo',
+          1,
+        );
         if (cpuData && cpuData.length > 1) {
           const headers = cpuData[0];
           const values = cpuData[1];
@@ -194,16 +212,21 @@ export class PerformanceMonitor {
           const totalIndex = headers.indexOf('total');
 
           metrics.cpuInfo = {
-            user: userIndex >= 0 ? parseFloat(values[userIndex]) : 0,
-            system: systemIndex >= 0 ? parseFloat(values[systemIndex]) : 0,
-            idle: idleIndex >= 0 ? parseFloat(values[idleIndex]) : 0,
-            total: totalIndex >= 0 ? parseFloat(values[totalIndex]) : 0
+            user: userIndex >= 0 ? Number.parseFloat(values[userIndex]) : 0,
+            system:
+              systemIndex >= 0 ? Number.parseFloat(values[systemIndex]) : 0,
+            idle: idleIndex >= 0 ? Number.parseFloat(values[idleIndex]) : 0,
+            total: totalIndex >= 0 ? Number.parseFloat(values[totalIndex]) : 0,
           };
         }
       }
 
       if (this.availableMetrics.includes('memoryinfo')) {
-        const memData = await driver.getPerformanceData(activePackage, 'memoryinfo', 1);
+        const memData = await driver.getPerformanceData(
+          activePackage,
+          'memoryinfo',
+          1,
+        );
         if (memData && memData.length > 1) {
           const headers = memData[0];
           const values = memData[1];
@@ -211,8 +234,10 @@ export class PerformanceMonitor {
           const totalIndex = headers.indexOf('totalMem');
           const freeIndex = headers.indexOf('freeMem');
 
-          const totalMem = totalIndex >= 0 ? parseInt(values[totalIndex], 10) : 0;
-          const freeMem = freeIndex >= 0 ? parseInt(values[freeIndex], 10) : 0;
+          const totalMem =
+            totalIndex >= 0 ? Number.parseInt(values[totalIndex], 10) : 0;
+          const freeMem =
+            freeIndex >= 0 ? Number.parseInt(values[freeIndex], 10) : 0;
           const usedMem = totalMem - freeMem;
           const usedMemPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
 
@@ -220,13 +245,17 @@ export class PerformanceMonitor {
             totalMem,
             freeMem,
             usedMem,
-            usedMemPercent
+            usedMemPercent,
           };
         }
       }
 
       if (this.availableMetrics.includes('batteryinfo')) {
-        const batteryData = await driver.getPerformanceData(activePackage, 'batteryinfo', 1);
+        const batteryData = await driver.getPerformanceData(
+          activePackage,
+          'batteryinfo',
+          1,
+        );
         if (batteryData && batteryData.length > 1) {
           const headers = batteryData[0];
           const values = batteryData[1];
@@ -236,15 +265,21 @@ export class PerformanceMonitor {
           const tempIndex = headers.indexOf('temperature');
 
           metrics.batteryInfo = {
-            level: levelIndex >= 0 ? parseInt(values[levelIndex], 10) : 0,
+            level:
+              levelIndex >= 0 ? Number.parseInt(values[levelIndex], 10) : 0,
             status: statusIndex >= 0 ? values[statusIndex] : '',
-            temperature: tempIndex >= 0 ? parseInt(values[tempIndex], 10) / 10 : 0
+            temperature:
+              tempIndex >= 0 ? Number.parseInt(values[tempIndex], 10) / 10 : 0,
           };
         }
       }
 
       if (this.availableMetrics.includes('networkinfo')) {
-        const networkData = await driver.getPerformanceData(activePackage, 'networkinfo', 1);
+        const networkData = await driver.getPerformanceData(
+          activePackage,
+          'networkinfo',
+          1,
+        );
         if (networkData && networkData.length > 1) {
           const headers = networkData[0];
           const values = networkData[1];
@@ -255,10 +290,18 @@ export class PerformanceMonitor {
           const txPacketsIndex = headers.indexOf('txPackets');
 
           metrics.networkInfo = {
-            rxBytes: rxBytesIndex >= 0 ? parseInt(values[rxBytesIndex], 10) : 0,
-            txBytes: txBytesIndex >= 0 ? parseInt(values[txBytesIndex], 10) : 0,
-            rxPackets: rxPacketsIndex >= 0 ? parseInt(values[rxPacketsIndex], 10) : 0,
-            txPackets: txPacketsIndex >= 0 ? parseInt(values[txPacketsIndex], 10) : 0
+            rxBytes:
+              rxBytesIndex >= 0 ? Number.parseInt(values[rxBytesIndex], 10) : 0,
+            txBytes:
+              txBytesIndex >= 0 ? Number.parseInt(values[txBytesIndex], 10) : 0,
+            rxPackets:
+              rxPacketsIndex >= 0
+                ? Number.parseInt(values[rxPacketsIndex], 10)
+                : 0,
+            txPackets:
+              txPacketsIndex >= 0
+                ? Number.parseInt(values[txPacketsIndex], 10)
+                : 0,
           };
         }
       }
@@ -275,12 +318,15 @@ export class PerformanceMonitor {
    *
    * @param intervalMs - Interval in milliseconds (default: 5000)
    */
-  public startMonitoring(intervalMs: number = 5000): void {
+  public startMonitoring(intervalMs = 5000): void {
     if (this.monitoringInterval) {
       this.stopMonitoring();
     }
 
-    debugDevice('Starting performance monitoring with interval %d ms', intervalMs);
+    debugDevice(
+      'Starting performance monitoring with interval %d ms',
+      intervalMs,
+    );
     this.monitoringInterval = setInterval(async () => {
       await this.getCurrentMetrics();
     }, intervalMs);
@@ -324,8 +370,8 @@ export class PerformanceMonitor {
    * @param filePath - Path to save the JSON file
    */
   public async exportMetricsToFile(filePath: string): Promise<void> {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
 
     try {
       // Create directory if it doesn't exist
@@ -351,7 +397,7 @@ export class PerformanceMonitor {
    * @param packageName - Package name to filter by
    */
   public getMetricsForPackage(packageName: string): PerformanceMetrics[] {
-    return this.metrics.filter(metric => metric.packageName === packageName);
+    return this.metrics.filter((metric) => metric.packageName === packageName);
   }
 
   /**
@@ -360,9 +406,12 @@ export class PerformanceMonitor {
    * @param startTime - Start timestamp in milliseconds
    * @param endTime - End timestamp in milliseconds
    */
-  public getMetricsInTimeRange(startTime: number, endTime: number): PerformanceMetrics[] {
-    return this.metrics.filter(metric =>
-      metric.timestamp >= startTime && metric.timestamp <= endTime
+  public getMetricsInTimeRange(
+    startTime: number,
+    endTime: number,
+  ): PerformanceMetrics[] {
+    return this.metrics.filter(
+      (metric) => metric.timestamp >= startTime && metric.timestamp <= endTime,
     );
   }
 }

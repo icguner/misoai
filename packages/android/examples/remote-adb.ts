@@ -14,8 +14,8 @@ async function main() {
     const agent = await agentFromAdbDevice(undefined, {
       adbConnectionOptions: {
         host: '192.168.1.100', // Replace with your remote ADB server IP
-        port: 5037             // Replace with your remote ADB server port if not default
-      }
+        port: 5037, // Replace with your remote ADB server port if not default
+      },
     });
 
     // Launch the settings app
@@ -23,7 +23,7 @@ async function main() {
 
     // Take a screenshot
     const screenshot = await agent.page.screenshotBase64();
-    console.log('Screenshot taken:', screenshot.substring(0, 50) + '...');
+    console.log('Screenshot taken:', `${screenshot.substring(0, 50)}...`);
 
     // Get device size
     const size = await agent.page.size();

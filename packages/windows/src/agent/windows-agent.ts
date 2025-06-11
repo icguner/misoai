@@ -1,18 +1,18 @@
-import { getDebug } from 'misoai-shared/logger';
-import type { 
-  MemoryItem, 
-  MemoryConfig, 
+import type {
   AITaskResult,
-  LocateOption 
+  LocateOption,
+  MemoryConfig,
+  MemoryItem,
 } from 'misoai-core';
+import { getDebug } from 'misoai-shared/logger';
 import { PageAgent, type PageAgentOpt } from 'misoai-web/common/agent';
-import type { 
-  WindowsApplication, 
-  WindowsAutomationConfig, 
-  WindowsInputOptions,
-  WindowManipulationOptions 
-} from '../types';
 import { WindowsPage } from '../page/windows-page';
+import type {
+  WindowManipulationOptions,
+  WindowsApplication,
+  WindowsAutomationConfig,
+  WindowsInputOptions,
+} from '../types';
 
 const debugWindowsAgent = getDebug('windows:agent');
 
@@ -41,10 +41,11 @@ export class WindowsAgent extends PageAgent {
   constructor(options: WindowsAgentOptions = {}) {
     // Create Windows page instance
     const windowsPage = new WindowsPage(options.windowsConfig);
-    
+
     // Initialize parent PageAgent with Windows page
     super(windowsPage, {
-      aiActionContext: options.aiActionContext || 
+      aiActionContext:
+        options.aiActionContext ||
         'You are automating a Windows desktop application. Pay attention to window controls, menus, and desktop elements.',
       memoryConfig: {
         maxItems: 50,
@@ -75,18 +76,26 @@ export class WindowsAgent extends PageAgent {
       ...options.windowsConfig,
     };
 
-    debugWindowsAgent('WindowsAgent initialized with config: %o', this.windowsConfig);
+    debugWindowsAgent(
+      'WindowsAgent initialized with config: %o',
+      this.windowsConfig,
+    );
   }
 
   /**
    * Connects to a Windows application
    */
-  public async connectToApplication(applicationIdentifier?: string | number): Promise<WindowsAgent> {
-    debugWindowsAgent('Connecting to Windows application: %s', applicationIdentifier);
+  public async connectToApplication(
+    applicationIdentifier?: string | number,
+  ): Promise<WindowsAgent> {
+    debugWindowsAgent(
+      'Connecting to Windows application: %s',
+      applicationIdentifier,
+    );
 
     try {
       await this.windowsPage.connect(applicationIdentifier);
-      
+
       // Add connection to memory
       await this.addToMemory({
         id: `connect_${Date.now()}`,
@@ -108,22 +117,31 @@ export class WindowsAgent extends PageAgent {
       debugWindowsAgent('Successfully connected to Windows application');
       return this;
     } catch (error: any) {
-      debugWindowsAgent('Failed to connect to Windows application: %s', error.message);
-      throw new Error(`Failed to connect to Windows application: ${error.message}`, {
-        cause: error,
-      });
+      debugWindowsAgent(
+        'Failed to connect to Windows application: %s',
+        error.message,
+      );
+      throw new Error(
+        `Failed to connect to Windows application: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
   /**
    * Launches a Windows application
    */
-  public async launchApplication(applicationPath: string, args?: string[]): Promise<WindowsAgent> {
+  public async launchApplication(
+    applicationPath: string,
+    args?: string[],
+  ): Promise<WindowsAgent> {
     debugWindowsAgent('Launching Windows application: %s', applicationPath);
 
     try {
       await this.windowsPage.launch(applicationPath, args);
-      
+
       // Add launch to memory
       await this.addToMemory({
         id: `launch_${Date.now()}`,
@@ -145,10 +163,16 @@ export class WindowsAgent extends PageAgent {
       debugWindowsAgent('Successfully launched Windows application');
       return this;
     } catch (error: any) {
-      debugWindowsAgent('Failed to launch Windows application: %s', error.message);
-      throw new Error(`Failed to launch Windows application: ${error.message}`, {
-        cause: error,
-      });
+      debugWindowsAgent(
+        'Failed to launch Windows application: %s',
+        error.message,
+      );
+      throw new Error(
+        `Failed to launch Windows application: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -156,15 +180,15 @@ export class WindowsAgent extends PageAgent {
    * AI-powered click action for Windows applications
    */
   public async aiClickWindows(
-    locatePrompt: string, 
-    options?: LocateOption & WindowsInputOptions
+    locatePrompt: string,
+    options?: LocateOption & WindowsInputOptions,
   ): Promise<AITaskResult> {
     debugWindowsAgent('AI click on Windows element: %s', locatePrompt);
 
     try {
       // Get memory context for better AI understanding
       const memoryContext = this.getMemoryAsContext();
-      const enhancedPrompt = memoryContext 
+      const enhancedPrompt = memoryContext
         ? `${locatePrompt}\n\nPrevious workflow steps:\n${memoryContext}`
         : locatePrompt;
 
@@ -193,7 +217,7 @@ export class WindowsAgent extends PageAgent {
       return result;
     } catch (error: any) {
       debugWindowsAgent('AI click failed: %s', error.message);
-      
+
       // Add failure to memory
       await this.addToMemory({
         id: `windows_click_error_${Date.now()}`,
@@ -221,21 +245,24 @@ export class WindowsAgent extends PageAgent {
    * AI-powered input action for Windows applications
    */
   public async aiInputWindows(
-    text: string, 
-    locatePrompt?: string, 
-    options?: LocateOption & WindowsInputOptions
+    text: string,
+    locatePrompt?: string,
+    options?: LocateOption & WindowsInputOptions,
   ): Promise<AITaskResult> {
-    debugWindowsAgent('AI input on Windows element: %s', locatePrompt || 'focused element');
+    debugWindowsAgent(
+      'AI input on Windows element: %s',
+      locatePrompt || 'focused element',
+    );
 
     try {
       // Get memory context
       const memoryContext = this.getMemoryAsContext();
-      
+
       let result: AITaskResult;
-      
+
       if (locatePrompt) {
         // Use aiInput with element location
-        const enhancedPrompt = memoryContext 
+        const enhancedPrompt = memoryContext
           ? `${locatePrompt}\n\nPrevious workflow steps:\n${memoryContext}`
           : locatePrompt;
         result = await this.aiInput(text, enhancedPrompt, options);
@@ -278,8 +305,8 @@ export class WindowsAgent extends PageAgent {
    * AI-powered key press action for Windows applications
    */
   public async aiKeyPressWindows(
-    key: string, 
-    options?: WindowsInputOptions
+    key: string,
+    options?: WindowsInputOptions,
   ): Promise<AITaskResult> {
     debugWindowsAgent('AI key press: %s', key);
 
@@ -324,7 +351,7 @@ export class WindowsAgent extends PageAgent {
     try {
       // Get memory context for better assertion understanding
       const memoryContext = this.getMemoryAsContext();
-      const enhancedAssertion = memoryContext 
+      const enhancedAssertion = memoryContext
         ? `${assertion}\n\nPrevious workflow steps:\n${memoryContext}`
         : assertion;
 
@@ -365,7 +392,7 @@ export class WindowsAgent extends PageAgent {
     try {
       // Get memory context
       const memoryContext = this.getMemoryAsContext();
-      const enhancedQuery = memoryContext 
+      const enhancedQuery = memoryContext
         ? `${query}\n\nPrevious workflow steps:\n${memoryContext}`
         : query;
 
@@ -416,7 +443,7 @@ export class WindowsAgent extends PageAgent {
    */
   public async takeScreenshot(): Promise<string> {
     debugWindowsAgent('Taking Windows screenshot');
-    
+
     try {
       return await this.windowsPage.screenshotBase64();
     } catch (error: any) {
@@ -430,10 +457,10 @@ export class WindowsAgent extends PageAgent {
    */
   public async disconnect(): Promise<void> {
     debugWindowsAgent('Disconnecting from Windows application');
-    
+
     try {
       await this.windowsPage.disconnect();
-      
+
       // Add disconnection to memory
       await this.addToMemory({
         id: `disconnect_${Date.now()}`,

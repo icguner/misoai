@@ -85,7 +85,11 @@ export function collectElementInfo(
       const selectedIndex = selectElement.selectedIndex;
 
       // Check if selectedIndex is valid and options exist
-      if (selectedIndex >= 0 && selectElement.options && selectElement.options[selectedIndex]) {
+      if (
+        selectedIndex >= 0 &&
+        selectElement.options &&
+        selectElement.options[selectedIndex]
+      ) {
         const selectedOption = selectElement.options[selectedIndex];
         // Retrieve the text content of the selected option
         valueContent = selectedOption.textContent || '';

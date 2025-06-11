@@ -1,6 +1,6 @@
+import { vlLocateMode } from 'misoai-shared/env';
 import { PageAgent, type PageAgentOpt } from 'misoai-web/agent';
 import { AndroidDevice, type AndroidDeviceOpt } from '../page';
-import { vlLocateMode } from 'misoai-shared/env';
 import { getConnectedDevices } from '../utils';
 
 import { debugPage } from '../page';
@@ -24,7 +24,7 @@ export class AndroidAgent extends PageAgent<AndroidDevice> {
   }
 }
 
-import { AppiumServerConfig, AppiumBaseCapabilities, SauceLabsConfig, SauceLabsCapabilities } from '../types';
+import type { AppiumBaseCapabilities, AppiumServerConfig, SauceLabsCapabilities, SauceLabsConfig } from '../types';
 
 export async function agentFromAdbDevice(
   deviceId?: string,

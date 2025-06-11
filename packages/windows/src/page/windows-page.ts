@@ -1,19 +1,19 @@
-import { type ElementTreeNode, type Point, type Size } from 'misoai-core';
+import type { ElementTreeNode, Point, Size } from 'misoai-core';
 import type { PageType } from 'misoai-core';
 import { NodeType } from 'misoai-shared/constants';
 import type { ElementInfo } from 'misoai-shared/extractor';
 import { getDebug } from 'misoai-shared/logger';
-import type { 
-  WindowsApplication, 
-  WindowsUIElement, 
-  WindowsScreenshotOptions,
+import type {
   WindowManipulationOptions,
+  WindowsApplication,
+  WindowsAutomationConfig,
   WindowsInputOptions,
-  WindowsAutomationConfig 
+  WindowsScreenshotOptions,
+  WindowsUIElement,
 } from '../types';
-import { WindowsScreenshotCapture } from '../utils/screenshot';
 import { WindowsElementDetector } from '../utils/element-detector';
 import { WindowsInputSimulator } from '../utils/input-simulator';
+import { WindowsScreenshotCapture } from '../utils/screenshot';
 import { WindowsWindowManager } from '../utils/window-manager';
 
 export const debugWindowsPage = getDebug('windows:page');
@@ -92,56 +92,86 @@ export class WindowsPage {
   /**
    * Connects to a Windows application
    */
-  public async connect(applicationIdentifier?: string | number): Promise<WindowsPage> {
-    debugWindowsPage('Connecting to Windows application: %s', applicationIdentifier);
+  public async connect(
+    applicationIdentifier?: string | number,
+  ): Promise<WindowsPage> {
+    debugWindowsPage(
+      'Connecting to Windows application: %s',
+      applicationIdentifier,
+    );
 
     try {
       if (applicationIdentifier) {
-        this.targetApplication = await this.windowManager.findApplication(applicationIdentifier);
+        this.targetApplication = await this.windowManager.findApplication(
+          applicationIdentifier,
+        );
         if (!this.targetApplication) {
           throw new Error(`Application not found: ${applicationIdentifier}`);
         }
-        debugWindowsPage('Connected to application: %s (PID: %d)', 
-          this.targetApplication.name, this.targetApplication.pid);
+        debugWindowsPage(
+          'Connected to application: %s (PID: %d)',
+          this.targetApplication.name,
+          this.targetApplication.pid,
+        );
       } else {
         // Connect to active window
         this.targetApplication = await this.windowManager.getActiveWindow();
-        debugWindowsPage('Connected to active window: %s', this.targetApplication?.title);
+        debugWindowsPage(
+          'Connected to active window: %s',
+          this.targetApplication?.title,
+        );
       }
 
       return this;
     } catch (error: any) {
       debugWindowsPage('Failed to connect to application: %s', error.message);
-      throw new Error(`Failed to connect to Windows application: ${error.message}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Failed to connect to Windows application: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
   /**
    * Launches a Windows application
    */
-  public async launch(applicationPath: string, args?: string[]): Promise<WindowsPage> {
+  public async launch(
+    applicationPath: string,
+    args?: string[],
+  ): Promise<WindowsPage> {
     debugWindowsPage('Launching application: %s', applicationPath);
 
     try {
-      this.targetApplication = await this.windowManager.launchApplication(applicationPath, args);
-      debugWindowsPage('Successfully launched application: %s (PID: %d)', 
-        this.targetApplication.name, this.targetApplication.pid);
-      
+      this.targetApplication = await this.windowManager.launchApplication(
+        applicationPath,
+        args,
+      );
+      debugWindowsPage(
+        'Successfully launched application: %s (PID: %d)',
+        this.targetApplication.name,
+        this.targetApplication.pid,
+      );
+
       return this;
     } catch (error: any) {
       debugWindowsPage('Failed to launch application: %s', error.message);
-      throw new Error(`Failed to launch application ${applicationPath}: ${error.message}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Failed to launch application ${applicationPath}: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
   /**
    * Takes a screenshot and returns it as a base64-encoded string
    */
-  public async screenshotBase64(options?: WindowsScreenshotOptions): Promise<string> {
+  public async screenshotBase64(
+    options?: WindowsScreenshotOptions,
+  ): Promise<string> {
     debugWindowsPage('Taking screenshot');
 
     try {
@@ -152,7 +182,8 @@ export class WindowsPage {
         ...options,
       };
 
-      const screenshot = await this.screenshotCapture.capture(screenshotOptions);
+      const screenshot =
+        await this.screenshotCapture.capture(screenshotOptions);
       return `data:image/png;base64,${screenshot}`;
     } catch (error: any) {
       debugWindowsPage('Error taking screenshot: %s', error.message);
@@ -173,7 +204,9 @@ export class WindowsPage {
         throw new Error('No target application connected');
       }
 
-      const elements = await this.elementDetector.detectElements(this.targetApplication);
+      const elements = await this.elementDetector.detectElements(
+        this.targetApplication,
+      );
       return this.convertToElementTree(elements);
     } catch (error: any) {
       debugWindowsPage('Error getting element tree: %s', error.message);
@@ -220,7 +253,11 @@ export class WindowsPage {
   /**
    * Simulates a click at the specified coordinates
    */
-  public async click(x: number, y: number, options?: WindowsInputOptions): Promise<void> {
+  public async click(
+    x: number,
+    y: number,
+    options?: WindowsInputOptions,
+  ): Promise<void> {
     debugWindowsPage('Clicking at (%d, %d)', x, y);
 
     try {
@@ -237,7 +274,10 @@ export class WindowsPage {
   /**
    * Simulates typing text
    */
-  public async type(text: string, options?: WindowsInputOptions): Promise<void> {
+  public async type(
+    text: string,
+    options?: WindowsInputOptions,
+  ): Promise<void> {
     debugWindowsPage('Typing text: %s', text);
 
     try {
@@ -254,7 +294,10 @@ export class WindowsPage {
   /**
    * Simulates key press
    */
-  public async keyPress(key: string, options?: WindowsInputOptions): Promise<void> {
+  public async keyPress(
+    key: string,
+    options?: WindowsInputOptions,
+  ): Promise<void> {
     debugWindowsPage('Pressing key: %s', key);
 
     try {
@@ -271,7 +314,9 @@ export class WindowsPage {
   /**
    * Converts Windows UI elements to ElementTreeNode format
    */
-  private convertToElementTree(elements: WindowsUIElement[]): ElementTreeNode<ElementInfo> {
+  private convertToElementTree(
+    elements: WindowsUIElement[],
+  ): ElementTreeNode<ElementInfo> {
     // Create root element
     const rootElement: ElementInfo = {
       id: 'windows-root',
@@ -283,31 +328,36 @@ export class WindowsPage {
       },
       nodeType: NodeType.CONTAINER,
       content: this.targetApplication?.title || 'Windows Desktop',
-      rect: { 
-        left: 0, 
-        top: 0, 
-        width: this.screenSize?.width || 1920, 
-        height: this.screenSize?.height || 1080 
+      rect: {
+        left: 0,
+        top: 0,
+        width: this.screenSize?.width || 1920,
+        height: this.screenSize?.height || 1080,
       },
       center: [
-        (this.screenSize?.width || 1920) / 2, 
-        (this.screenSize?.height || 1080) / 2
-      ]
+        (this.screenSize?.width || 1920) / 2,
+        (this.screenSize?.height || 1080) / 2,
+      ],
     };
 
     // Convert Windows elements to ElementInfo format
-    const children = elements.map((element, index) => this.convertWindowsElementToElementInfo(element, index + 1));
+    const children = elements.map((element, index) =>
+      this.convertWindowsElementToElementInfo(element, index + 1),
+    );
 
     return {
       node: rootElement,
-      children: children.map(child => ({ node: child, children: [] }))
+      children: children.map((child) => ({ node: child, children: [] })),
     };
   }
 
   /**
    * Converts a single Windows UI element to ElementInfo format
    */
-  private convertWindowsElementToElementInfo(element: WindowsUIElement, indexId: number): ElementInfo {
+  private convertWindowsElementToElementInfo(
+    element: WindowsUIElement,
+    indexId: number,
+  ): ElementInfo {
     return {
       id: element.id,
       indexId,
@@ -327,7 +377,7 @@ export class WindowsPage {
         width: element.bounds.width,
         height: element.bounds.height,
       },
-      center: [element.center.left, element.center.top]
+      center: [element.center.left, element.center.top],
     };
   }
 

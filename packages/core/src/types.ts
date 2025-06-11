@@ -170,7 +170,12 @@ export interface InsightOptions {
 
 export type EnsureObject<T> = { [K in keyof T]: any };
 
-export type InsightAction = 'locate' | 'extract' | 'assert' | 'describe' | 'captcha';
+export type InsightAction =
+  | 'locate'
+  | 'extract'
+  | 'assert'
+  | 'describe'
+  | 'captcha';
 
 export type InsightExtractParam = string | Record<string, string>;
 
@@ -532,7 +537,6 @@ export interface MemoryContext {
   errorInfo?: string;
   assertionResult?: boolean;
   assertionDetails?: string;
-
 }
 
 // Hafıza metadata'sı
@@ -588,9 +592,11 @@ export interface MemoryReport {
     averageMemorySize: number;
   };
   config: MemoryConfig;
-  items: Array<MemoryItem & {
-    relativeTime: string;
-  }>;
+  items: Array<
+    MemoryItem & {
+      relativeTime: string;
+    }
+  >;
   analytics: {
     taskTypeDistribution: Record<string, number>;
     successRate: number; // percentage

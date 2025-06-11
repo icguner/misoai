@@ -17,14 +17,6 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": [
-    "src/**/*",
-    "examples/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "include": ["src/**/*", "examples/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

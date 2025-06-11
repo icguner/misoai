@@ -19,6 +19,10 @@ import {
   type InsightExtractOption,
   type InsightExtractParam,
   type LocateResultElement,
+  type MemoryConfig,
+  // YENİ: Hafıza sistemi tipleri
+  type MemoryItem,
+  type MemoryStats,
   type MidsceneYamlFlowItem,
   type PageType,
   type PlanningAIResponse,
@@ -32,10 +36,6 @@ import {
   type PlanningActionParamTap,
   type PlanningActionParamWaitFor,
   plan,
-  // YENİ: Hafıza sistemi tipleri
-  type MemoryItem,
-  type MemoryConfig,
-  type MemoryStats,
 } from 'misoai-core';
 import {
   type ChatCompletionMessageParam,
@@ -124,7 +124,7 @@ class WorkflowMemory {
   /**
    * İş akışı hafızasını getirir
    */
-  getWorkflowMemory(workflowId: string = 'default'): MemoryItem[] {
+  getWorkflowMemory(workflowId = 'default'): MemoryItem[] {
     const workflow = this.workflows.get(workflowId);
     return workflow?.memory || [];
   }
@@ -132,19 +132,30 @@ class WorkflowMemory {
   /**
    * İş akışı verilerini getirir
    */
-  getWorkflowData(workflowId: string = 'default'): WorkflowMemoryData {
-    return this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId);
+  getWorkflowData(workflowId = 'default'): WorkflowMemoryData {
+    return (
+      this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId)
+    );
   }
 
   /**
    * İş akışı hafızasını kaydeder
    */
-  saveWorkflowMemory(memory: readonly MemoryItem[], workflowId: string = 'default'): void {
-    const workflow = this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId);
+  saveWorkflowMemory(
+    memory: readonly MemoryItem[],
+    workflowId = 'default',
+  ): void {
+    const workflow =
+      this.workflows.get(workflowId) ||
+      this.createEmptyWorkflowData(workflowId);
     workflow.memory = [...memory];
     workflow.metadata.totalSteps = workflow.steps.length;
-    workflow.metadata.completedSteps = workflow.steps.filter(s => s.status === 'completed').length;
-    workflow.metadata.failedSteps = workflow.steps.filter(s => s.status === 'failed').length;
+    workflow.metadata.completedSteps = workflow.steps.filter(
+      (s) => s.status === 'completed',
+    ).length;
+    workflow.metadata.failedSteps = workflow.steps.filter(
+      (s) => s.status === 'failed',
+    ).length;
 
     this.workflows.set(workflowId, workflow);
     this.enforceRetentionPolicy();
@@ -153,20 +164,27 @@ class WorkflowMemory {
   /**
    * İş akışı bağlamını günceller
    */
-  updateWorkflowContext(context: WorkflowContext, workflowId: string = 'default'): void {
-    const workflow = this.workflows.get(workflowId) || this.createEmptyWorkflowData(workflowId);
+  updateWorkflowContext(
+    context: WorkflowContext,
+    workflowId = 'default',
+  ): void {
+    const workflow =
+      this.workflows.get(workflowId) ||
+      this.createEmptyWorkflowData(workflowId);
     workflow.context = { ...workflow.context, ...context };
 
     // Yeni adım ekle
     if (context.currentStep) {
-      const existingStep = workflow.steps.find(s => s.stepName === context.currentStep);
+      const existingStep = workflow.steps.find(
+        (s) => s.stepName === context.currentStep,
+      );
       if (!existingStep) {
         workflow.steps.push({
           stepId: `step_${workflow.steps.length + 1}`,
           stepName: context.currentStep,
           timestamp: context.timestamp,
           status: 'running',
-          memoryItems: []
+          memoryItems: [],
         });
       }
     }
@@ -177,7 +195,7 @@ class WorkflowMemory {
   /**
    * İş akışını temizler
    */
-  clearWorkflow(workflowId: string = 'default'): void {
+  clearWorkflow(workflowId = 'default'): void {
     this.workflows.delete(workflowId);
   }
 
@@ -195,14 +213,14 @@ class WorkflowMemory {
       memory: [],
       context: {
         pageInfo: { url: '', title: '' },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       },
       metadata: {
         totalSteps: 0,
         completedSteps: 0,
         failedSteps: 0,
-        startTime: Date.now()
-      }
+        startTime: Date.now(),
+      },
     };
   }
 
@@ -210,8 +228,11 @@ class WorkflowMemory {
     const maxWorkflows = 10; // Maksimum iş akışı sayısı
 
     if (this.workflows.size > maxWorkflows) {
-      const sortedWorkflows = Array.from(this.workflows.entries())
-        .sort(([, a], [, b]) => (b.metadata.endTime || b.metadata.startTime) - (a.metadata.endTime || a.metadata.startTime));
+      const sortedWorkflows = Array.from(this.workflows.entries()).sort(
+        ([, a], [, b]) =>
+          (b.metadata.endTime || b.metadata.startTime) -
+          (a.metadata.endTime || a.metadata.startTime),
+      );
 
       // En eski iş akışlarını sil
       const toDelete = sortedWorkflows.slice(maxWorkflows);
@@ -262,7 +283,7 @@ export class PageTaskExecutor {
       enablePersistence: true,
       enableAnalytics: true,
       filterStrategy: 'hybrid',
-      ...opts?.memoryConfig
+      ...opts?.memoryConfig,
     };
 
     // Oturum bağlamı
@@ -272,8 +293,8 @@ export class PageTaskExecutor {
       startTime: Date.now(),
       pageInfo: {
         url: '',
-        title: ''
-      }
+        title: '',
+      },
     };
 
     // İş akışı hafızası
@@ -1105,13 +1126,18 @@ export class PageTaskExecutor {
    * Persistent executor'ı getirir veya oluşturur
    */
   public getPersistentExecutor(): Executor {
-    if (!this.persistentExecutor || this.persistentExecutor.status === 'error') {
+    if (
+      !this.persistentExecutor ||
+      this.persistentExecutor.status === 'error'
+    ) {
       // Önceki hafızayı yükle
-      const previousMemory = this.workflowMemory.getWorkflowMemory(this.sessionContext.workflowId);
+      const previousMemory = this.workflowMemory.getWorkflowMemory(
+        this.sessionContext.workflowId,
+      );
 
       this.persistentExecutor = new Executor('Persistent Task Executor', {
         onTaskStart: this.onTaskStartCallback,
-        initialMemory: previousMemory
+        initialMemory: previousMemory,
       });
     }
     return this.persistentExecutor;
@@ -1126,7 +1152,10 @@ export class PageTaskExecutor {
         this.sessionContext.pageInfo.url = await this.page.url();
       }
 
-      if (this.page.pageType === 'puppeteer' || this.page.pageType === 'playwright') {
+      if (
+        this.page.pageType === 'puppeteer' ||
+        this.page.pageType === 'playwright'
+      ) {
         this.sessionContext.pageInfo.title = await (this.page as any).title();
       }
     } catch (e) {
@@ -1141,7 +1170,9 @@ export class PageTaskExecutor {
     if (this.persistentExecutor) {
       this.persistentExecutor.clearMemory();
     }
-    this.workflowMemory.clearWorkflow(this.sessionContext.workflowId || 'default');
+    this.workflowMemory.clearWorkflow(
+      this.sessionContext.workflowId || 'default',
+    );
   }
 
   /**
@@ -1155,18 +1186,28 @@ export class PageTaskExecutor {
    * İş akışı hafızasını döndürür
    */
   public getWorkflowMemory(): WorkflowMemoryData {
-    return this.workflowMemory.getWorkflowData(this.sessionContext.workflowId || 'default');
+    return this.workflowMemory.getWorkflowData(
+      this.sessionContext.workflowId || 'default',
+    );
   }
 
   /**
    * Hafıza istatistiklerini döndürür
    */
   public getMemoryStats(): MemoryStats {
-    return this.persistentExecutor?.getMemoryStats() || {
-      totalItems: 0,
-      analytics: { totalTasks: 0, memoryHits: 0, memoryMisses: 0, averageMemorySize: 0, memoryEffectiveness: 0 },
-      config: this.memoryConfig
-    };
+    return (
+      this.persistentExecutor?.getMemoryStats() || {
+        totalItems: 0,
+        analytics: {
+          totalTasks: 0,
+          memoryHits: 0,
+          memoryMisses: 0,
+          averageMemorySize: 0,
+          memoryEffectiveness: 0,
+        },
+        config: this.memoryConfig,
+      }
+    );
   }
 
   /**
@@ -1197,7 +1238,7 @@ export class PageTaskExecutor {
 
     // Son 5 hafıza öğesini al ve özetlerini birleştir
     const recentMemory = memory.slice(-5);
-    return recentMemory.map(item => `- ${item.summary}`).join('\n');
+    return recentMemory.map((item) => `- ${item.summary}`).join('\n');
   }
 
   async runPlans(
@@ -1219,27 +1260,30 @@ export class PageTaskExecutor {
       taskExecutor = this.getPersistentExecutor();
 
       // İş akışı bağlamını güncelle
-      this.workflowMemory.updateWorkflowContext({
-        currentStep: title,
-        pageInfo: this.sessionContext.pageInfo,
-        timestamp: Date.now()
-      }, this.sessionContext.workflowId || 'default');
+      this.workflowMemory.updateWorkflowContext(
+        {
+          currentStep: title,
+          pageInfo: this.sessionContext.pageInfo,
+          timestamp: Date.now(),
+        },
+        this.sessionContext.workflowId || 'default',
+      );
     } else {
       // Geleneksel yöntem: yeni executor
       taskExecutor = new Executor(title, {
-        onTaskStart: this.onTaskStartCallback
+        onTaskStart: this.onTaskStartCallback,
       });
     }
 
     const { tasks } = await this.convertPlanToExecutable(plans, opts);
 
     // Görevlere bağlam bilgisi ekle
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       (task as any).context = {
         ...(task as any).context,
         ...this.sessionContext.pageInfo,
         workflowId: this.sessionContext.workflowId,
-        sessionId: this.sessionContext.sessionId
+        sessionId: this.sessionContext.sessionId,
       };
     });
 
@@ -1250,7 +1294,7 @@ export class PageTaskExecutor {
     if (useMemory) {
       this.workflowMemory.saveWorkflowMemory(
         taskExecutor.getMemory(),
-        this.sessionContext.workflowId || 'default'
+        this.sessionContext.workflowId || 'default',
       );
     }
 
@@ -1714,19 +1758,27 @@ export class PageTaskExecutor {
    */
   public addToMemory(memoryItem: MemoryItem): void {
     // Persistent executor'ı al ve hafızaya ekle
-    if (!this.persistentExecutor || this.persistentExecutor.status === 'error') {
+    if (
+      !this.persistentExecutor ||
+      this.persistentExecutor.status === 'error'
+    ) {
       // Önceki hafızayı yükle
-      const previousMemory = this.workflowMemory.getWorkflowMemory(this.sessionContext.workflowId);
+      const previousMemory = this.workflowMemory.getWorkflowMemory(
+        this.sessionContext.workflowId,
+      );
 
       this.persistentExecutor = new Executor('Persistent Task Executor', {
         onTaskStart: this.onTaskStartCallback,
-        initialMemory: previousMemory
+        initialMemory: previousMemory,
       });
     }
 
     // Hafızaya direkt ekle - executor'un internal metodunu kullanmak yerine
     // memory store'a direkt erişim sağla
     (this.persistentExecutor as any).memoryStore?.add(memoryItem);
-    (this.persistentExecutor as any).memoryAnalytics?.recordMemoryOperation('add', memoryItem);
+    (this.persistentExecutor as any).memoryAnalytics?.recordMemoryOperation(
+      'add',
+      memoryItem,
+    );
   }
 }

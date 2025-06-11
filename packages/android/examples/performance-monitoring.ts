@@ -1,10 +1,13 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 /**
  * Example for continuous performance monitoring during test execution using misoai-android
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import {
+  type AppiumBaseCapabilities,
+  agentFromLocalAppium,
+} from 'misoai-android';
 import { PerformanceMonitor } from '../src/performance';
-import * as fs from 'fs';
-import * as path from 'path';
 
 async function main() {
   try {
@@ -17,7 +20,7 @@ async function main() {
       'appium:deviceName': 'Android Device',
       // Uncomment and set your device ID if you have multiple devices connected
       // 'appium:udid': 'your_device_id_here',
-      'appium:autoGrantPermissions': true
+      'appium:autoGrantPermissions': true,
     };
 
     // Create an agent using the local Appium server
@@ -30,7 +33,9 @@ async function main() {
     await agent.launch(appPackage);
 
     // Create a performance monitor with auto-detection of active app
-    console.log('Initializing performance monitor with active app detection...');
+    console.log(
+      'Initializing performance monitor with active app detection...',
+    );
     // Note: We don't pass a fixed package name, so it will auto-detect the active app
     const performanceMonitor = new PerformanceMonitor(agent.page);
 
@@ -57,21 +62,21 @@ async function main() {
     for (let i = 0; i < 5; i++) {
       console.log(`Scrolling down (${i + 1}/5)...`);
       await agent.page.scrollDown(300);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     // Scroll up a few times
     for (let i = 0; i < 5; i++) {
       console.log(`Scrolling up (${i + 1}/5)...`);
       await agent.page.scrollUp(300);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     // Tap in the middle of the screen a few times
     for (let i = 0; i < 3; i++) {
       console.log(`Tapping in the middle of the screen (${i + 1}/3)...`);
       await agent.page.tap(size.width / 2, size.height / 2);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     // Stop monitoring
@@ -91,11 +96,18 @@ async function main() {
     console.log(`Metrics saved to: ${metricsFilePath}`);
 
     // Get metrics for the settings app specifically
-    const settingsAppMetrics = performanceMonitor.getMetricsForPackage('com.android.settings');
-    console.log(`Collected ${settingsAppMetrics.length} metrics specifically for the settings app`);
+    const settingsAppMetrics = performanceMonitor.getMetricsForPackage(
+      'com.android.settings',
+    );
+    console.log(
+      `Collected ${settingsAppMetrics.length} metrics specifically for the settings app`,
+    );
 
     // Save device info to a file
-    const deviceInfoFilePath = path.join(resultsDir, `device-info-${timestamp}.json`);
+    const deviceInfoFilePath = path.join(
+      resultsDir,
+      `device-info-${timestamp}.json`,
+    );
     fs.writeFileSync(deviceInfoFilePath, JSON.stringify(deviceInfo, null, 2));
     console.log(`Device info saved to: ${deviceInfoFilePath}`);
 
@@ -126,7 +138,7 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
   // Group metrics by package name
   const packageGroups: Record<string, any[]> = {};
 
-  metrics.forEach(metric => {
+  metrics.forEach((metric) => {
     const packageName = metric.packageName || 'unknown';
     if (!packageGroups[packageName]) {
       packageGroups[packageName] = [];
@@ -139,22 +151,22 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
 
   // Create CPU usage data for chart
   const cpuData = metrics
-    .filter(m => m.cpuInfo)
-    .map(m => ({
+    .filter((m) => m.cpuInfo)
+    .map((m) => ({
       timestamp: new Date(m.timestamp).toLocaleTimeString(),
       packageName: m.packageName,
       user: m.cpuInfo?.user || 0,
       system: m.cpuInfo?.system || 0,
-      idle: m.cpuInfo?.idle || 0
+      idle: m.cpuInfo?.idle || 0,
     }));
 
   // Create memory usage data for chart
   const memoryData = metrics
-    .filter(m => m.memoryInfo)
-    .map(m => ({
+    .filter((m) => m.memoryInfo)
+    .map((m) => ({
       timestamp: new Date(m.timestamp).toLocaleTimeString(),
       packageName: m.packageName,
-      usedMemPercent: m.memoryInfo?.usedMemPercent || 0
+      usedMemPercent: m.memoryInfo?.usedMemPercent || 0,
     }));
 
   return `
@@ -200,16 +212,22 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
           <th>Number of Metrics</th>
           <th>Time Range</th>
         </tr>
-        ${packageNames.map(pkg => {
-          const pkgMetrics = packageGroups[pkg];
-          const startTime = new Date(Math.min(...pkgMetrics.map(m => m.timestamp))).toLocaleTimeString();
-          const endTime = new Date(Math.max(...pkgMetrics.map(m => m.timestamp))).toLocaleTimeString();
-          return `<tr>
+        ${packageNames
+          .map((pkg) => {
+            const pkgMetrics = packageGroups[pkg];
+            const startTime = new Date(
+              Math.min(...pkgMetrics.map((m) => m.timestamp)),
+            ).toLocaleTimeString();
+            const endTime = new Date(
+              Math.max(...pkgMetrics.map((m) => m.timestamp)),
+            ).toLocaleTimeString();
+            return `<tr>
             <td>${pkg}</td>
             <td>${pkgMetrics.length}</td>
             <td>${startTime} - ${endTime}</td>
           </tr>`;
-        }).join('')}
+          })
+          .join('')}
       </table>
     </div>
 
@@ -246,25 +264,25 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
     new Chart(cpuCtx, {
       type: 'line',
       data: {
-        labels: ${JSON.stringify(cpuData.map(d => d.timestamp))},
+        labels: ${JSON.stringify(cpuData.map((d) => d.timestamp))},
         datasets: [
           {
             label: 'User CPU (%)',
-            data: ${JSON.stringify(cpuData.map(d => d.user))},
+            data: ${JSON.stringify(cpuData.map((d) => d.user))},
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             tension: 0.1
           },
           {
             label: 'System CPU (%)',
-            data: ${JSON.stringify(cpuData.map(d => d.system))},
+            data: ${JSON.stringify(cpuData.map((d) => d.system))},
             borderColor: 'rgba(255, 99, 132, 1)',
             backgroundColor: 'rgba(255, 99, 132, 0.2)',
             tension: 0.1
           },
           {
             label: 'Idle CPU (%)',
-            data: ${JSON.stringify(cpuData.map(d => d.idle))},
+            data: ${JSON.stringify(cpuData.map((d) => d.idle))},
             borderColor: 'rgba(54, 162, 235, 1)',
             backgroundColor: 'rgba(54, 162, 235, 0.2)',
             tension: 0.1
@@ -288,11 +306,11 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
     new Chart(memCtx, {
       type: 'line',
       data: {
-        labels: ${JSON.stringify(memoryData.map(d => d.timestamp))},
+        labels: ${JSON.stringify(memoryData.map((d) => d.timestamp))},
         datasets: [
           {
             label: 'Memory Usage (%)',
-            data: ${JSON.stringify(memoryData.map(d => d.usedMemPercent))},
+            data: ${JSON.stringify(memoryData.map((d) => d.usedMemPercent))},
             borderColor: 'rgba(153, 102, 255, 1)',
             backgroundColor: 'rgba(153, 102, 255, 0.2)',
             tension: 0.1
@@ -321,10 +339,12 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
       const color = \`hsl(\${hue}, 70%, 60%)\`;
 
       // Create data points where the package is active
-      const dataPoints = ${JSON.stringify(metrics.map(m => ({
-        timestamp: new Date(m.timestamp).toLocaleTimeString(),
-        packageName: m.packageName
-      })))}.map(point => ({
+      const dataPoints = ${JSON.stringify(
+        metrics.map((m) => ({
+          timestamp: new Date(m.timestamp).toLocaleTimeString(),
+          packageName: m.packageName,
+        })),
+      )}.map(point => ({
         x: point.timestamp,
         y: point.packageName === pkg ? 1 : 0
       }));
@@ -350,7 +370,7 @@ function generateHtmlReport(deviceInfo: any, metrics: any[]): string {
         scales: {
           x: {
             type: 'category',
-            labels: ${JSON.stringify(metrics.map(m => new Date(m.timestamp).toLocaleTimeString()))}
+            labels: ${JSON.stringify(metrics.map((m) => new Date(m.timestamp).toLocaleTimeString()))}
           },
           y: {
             beginAtZero: true,

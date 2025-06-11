@@ -96,7 +96,9 @@ export const extractDataQueryPrompt = async (
 {pageDescription}
 </PageDescription>
 
-${memoryContext ? `
+${
+  memoryContext
+    ? `
 <PreviousWorkflowSteps>
 ${memoryContext}
 </PreviousWorkflowSteps>
@@ -106,7 +108,9 @@ IMPORTANT INSTRUCTIONS:
 - If the data request relates to actions completed in previous steps, factor that context into your response
 - If previous steps involved form submissions, navigation, or data entry, use that context to better understand the current page state
 - Extract data that builds upon or relates to the previous workflow actions
-` : ''}
+`
+    : ''
+}
 
 <DATA_DEMAND>
 {dataQuery}

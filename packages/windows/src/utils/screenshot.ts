@@ -1,5 +1,9 @@
 import { getDebug } from 'misoai-shared/logger';
-import type { WindowsScreenshotOptions, WindowsAutomationConfig, WindowsApplication } from '../types';
+import type {
+  WindowsApplication,
+  WindowsAutomationConfig,
+  WindowsScreenshotOptions,
+} from '../types';
 
 // Dynamic imports for optional dependencies
 let robotjs: any;
@@ -22,7 +26,10 @@ export class WindowsScreenshotCapture {
    * Captures a screenshot using the configured method
    */
   public async capture(options: WindowsScreenshotOptions): Promise<string> {
-    debugScreenshot('Capturing screenshot with method: %s', this.config.screenshotMethod);
+    debugScreenshot(
+      'Capturing screenshot with method: %s',
+      this.config.screenshotMethod,
+    );
 
     try {
       switch (this.config.screenshotMethod) {
@@ -35,23 +42,31 @@ export class WindowsScreenshotCapture {
         case 'win32-api':
           return await this.captureWithWin32API(options);
         default:
-          throw new Error(`Unsupported screenshot method: ${this.config.screenshotMethod}`);
+          throw new Error(
+            `Unsupported screenshot method: ${this.config.screenshotMethod}`,
+          );
       }
     } catch (error: any) {
       debugScreenshot('Screenshot capture failed: %s', error.message);
-      throw new Error(`Screenshot capture failed: ${error.message}`, { cause: error });
+      throw new Error(`Screenshot capture failed: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
   /**
    * Captures screenshot using RobotJS
    */
-  private async captureWithRobotJS(options: WindowsScreenshotOptions): Promise<string> {
+  private async captureWithRobotJS(
+    options: WindowsScreenshotOptions,
+  ): Promise<string> {
     if (!robotjs) {
       try {
         robotjs = require('robotjs');
       } catch (error) {
-        throw new Error('RobotJS not available. Install with: npm install robotjs');
+        throw new Error(
+          'RobotJS not available. Install with: npm install robotjs',
+        );
       }
     }
 
@@ -59,14 +74,14 @@ export class WindowsScreenshotCapture {
 
     try {
       let bitmap;
-      
+
       if (options.region) {
         // Capture specific region
         bitmap = robotjs.screen.capture(
           options.region.x,
           options.region.y,
           options.region.width,
-          options.region.height
+          options.region.height,
         );
       } else {
         // Capture entire screen
@@ -84,12 +99,16 @@ export class WindowsScreenshotCapture {
   /**
    * Captures screenshot using Nut.js
    */
-  private async captureWithNutJS(options: WindowsScreenshotOptions): Promise<string> {
+  private async captureWithNutJS(
+    options: WindowsScreenshotOptions,
+  ): Promise<string> {
     if (!nutjs) {
       try {
         nutjs = require('@nut-tree/nut-js');
       } catch (error) {
-        throw new Error('Nut.js not available. Install with: npm install @nut-tree/nut-js');
+        throw new Error(
+          'Nut.js not available. Install with: npm install @nut-tree/nut-js',
+        );
       }
     }
 
@@ -104,7 +123,7 @@ export class WindowsScreenshotCapture {
           options.region.x,
           options.region.y,
           options.region.width,
-          options.region.height
+          options.region.height,
         );
         image = await nutjs.screen.capture(region);
       } else {
@@ -123,12 +142,16 @@ export class WindowsScreenshotCapture {
   /**
    * Captures screenshot using screenshot-desktop
    */
-  private async captureWithScreenshotDesktop(options: WindowsScreenshotOptions): Promise<string> {
+  private async captureWithScreenshotDesktop(
+    options: WindowsScreenshotOptions,
+  ): Promise<string> {
     if (!screenshotDesktop) {
       try {
         screenshotDesktop = require('screenshot-desktop');
       } catch (error) {
-        throw new Error('screenshot-desktop not available. Install with: npm install screenshot-desktop');
+        throw new Error(
+          'screenshot-desktop not available. Install with: npm install screenshot-desktop',
+        );
       }
     }
 
@@ -158,7 +181,9 @@ export class WindowsScreenshotCapture {
   /**
    * Captures screenshot using Win32 API (via FFI)
    */
-  private async captureWithWin32API(options: WindowsScreenshotOptions): Promise<string> {
+  private async captureWithWin32API(
+    options: WindowsScreenshotOptions,
+  ): Promise<string> {
     debugScreenshot('Capturing with Win32 API');
 
     try {
@@ -174,7 +199,10 @@ export class WindowsScreenshotCapture {
   /**
    * Captures screenshot of a specific window
    */
-  public async captureWindow(application: WindowsApplication, options?: Partial<WindowsScreenshotOptions>): Promise<string> {
+  public async captureWindow(
+    application: WindowsApplication,
+    options?: Partial<WindowsScreenshotOptions>,
+  ): Promise<string> {
     debugScreenshot('Capturing window screenshot for: %s', application.name);
 
     const windowOptions: WindowsScreenshotOptions = {
@@ -196,7 +224,9 @@ export class WindowsScreenshotCapture {
   /**
    * Captures screenshot of the entire desktop
    */
-  public async captureDesktop(options?: Partial<WindowsScreenshotOptions>): Promise<string> {
+  public async captureDesktop(
+    options?: Partial<WindowsScreenshotOptions>,
+  ): Promise<string> {
     debugScreenshot('Capturing desktop screenshot');
 
     const desktopOptions: WindowsScreenshotOptions = {

@@ -3,14 +3,14 @@ export {
   AndroidAgent,
   agentFromAppiumServer,
   agentFromLocalAppium,
-  agentFromSauceLabs
+  agentFromSauceLabs,
 } from './agent';
 export type {
   AppiumServerConfig,
   AppiumBaseCapabilities,
   SauceLabsConfig,
   SauceLabsCapabilities,
-  SauceLabsSpecificOptions
+  SauceLabsSpecificOptions,
 } from './types';
 export { overrideAIConfig } from 'misoai-shared/env';
 
@@ -22,7 +22,7 @@ export {
   type BatteryInfo,
   type NetworkInfo,
   type DeviceInfo,
-  type PerformanceMetrics
+  type PerformanceMetrics,
 } from './performance';
 
 // Media utility exports
@@ -31,5 +31,5 @@ export {
   startVideoRecording,
   stopVideoRecording,
   type ScreenshotOptions,
-  type VideoRecordingOptions
+  type VideoRecordingOptions,
 } from './utils/media';

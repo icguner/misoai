@@ -1,9 +1,9 @@
+import yaml from 'js-yaml';
 import type {
   MidsceneYamlScript,
   MidsceneYamlScriptWebEnv,
   MidsceneYamlTask,
 } from 'misoai-core';
-import yaml from 'js-yaml';
 
 export function buildYaml(
   env: MidsceneYamlScriptWebEnv,

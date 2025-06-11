@@ -1,5 +1,5 @@
-import { assert } from 'misoai-shared/utils';
 import yaml from 'js-yaml';
+import { assert } from 'misoai-shared/utils';
 
 import type { MidsceneYamlScript } from 'misoai-core';
 

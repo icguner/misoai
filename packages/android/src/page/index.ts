@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
+import { ADB } from 'appium-adb';
 import { type Point, type Size, getAIConfig } from 'misoai-core';
 import type { PageType } from 'misoai-core';
 import { getTmpFile, sleep } from 'misoai-core/utils';
@@ -14,7 +15,6 @@ import { isValidPNGImageBuffer, resizeImg } from 'misoai-shared/img';
 import { getDebug } from 'misoai-shared/logger';
 import { repeat } from 'misoai-shared/utils';
 import type { AndroidDeviceInputOpt, AndroidDevicePage } from 'misoai-web';
-import { ADB } from 'appium-adb';
 
 const androidScreenshotPath = '/data/local/tmp/midscene_screenshot.png';
 // only for Android, because it's impossible to scroll to the bottom, so we need to set a default scroll times

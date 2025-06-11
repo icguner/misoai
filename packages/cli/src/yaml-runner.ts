@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { basename, extname } from 'node:path';
-import { ScriptPlayer, parseYamlScript } from 'misoai-web/yaml';
 import { createServer } from 'http-server';
+import { ScriptPlayer, parseYamlScript } from 'misoai-web/yaml';
 import {
   type MidsceneYamlFileContext,
   contextInfo,

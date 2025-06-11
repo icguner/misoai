@@ -28,11 +28,12 @@ async function basicWindowsAutomation() {
     // Example 2: Launch Notepad
     console.log('\n📝 Launching Notepad...');
     const notepadAgent = await launchWindowsApp('notepad.exe', [], {
-      aiActionContext: 'You are automating Notepad. Focus on text editing operations.',
+      aiActionContext:
+        'You are automating Notepad. Focus on text editing operations.',
     });
 
     // Wait a moment for Notepad to fully load
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Type some text
     console.log('\n⌨️  Typing text in Notepad...');
@@ -42,7 +43,9 @@ async function basicWindowsAutomation() {
     // Take another screenshot
     console.log('\n📸 Taking Notepad screenshot...');
     const notepadScreenshot = await notepadAgent.takeScreenshot();
-    console.log(`✅ Notepad screenshot captured (${notepadScreenshot.length} characters)`);
+    console.log(
+      `✅ Notepad screenshot captured (${notepadScreenshot.length} characters)`,
+    );
 
     // Disconnect
     console.log('\n🔌 Disconnecting...');
@@ -50,8 +53,9 @@ async function basicWindowsAutomation() {
     await notepadAgent.disconnect();
     console.log('✅ Disconnected from applications');
 
-    console.log('\n🎉 Basic Windows automation example completed successfully!');
-
+    console.log(
+      '\n🎉 Basic Windows automation example completed successfully!',
+    );
   } catch (error) {
     console.error('❌ Error in basic Windows automation:', error);
     process.exit(1);

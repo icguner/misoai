@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WindowsAgent } from '../src/agent/windows-agent';
 import type { WindowsAutomationConfig } from '../src/types';
 
@@ -131,7 +131,9 @@ describe('WindowsAgent', () => {
     it('should handle screenshot errors gracefully', async () => {
       // Mock screenshot failure
       const nutjs = await import('@nut-tree/nut-js');
-      vi.mocked(nutjs.screen.capture).mockRejectedValueOnce(new Error('Screenshot failed'));
+      vi.mocked(nutjs.screen.capture).mockRejectedValueOnce(
+        new Error('Screenshot failed'),
+      );
 
       await expect(agent.takeScreenshot()).rejects.toThrow('Screenshot failed');
     });
@@ -151,10 +153,10 @@ describe('WindowsAgent', () => {
       });
 
       const result = await agent.aiClickWindows('Click the OK button');
-      
+
       expect(mockAiTap).toHaveBeenCalledWith(
         expect.stringContaining('Click the OK button'),
-        undefined
+        undefined,
       );
       expect(result.result.success).toBe(true);
     });
@@ -166,12 +168,15 @@ describe('WindowsAgent', () => {
         metadata: { executionTime: 800 },
       });
 
-      const result = await agent.aiInputWindows('Hello World', 'text input field');
-      
+      const result = await agent.aiInputWindows(
+        'Hello World',
+        'text input field',
+      );
+
       expect(mockAiInput).toHaveBeenCalledWith(
         'Hello World',
         expect.stringContaining('text input field'),
-        undefined
+        undefined,
       );
       expect(result.result.success).toBe(true);
     });
@@ -183,10 +188,12 @@ describe('WindowsAgent', () => {
         metadata: { executionTime: 600 },
       });
 
-      const result = await agent.aiAssertWindows('Window title contains "Test"');
-      
+      const result = await agent.aiAssertWindows(
+        'Window title contains "Test"',
+      );
+
       expect(mockAiAssert).toHaveBeenCalledWith(
-        expect.stringContaining('Window title contains "Test"')
+        expect.stringContaining('Window title contains "Test"'),
       );
       expect(result.result.success).toBe(true);
     });
@@ -198,10 +205,12 @@ describe('WindowsAgent', () => {
         metadata: { executionTime: 1200 },
       });
 
-      const result = await agent.aiQueryWindows('Extract user information from the profile page');
-      
+      const result = await agent.aiQueryWindows(
+        'Extract user information from the profile page',
+      );
+
       expect(mockAiQuery).toHaveBeenCalledWith(
-        expect.stringContaining('Extract user information')
+        expect.stringContaining('Extract user information'),
       );
       expect(result.result).toEqual({
         username: 'testuser',
@@ -247,11 +256,11 @@ describe('WindowsAgent', () => {
 
       const workflowMemory = agent.getWorkflowMemory();
       expect(workflowMemory.memory.length).toBeGreaterThanOrEqual(3);
-      
+
       // Check that memory contains our actions
-      const summaries = workflowMemory.memory.map(item => item.summary);
-      expect(summaries.some(s => s.includes('File menu'))).toBe(true);
-      expect(summaries.some(s => s.includes('New Document'))).toBe(true);
+      const summaries = workflowMemory.memory.map((item) => item.summary);
+      expect(summaries.some((s) => s.includes('File menu'))).toBe(true);
+      expect(summaries.some((s) => s.includes('New Document'))).toBe(true);
     });
 
     it('should handle memory context in AI calls', async () => {
@@ -296,18 +305,26 @@ describe('WindowsAgent', () => {
     it('should handle connection errors', async () => {
       // Mock connection failure
       const mockActiveWin = await import('active-win');
-      vi.mocked(mockActiveWin.default).mockRejectedValueOnce(new Error('No active window'));
+      vi.mocked(mockActiveWin.default).mockRejectedValueOnce(
+        new Error('No active window'),
+      );
 
-      await expect(agent.connectToApplication()).rejects.toThrow('No active window');
+      await expect(agent.connectToApplication()).rejects.toThrow(
+        'No active window',
+      );
     });
 
     it('should add failed actions to memory', async () => {
       await agent.connectToApplication();
 
       // Mock aiTap to fail
-      vi.spyOn(agent, 'aiTap').mockRejectedValueOnce(new Error('Element not found'));
+      vi.spyOn(agent, 'aiTap').mockRejectedValueOnce(
+        new Error('Element not found'),
+      );
 
-      await expect(agent.aiClickWindows('Click non-existent button')).rejects.toThrow('Element not found');
+      await expect(
+        agent.aiClickWindows('Click non-existent button'),
+      ).rejects.toThrow('Element not found');
 
       // Check that failure was recorded in memory
       const memoryStats = agent.getMemoryStats();
@@ -326,7 +343,9 @@ describe('WindowsAgent', () => {
     });
 
     it('should handle key combinations', async () => {
-      const result = await agent.aiKeyPressWindows('c', { modifiers: ['ctrl'] });
+      const result = await agent.aiKeyPressWindows('c', {
+        modifiers: ['ctrl'],
+      });
       expect(result.result.success).toBe(true);
     });
   });
@@ -339,10 +358,10 @@ describe('WindowsAgent', () => {
 
     it('should add disconnection to memory', async () => {
       await agent.connectToApplication();
-      
+
       const initialMemorySize = agent.getMemoryStats().totalItems;
       await agent.disconnect();
-      
+
       const finalMemorySize = agent.getMemoryStats().totalItems;
       expect(finalMemorySize).toBeGreaterThan(initialMemorySize);
     });

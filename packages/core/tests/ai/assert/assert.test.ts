@@ -46,7 +46,7 @@ describe('assert', () => {
       capturedMessages = msgs;
       return {
         content: { pass: true, thought: null },
-        usage: {}
+        usage: {},
       };
     });
 
@@ -57,7 +57,9 @@ describe('assert', () => {
 
     // Verify that the URL is included in the prompt
     const userMessage = capturedMessages[1].content[1].text;
-    expect(userMessage).toContain('Current page URL: https://example.com/test-page');
+    expect(userMessage).toContain(
+      'Current page URL: https://example.com/test-page',
+    );
 
     // Restore the original function
     require('@/ai-model/common').callAiFn = originalCallAiFn;

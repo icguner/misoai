@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { parseContextFromWebPage } from '@/common/utils';
 import StaticPage from '@/playground/static-page';
 import type { WebElementInfo } from '@/web-element';
+import { createServer } from 'http-server';
 import { sleep } from 'misoai-core/utils';
 import { traverseTree } from 'misoai-shared/extractor';
 import { getElementInfosScriptContent } from 'misoai-shared/fs';
@@ -10,7 +11,6 @@ import {
   imageInfoOfBase64,
   saveBase64Image,
 } from 'misoai-shared/img';
-import { createServer } from 'http-server';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { launchPage } from '../ai/web/puppeteer/utils';
 

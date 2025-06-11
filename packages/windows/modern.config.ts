@@ -13,9 +13,9 @@ export default defineConfig({
     externals: [
       // Core dependencies
       'misoai-core',
-      'misoai-shared', 
+      'misoai-shared',
       'misoai-web',
-      
+
       // Optional native dependencies
       'robotjs',
       '@nut-tree/nut-js',
@@ -25,7 +25,7 @@ export default defineConfig({
       'ref-napi',
       'ref-struct-di',
       'windows-window-manager',
-      
+
       // Node.js built-ins
       'child_process',
       'fs',

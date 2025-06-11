@@ -1,4 +1,5 @@
 import type { MidsceneYamlFlowItem, PlanningAction, Size } from '@/types';
+import { actionParser } from '@ui-tars/action-parser';
 import {
   UITarsModelVersion,
   uiTarsModelVersion,
@@ -8,7 +9,6 @@ import { resizeImgBase64 } from 'misoai-shared/img';
 import { transformHotkeyInput } from 'misoai-shared/keyboard-layout';
 import { getDebug } from 'misoai-shared/logger';
 import { assert } from 'misoai-shared/utils';
-import { actionParser } from '@ui-tars/action-parser';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import { AIActionType } from './common';
 import { getSummary, getUiTarsPlanningPrompt } from './prompt/ui-tars-planning';

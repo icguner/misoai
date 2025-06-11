@@ -3,10 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { dirname } from 'node:path';
-import {
-  defaultRunDirName,
-  getMidsceneRunSubDir,
-} from 'misoai-shared/common';
+import { defaultRunDirName, getMidsceneRunSubDir } from 'misoai-shared/common';
 import {
   MIDSCENE_DEBUG_MODE,
   MIDSCENE_OPENAI_INIT_CONFIG_JSON,

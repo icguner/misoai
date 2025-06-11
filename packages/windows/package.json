@@ -11,13 +11,7 @@
   ],
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
-  "files": [
-    "bin",
-    "dist",
-    "examples",
-    "README.md",
-    "CHANGELOG.md"
-  ],
+  "files": ["bin", "dist", "examples", "README.md", "CHANGELOG.md"],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",

@@ -67,7 +67,8 @@ export function createWindowsAgent(options?: {
       enableAnalytics: true,
       filterStrategy: 'hybrid',
     },
-    aiActionContext: options?.aiActionContext || 
+    aiActionContext:
+      options?.aiActionContext ||
       'You are automating a Windows desktop application. Pay attention to window controls, menus, and desktop elements.',
   });
 }
@@ -77,7 +78,7 @@ export function createWindowsAgent(options?: {
  */
 export async function createWindowsAgentForApp(
   applicationIdentifier: string | number,
-  options?: Parameters<typeof createWindowsAgent>[0]
+  options?: Parameters<typeof createWindowsAgent>[0],
 ) {
   const agent = createWindowsAgent(options);
   await agent.connectToApplication(applicationIdentifier);
@@ -90,7 +91,7 @@ export async function createWindowsAgentForApp(
 export async function launchWindowsApp(
   applicationPath: string,
   args?: string[],
-  options?: Parameters<typeof createWindowsAgent>[0]
+  options?: Parameters<typeof createWindowsAgent>[0],
 ) {
   const agent = createWindowsAgent(options);
   await agent.launchApplication(applicationPath, args);

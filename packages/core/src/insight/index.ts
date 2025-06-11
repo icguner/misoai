@@ -230,7 +230,11 @@ export default class Insight<
     };
   }
 
-  async extract<T = any>(input: string, opt?: InsightExtractOption, memoryContext?: string): Promise<T>;
+  async extract<T = any>(
+    input: string,
+    opt?: InsightExtractOption,
+    memoryContext?: string,
+  ): Promise<T>;
   async extract<T extends Record<string, string>>(
     input: T,
     opt?: InsightExtractOption,
@@ -308,7 +312,10 @@ export default class Insight<
     };
   }
 
-  async assert(assertion: string, memoryContext?: string): Promise<InsightAssertionResponse> {
+  async assert(
+    assertion: string,
+    memoryContext?: string,
+  ): Promise<InsightAssertionResponse> {
     if (typeof assertion !== 'string') {
       throw new Error(
         'This is the assert method for Midscene, the first argument should be a string. If you want to use the assert method from Node.js, please import it from the Node.js assert module.',
@@ -355,7 +362,11 @@ export default class Insight<
     };
   }
 
-  async captcha(options?: { deepThink?: boolean }): Promise<{ content: AICaptchaResponse; usage?: AIUsageInfo; deepThink?: boolean }> {
+  async captcha(options?: { deepThink?: boolean }): Promise<{
+    content: AICaptchaResponse;
+    usage?: AIUsageInfo;
+    deepThink?: boolean;
+  }> {
     const dumpSubscriber = this.onceDumpUpdatedFn;
     this.onceDumpUpdatedFn = undefined;
     const { deepThink = false } = options || {};

@@ -1,10 +1,10 @@
 import { basename, dirname, relative } from 'node:path';
+import chalk from 'chalk';
 import type {
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
 } from 'misoai-core';
 import type { ScriptPlayer } from 'misoai-web/yaml';
-import chalk from 'chalk';
 
 export interface MidsceneYamlFileContext {
   file: string;

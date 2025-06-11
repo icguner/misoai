@@ -4,6 +4,8 @@ import {
   DefaultAzureCredential,
   getBearerTokenProvider,
 } from '@azure/identity';
+import dJSON from 'dirty-json';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import {
   ANTHROPIC_API_KEY,
   AZURE_OPENAI_API_VERSION,
@@ -37,8 +39,6 @@ import {
 import { enableDebug, getDebug } from 'misoai-shared/logger';
 import { assert } from 'misoai-shared/utils';
 import { ifInBrowser } from 'misoai-shared/utils';
-import dJSON from 'dirty-json';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 import OpenAI, { AzureOpenAI } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import { SocksProxyAgent } from 'socks-proxy-agent';

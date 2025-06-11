@@ -1,7 +1,10 @@
 /**
  * Example for using misoai-android with AI-powered automation
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import {
+  type AppiumBaseCapabilities,
+  agentFromLocalAppium,
+} from 'misoai-android';
 import { overrideAIConfig } from 'misoai-shared/env';
 
 async function main() {
@@ -14,7 +17,7 @@ async function main() {
       apiKey: process.env.OPENAI_API_KEY || 'your-openai-api-key',
       model: 'gpt-4-vision-preview',
       temperature: 0.2,
-      maxTokens: 4096
+      maxTokens: 4096,
     });
 
     // Define capabilities for the Android device
@@ -24,7 +27,7 @@ async function main() {
       'appium:deviceName': 'Android Device',
       // Uncomment and set your device ID if you have multiple devices connected
       // 'appium:udid': 'your_device_id_here',
-      'appium:autoGrantPermissions': true
+      'appium:autoGrantPermissions': true,
     };
 
     // Create an agent using the local Appium server
@@ -40,7 +43,7 @@ async function main() {
     await agent.aiAction('Find and tap on the Wi-Fi option');
 
     // Wait for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Use AI to check if Wi-Fi is enabled
     console.log('Using AI to check if Wi-Fi is enabled...');
@@ -56,11 +59,13 @@ async function main() {
     await agent.aiAction('Find and tap on the Display option');
 
     // Wait for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Use AI to check the current brightness level
     console.log('Using AI to check the current brightness level...');
-    const brightnessInfo = await agent.aiExtract('What is the current brightness level?');
+    const brightnessInfo = await agent.aiExtract(
+      'What is the current brightness level?',
+    );
     console.log('Brightness info:', brightnessInfo);
 
     // Use AI to go back to the main settings screen

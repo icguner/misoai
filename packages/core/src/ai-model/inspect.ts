@@ -14,9 +14,9 @@ import type {
   UIContext,
 } from '@/types';
 import {
+  MIDSCENE_FORCE_DEEP_THINK,
   MIDSCENE_USE_QWEN_VL,
   MIDSCENE_USE_VLM_UI_TARS,
-  MIDSCENE_FORCE_DEEP_THINK,
   getAIConfigInBoolean,
   vlLocateMode,
 } from 'misoai-shared/env';
@@ -403,12 +403,16 @@ export async function AiAssert<
 Here is the assertion. Please tell whether it is truthy according to the screenshot.
 ${url ? `Current page URL: ${url}` : ''}
 
-${memoryContext ? `
+${
+  memoryContext
+    ? `
 IMPORTANT: Previous workflow steps have been completed:
 ${memoryContext}
 
 Please consider these previous actions when evaluating the assertion. The assertion should be evaluated in the context of the entire workflow, not just the current screenshot. If the assertion refers to actions that were completed in previous steps, take that into account.
-` : ''}
+`
+    : ''
+}
 
 =====================================
 ASSERTION TO EVALUATE:
@@ -514,10 +518,9 @@ Provide the coordinates of the CAPTCHA area as [x1, y1, x2, y2] where:
 
     try {
       // Try to get CAPTCHA area coordinates
-      const preliminaryResult = await callAiFn<{ coordinates: [number, number, number, number] }>(
-        preliminaryMsgs,
-        AIActionType.INSPECT_ELEMENT,
-      );
+      const preliminaryResult = await callAiFn<{
+        coordinates: [number, number, number, number];
+      }>(preliminaryMsgs, AIActionType.INSPECT_ELEMENT);
 
       if (preliminaryResult.content?.coordinates) {
         const [x1, y1, x2, y2] = preliminaryResult.content.coordinates;
@@ -538,7 +541,10 @@ Provide the coordinates of the CAPTCHA area as [x1, y1, x2, y2] where:
       }
     } catch (error) {
       // If preliminary analysis fails, use the full screenshot
-      console.warn('Failed to identify CAPTCHA area for deep thinking, using full screenshot', error);
+      console.warn(
+        'Failed to identify CAPTCHA area for deep thinking, using full screenshot',
+        error,
+      );
     }
   }
 

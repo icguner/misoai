@@ -2,10 +2,10 @@
  * Example for using misoai-android with Sauce Labs
  */
 import {
-  agentFromSauceLabs,
-  type SauceLabsConfig,
   type AppiumBaseCapabilities,
-  type SauceLabsCapabilities
+  type SauceLabsCapabilities,
+  type SauceLabsConfig,
+  agentFromSauceLabs,
 } from 'misoai-android';
 
 async function main() {
@@ -17,7 +17,7 @@ async function main() {
     const sauceConfig: SauceLabsConfig = {
       user: process.env.SAUCE_USERNAME || 'your-username',
       key: process.env.SAUCE_ACCESS_KEY || 'your-access-key',
-      region: 'us-west-1'
+      region: 'us-west-1',
     };
 
     // Define capabilities for the Android device
@@ -29,8 +29,8 @@ async function main() {
       'sauce:options': {
         build: `acabAI Android Test ${new Date().toISOString()}`,
         name: 'Android Automation Example',
-        appiumVersion: '2.0.0'
-      }
+        appiumVersion: '2.0.0',
+      },
     };
 
     // Create an agent using Sauce Labs
@@ -48,7 +48,7 @@ async function main() {
     // Take a screenshot
     console.log('Taking a screenshot...');
     const screenshot = await agent.page.screenshotBase64();
-    console.log('Screenshot taken:', screenshot.substring(0, 50) + '...');
+    console.log('Screenshot taken:', `${screenshot.substring(0, 50)}...`);
 
     // Get screen size
     const size = await agent.page.size();
@@ -59,14 +59,14 @@ async function main() {
     await agent.page.scrollDown(500);
 
     // Wait for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Scroll up
     console.log('Scrolling up...');
     await agent.page.scrollUp(300);
 
     // Wait for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Close the browser
     console.log('Closing the browser...');

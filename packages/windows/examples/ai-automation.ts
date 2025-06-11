@@ -24,7 +24,7 @@ async function aiWindowsAutomation() {
     });
 
     // Wait for Calculator to load
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     console.log('\n🔢 Performing calculation: 15 + 25 = ?');
 
@@ -50,7 +50,9 @@ async function aiWindowsAutomation() {
 
     // Step 6: Click equals button
     console.log('Step 6: Clicking equals (=) button...');
-    await agent.aiClickWindows('Click the equals (=) button to calculate the result');
+    await agent.aiClickWindows(
+      'Click the equals (=) button to calculate the result',
+    );
 
     // Step 7: Verify the result
     console.log('\n✅ Verifying calculation result...');
@@ -58,12 +60,16 @@ async function aiWindowsAutomation() {
 
     // Step 8: Extract the result using AI query
     console.log('\n📊 Extracting calculation result...');
-    const result = await agent.aiQueryWindows('What is the current number displayed on the calculator screen?');
+    const result = await agent.aiQueryWindows(
+      'What is the current number displayed on the calculator screen?',
+    );
     console.log('Extracted result:', result.result);
 
     // Step 9: Clear the calculator
     console.log('\n🧹 Clearing calculator...');
-    await agent.aiClickWindows('Click the clear (C) button to reset the calculator');
+    await agent.aiClickWindows(
+      'Click the clear (C) button to reset the calculator',
+    );
 
     // Step 10: Verify calculator is cleared
     console.log('\n✅ Verifying calculator is cleared...');
@@ -73,12 +79,16 @@ async function aiWindowsAutomation() {
     console.log('\n🧠 Memory Summary:');
     const memoryStats = agent.getMemoryStats();
     console.log(`Total memory items: ${memoryStats.totalItems}`);
-    console.log(`Memory effectiveness: ${memoryStats.analytics.memoryEffectiveness}%`);
+    console.log(
+      `Memory effectiveness: ${memoryStats.analytics.memoryEffectiveness}%`,
+    );
 
     // Take final screenshot
     console.log('\n📸 Taking final screenshot...');
     const finalScreenshot = await agent.takeScreenshot();
-    console.log(`✅ Final screenshot captured (${finalScreenshot.length} characters)`);
+    console.log(
+      `✅ Final screenshot captured (${finalScreenshot.length} characters)`,
+    );
 
     // Disconnect
     console.log('\n🔌 Disconnecting...');
@@ -90,7 +100,6 @@ async function aiWindowsAutomation() {
     console.log('- Memory integration across workflow steps');
     console.log('- Context-aware AI actions');
     console.log('- Data extraction and verification');
-
   } catch (error) {
     console.error('❌ Error in AI Windows automation:', error);
     process.exit(1);
@@ -110,11 +119,12 @@ async function textEditorWorkflow() {
       `,
     });
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Step 1: Type initial content
     console.log('Step 1: Creating document content...');
-    await agent.aiInputWindows(`
+    await agent.aiInputWindows(
+      `
 Windows Automation Test Document
 ================================
 
@@ -127,7 +137,8 @@ Key features tested:
 - AI-driven interactions
 
 Date: ${new Date().toLocaleDateString()}
-    `.trim());
+    `.trim(),
+    );
 
     // Step 2: Select all text
     console.log('Step 2: Selecting all text...');
@@ -135,7 +146,9 @@ Date: ${new Date().toLocaleDateString()}
 
     // Step 3: Verify text is selected
     console.log('Step 3: Verifying text selection...');
-    await agent.aiAssertWindows('All text in the document is selected/highlighted');
+    await agent.aiAssertWindows(
+      'All text in the document is selected/highlighted',
+    );
 
     // Step 4: Copy text
     console.log('Step 4: Copying text...');
@@ -165,11 +178,12 @@ Date: ${new Date().toLocaleDateString()}
 
     // Get workflow memory
     const workflowMemory = agent.getWorkflowMemory();
-    console.log(`\n🧠 Workflow completed with ${workflowMemory.memory.length} steps in memory`);
+    console.log(
+      `\n🧠 Workflow completed with ${workflowMemory.memory.length} steps in memory`,
+    );
 
     await agent.disconnect();
     console.log('✅ Text editor workflow completed!');
-
   } catch (error) {
     console.error('❌ Error in text editor workflow:', error);
   }

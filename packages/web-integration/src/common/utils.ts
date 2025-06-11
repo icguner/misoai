@@ -1,4 +1,5 @@
 import type { StaticPage } from '@/playground';
+import dayjs from 'dayjs';
 import type {
   BaseElement,
   ElementTreeNode,
@@ -19,7 +20,6 @@ import {
 import { resizeImgBase64 } from 'misoai-shared/img';
 import type { DebugFunction } from 'misoai-shared/logger';
 import { assert, logMsg, uuid } from 'misoai-shared/utils';
-import dayjs from 'dayjs';
 import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';
 import { WebElementInfo } from '../web-element';

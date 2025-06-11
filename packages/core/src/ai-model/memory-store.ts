@@ -1,8 +1,4 @@
-import type {
-  MemoryItem,
-  MemoryConfig,
-  MemoryMetrics,
-} from '@/types';
+import type { MemoryConfig, MemoryItem, MemoryMetrics } from '@/types';
 
 /**
  * Enhanced Memory Store for managing AI task memory
@@ -33,7 +29,7 @@ export class MemoryStore {
    * Birden fazla öğe ekler
    */
   addMultiple(items: MemoryItem[]): void {
-    items.forEach(item => this.add(item));
+    items.forEach((item) => this.add(item));
   }
 
   /**
@@ -41,13 +37,12 @@ export class MemoryStore {
    */
   getRelevant(taskType: string, context?: any): MemoryItem[] {
     const allItems = Array.from(this.items.values());
-    
+
     switch (this.config.filterStrategy) {
       case 'relevance':
         return this.filterByRelevance(allItems, taskType, context);
       case 'recency':
         return this.filterByRecency(allItems);
-      case 'hybrid':
       default:
         return this.filterHybrid(allItems, taskType, context);
     }
@@ -121,12 +116,14 @@ export class MemoryStore {
     const itemsArray = Array.from(this.items.entries());
 
     // Yaş sınırını uygula
-    const validItems = itemsArray.filter(([_, item]) => 
-      now - item.timestamp < this.config.maxAge
+    const validItems = itemsArray.filter(
+      ([_, item]) => now - item.timestamp < this.config.maxAge,
     );
 
     // Boyut sınırını uygula
-    const sortedItems = validItems.sort(([_, a], [__, b]) => b.timestamp - a.timestamp);
+    const sortedItems = validItems.sort(
+      ([_, a], [__, b]) => b.timestamp - a.timestamp,
+    );
     const limitedItems = sortedItems.slice(0, this.config.maxItems);
 
     // Hafızayı güncelle
@@ -134,28 +131,32 @@ export class MemoryStore {
     limitedItems.forEach(([id, item]) => this.items.set(id, item));
   }
 
-  private filterByRelevance(items: MemoryItem[], taskType: string, context?: any): MemoryItem[] {
+  private filterByRelevance(
+    items: MemoryItem[],
+    taskType: string,
+    context?: any,
+  ): MemoryItem[] {
     return items
-      .filter(item => item.taskType === taskType)
+      .filter((item) => item.taskType === taskType)
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 5);
   }
 
   private filterByRecency(items: MemoryItem[]): MemoryItem[] {
-    return items
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 10);
+    return items.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
   }
 
-
-
-  private filterHybrid(items: MemoryItem[], taskType: string, context?: any): MemoryItem[] {
+  private filterHybrid(
+    items: MemoryItem[],
+    taskType: string,
+    context?: any,
+  ): MemoryItem[] {
     const now = Date.now();
 
     return items
-      .map(item => ({
+      .map((item) => ({
         item,
-        score: this.calculateRelevanceScore(item, taskType, context, now)
+        score: this.calculateRelevanceScore(item, taskType, context, now),
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
@@ -166,7 +167,7 @@ export class MemoryStore {
     item: MemoryItem,
     taskType: string,
     context: any,
-    now: number
+    now: number,
   ): number {
     let score = 0;
 
@@ -180,12 +181,15 @@ export class MemoryStore {
     // Bağlam eşleşmesi
     if (context && item.context) {
       if (context.url && item.context.url === context.url) score += 15;
-      if (context.pageTitle && item.context.pageTitle === context.pageTitle) score += 10;
+      if (context.pageTitle && item.context.pageTitle === context.pageTitle)
+        score += 10;
     }
 
     // Tag eşleşmesi
     if (item.tags && context?.tags) {
-      const matchingTags = item.tags.filter(tag => context.tags.includes(tag));
+      const matchingTags = item.tags.filter((tag) =>
+        context.tags.includes(tag),
+      );
       score += matchingTags.length * 5;
     }
 
@@ -207,7 +211,7 @@ export class MemoryAnalytics {
 
   recordTaskStart(taskType: string, memorySize: number): void {
     this.metrics.totalTasks++;
-    
+
     if (memorySize > 0) {
       this.metrics.memoryHits++;
     } else {
@@ -218,11 +222,18 @@ export class MemoryAnalytics {
     this.updateEffectiveness();
   }
 
-  recordTaskCompletion(taskType: string, success: boolean, memoryCreated: boolean): void {
+  recordTaskCompletion(
+    taskType: string,
+    success: boolean,
+    memoryCreated: boolean,
+  ): void {
     // Bu method gelecekte daha detaylı analytics için kullanılabilir
   }
 
-  recordMemoryOperation(operation: 'add' | 'remove' | 'clear', item?: MemoryItem): void {
+  recordMemoryOperation(
+    operation: 'add' | 'remove' | 'clear',
+    item?: MemoryItem,
+  ): void {
     // Memory operation tracking için
   }
 
@@ -242,12 +253,15 @@ export class MemoryAnalytics {
 
   private updateAverageMemorySize(memorySize: number): void {
     this.metrics.averageMemorySize =
-      (this.metrics.averageMemorySize * (this.metrics.totalTasks - 1) + memorySize) /
+      (this.metrics.averageMemorySize * (this.metrics.totalTasks - 1) +
+        memorySize) /
       this.metrics.totalTasks;
   }
 
   private updateEffectiveness(): void {
     this.metrics.memoryEffectiveness =
-      this.metrics.totalTasks > 0 ? this.metrics.memoryHits / this.metrics.totalTasks : 0;
+      this.metrics.totalTasks > 0
+        ? this.metrics.memoryHits / this.metrics.totalTasks
+        : 0;
   }
 }

@@ -1,7 +1,10 @@
 /**
  * Basic usage example for misoai-android with local Appium server
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import {
+  type AppiumBaseCapabilities,
+  agentFromLocalAppium,
+} from 'misoai-android';
 
 async function main() {
   try {
@@ -14,7 +17,7 @@ async function main() {
       'appium:deviceName': 'Android Device',
       // Uncomment and set your device ID if you have multiple devices connected
       // 'appium:udid': 'your_device_id_here',
-      'appium:autoGrantPermissions': true
+      'appium:autoGrantPermissions': true,
     };
 
     // Create an agent using the local Appium server
@@ -28,7 +31,7 @@ async function main() {
     // Take a screenshot
     console.log('Taking a screenshot...');
     const screenshot = await agent.page.screenshotBase64();
-    console.log('Screenshot taken:', screenshot.substring(0, 50) + '...');
+    console.log('Screenshot taken:', `${screenshot.substring(0, 50)}...`);
 
     // Get the current URL (package/activity)
     const currentUrl = await agent.page.url();
@@ -47,14 +50,14 @@ async function main() {
     await agent.page.scrollDown(300);
 
     // Wait for 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Press the back button
     console.log('Pressing back button...');
     await agent.page.back();
 
     // Wait for 1 second
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Press the home button
     console.log('Pressing home button...');

@@ -180,7 +180,12 @@ export interface WindowsAutomationCapabilities {
  * Error types specific to Windows automation
  */
 export interface WindowsAutomationError extends Error {
-  code: 'WINDOW_NOT_FOUND' | 'ELEMENT_NOT_FOUND' | 'SCREENSHOT_FAILED' | 
-        'INPUT_FAILED' | 'PERMISSION_DENIED' | 'AUTOMATION_DISABLED';
+  code:
+    | 'WINDOW_NOT_FOUND'
+    | 'ELEMENT_NOT_FOUND'
+    | 'SCREENSHOT_FAILED'
+    | 'INPUT_FAILED'
+    | 'PERMISSION_DENIED'
+    | 'AUTOMATION_DISABLED';
   details?: any;
 }

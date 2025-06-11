@@ -1,9 +1,9 @@
-import { getDebug } from 'misoai-shared/logger';
 import type { Size } from 'misoai-core';
-import type { 
-  WindowsApplication, 
-  WindowsAutomationConfig, 
-  WindowManipulationOptions 
+import { getDebug } from 'misoai-shared/logger';
+import type {
+  WindowManipulationOptions,
+  WindowsApplication,
+  WindowsAutomationConfig,
 } from '../types';
 
 // Dynamic imports for optional dependencies
@@ -26,15 +26,16 @@ export class WindowsWindowManager {
   /**
    * Finds an application by name or process ID
    */
-  public async findApplication(identifier: string | number): Promise<WindowsApplication | null> {
+  public async findApplication(
+    identifier: string | number,
+  ): Promise<WindowsApplication | null> {
     debugWindowManager('Finding application: %s', identifier);
 
     try {
       if (typeof identifier === 'number') {
         return await this.findApplicationByPID(identifier);
-      } else {
-        return await this.findApplicationByName(identifier);
       }
+      return await this.findApplicationByName(identifier);
     } catch (error: any) {
       debugWindowManager('Failed to find application: %s', error.message);
       return null;
@@ -52,7 +53,9 @@ export class WindowsWindowManager {
         try {
           activeWin = require('active-win');
         } catch (error) {
-          throw new Error('active-win not available. Install with: npm install active-win');
+          throw new Error(
+            'active-win not available. Install with: npm install active-win',
+          );
         }
       }
 
@@ -71,15 +74,18 @@ export class WindowsWindowManager {
   /**
    * Launches an application
    */
-  public async launchApplication(applicationPath: string, args?: string[]): Promise<WindowsApplication> {
+  public async launchApplication(
+    applicationPath: string,
+    args?: string[],
+  ): Promise<WindowsApplication> {
     debugWindowManager('Launching application: %s', applicationPath);
 
     try {
-      const { spawn } = require('child_process');
-      
+      const { spawn } = require('node:child_process');
+
       const process = spawn(applicationPath, args || [], {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
       });
 
       // Wait a bit for the application to start
@@ -91,13 +97,18 @@ export class WindowsWindowManager {
         throw new Error('Failed to find launched application');
       }
 
-      debugWindowManager('Successfully launched application: %s (PID: %d)', 
-        application.name, application.pid);
-      
+      debugWindowManager(
+        'Successfully launched application: %s (PID: %d)',
+        application.name,
+        application.pid,
+      );
+
       return application;
     } catch (error: any) {
       debugWindowManager('Failed to launch application: %s', error.message);
-      throw new Error(`Failed to launch application: ${error.message}`, { cause: error });
+      throw new Error(`Failed to launch application: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -122,8 +133,8 @@ export class WindowsWindowManager {
    * Manipulates a window (move, resize, etc.)
    */
   public async manipulateWindow(
-    application: WindowsApplication, 
-    options: WindowManipulationOptions
+    application: WindowsApplication,
+    options: WindowManipulationOptions,
   ): Promise<void> {
     debugWindowManager('Manipulating window for: %s', application.name);
 
@@ -151,7 +162,9 @@ export class WindowsWindowManager {
       debugWindowManager('Successfully manipulated window');
     } catch (error: any) {
       debugWindowManager('Failed to manipulate window: %s', error.message);
-      throw new Error(`Failed to manipulate window: ${error.message}`, { cause: error });
+      throw new Error(`Failed to manipulate window: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -165,10 +178,9 @@ export class WindowsWindowManager {
       // Try to get screen size using various methods
       if (this.shouldUseWin32API()) {
         return await this.getScreenSizeWithWin32API();
-      } else {
-        // Fallback to default resolution
-        return { width: 1920, height: 1080 };
       }
+      // Fallback to default resolution
+      return { width: 1920, height: 1080 };
     } catch (error: any) {
       debugWindowManager('Failed to get screen size: %s', error.message);
       // Return default resolution as fallback
@@ -179,7 +191,9 @@ export class WindowsWindowManager {
   /**
    * Finds application by process ID
    */
-  private async findApplicationByPID(pid: number): Promise<WindowsApplication | null> {
+  private async findApplicationByPID(
+    pid: number,
+  ): Promise<WindowsApplication | null> {
     debugWindowManager('Finding application by PID: %d', pid);
 
     try {
@@ -189,7 +203,7 @@ export class WindowsWindowManager {
         pid,
         name: `Application_${pid}`,
         title: `Window Title ${pid}`,
-        executablePath: `C:\\Program Files\\App\\app.exe`,
+        executablePath: 'C:\\Program Files\\App\\app.exe',
         windowHandle: `0x${pid.toString(16)}`,
         bounds: { x: 100, y: 100, width: 800, height: 600 },
         state: 'normal',
@@ -198,7 +212,10 @@ export class WindowsWindowManager {
 
       return mockApplication;
     } catch (error: any) {
-      debugWindowManager('Failed to find application by PID: %s', error.message);
+      debugWindowManager(
+        'Failed to find application by PID: %s',
+        error.message,
+      );
       return null;
     }
   }
@@ -206,7 +223,9 @@ export class WindowsWindowManager {
   /**
    * Finds application by name
    */
-  private async findApplicationByName(name: string): Promise<WindowsApplication | null> {
+  private async findApplicationByName(
+    name: string,
+  ): Promise<WindowsApplication | null> {
     debugWindowManager('Finding application by name: %s', name);
 
     try {
@@ -225,7 +244,10 @@ export class WindowsWindowManager {
 
       return mockApplication;
     } catch (error: any) {
-      debugWindowManager('Failed to find application by name: %s', error.message);
+      debugWindowManager(
+        'Failed to find application by name: %s',
+        error.message,
+      );
       return null;
     }
   }
@@ -254,9 +276,11 @@ export class WindowsWindowManager {
   /**
    * Brings window to front
    */
-  private async bringWindowToFront(application: WindowsApplication): Promise<void> {
+  private async bringWindowToFront(
+    application: WindowsApplication,
+  ): Promise<void> {
     debugWindowManager('Bringing window to front: %s', application.name);
-    
+
     // This would use Windows API to bring window to front
     // For now, just log the action
   }
@@ -266,7 +290,7 @@ export class WindowsWindowManager {
    */
   private async focusWindow(application: WindowsApplication): Promise<void> {
     debugWindowManager('Focusing window: %s', application.name);
-    
+
     // This would use Windows API to focus window
     // For now, just log the action
   }
@@ -274,9 +298,16 @@ export class WindowsWindowManager {
   /**
    * Moves a window to specified position
    */
-  private async moveWindow(application: WindowsApplication, position: { left: number; top: number }): Promise<void> {
-    debugWindowManager('Moving window to (%d, %d)', position.left, position.top);
-    
+  private async moveWindow(
+    application: WindowsApplication,
+    position: { left: number; top: number },
+  ): Promise<void> {
+    debugWindowManager(
+      'Moving window to (%d, %d)',
+      position.left,
+      position.top,
+    );
+
     // This would use Windows API to move window
     // For now, just update the application bounds
     application.bounds.x = position.left;
@@ -286,9 +317,12 @@ export class WindowsWindowManager {
   /**
    * Resizes a window
    */
-  private async resizeWindow(application: WindowsApplication, size: Size): Promise<void> {
+  private async resizeWindow(
+    application: WindowsApplication,
+    size: Size,
+  ): Promise<void> {
     debugWindowManager('Resizing window to %dx%d', size.width, size.height);
-    
+
     // This would use Windows API to resize window
     // For now, just update the application bounds
     application.bounds.width = size.width;
@@ -299,11 +333,11 @@ export class WindowsWindowManager {
    * Sets window state (minimize, maximize, etc.)
    */
   private async setWindowState(
-    application: WindowsApplication, 
-    state: 'normal' | 'minimized' | 'maximized' | 'restore'
+    application: WindowsApplication,
+    state: 'normal' | 'minimized' | 'maximized' | 'restore',
   ): Promise<void> {
     debugWindowManager('Setting window state to: %s', state);
-    
+
     // This would use Windows API to set window state
     // For now, just update the application state
     application.state = state;
@@ -342,6 +376,6 @@ export class WindowsWindowManager {
    * Sleep utility
    */
   private async sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

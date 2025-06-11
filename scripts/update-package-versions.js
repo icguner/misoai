@@ -7,13 +7,15 @@
  * Usage: node scripts/update-package-versions.js
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const { execSync } = require('node:child_process');
 
 // Read the root package.json
 const rootPackageJsonPath = path.resolve(__dirname, '../package.json');
-const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8'));
+const rootPackageJson = JSON.parse(
+  fs.readFileSync(rootPackageJsonPath, 'utf8'),
+);
 
 // Get the package versions from the root package.json
 const packageVersions = rootPackageJson.packageVersions || {};
@@ -29,11 +31,10 @@ console.table(packageVersions);
 
 // Get all packages in the workspace
 const packagesDir = path.resolve(__dirname, '../packages');
-const packages = fs.readdirSync(packagesDir)
-  .filter(dir => {
-    const stats = fs.statSync(path.join(packagesDir, dir));
-    return stats.isDirectory() && !dir.startsWith('.');
-  });
+const packages = fs.readdirSync(packagesDir).filter((dir) => {
+  const stats = fs.statSync(path.join(packagesDir, dir));
+  return stats.isDirectory() && !dir.startsWith('.');
+});
 
 console.log(`Found ${packages.length} packages in workspace:`, packages);
 
@@ -56,11 +57,15 @@ for (const pkg of packages) {
     const newVersion = packageVersions[packageName];
 
     if (oldVersion !== newVersion) {
-      console.log(`Updating ${packageName} version from ${oldVersion} to ${newVersion}`);
+      console.log(
+        `Updating ${packageName} version from ${oldVersion} to ${newVersion}`,
+      );
       packageJson.version = newVersion;
       updatedCount++;
     } else {
-      console.log(`${packageName} version is already ${newVersion}, no update needed`);
+      console.log(
+        `${packageName} version is already ${newVersion}, no update needed`,
+      );
     }
   } else {
     console.warn(`No version defined for ${packageName} in root package.json`);
@@ -84,13 +89,15 @@ for (const pkg of packages) {
       'misoai-cli',
       'misoai-visualizer',
       'misoai-evaluation',
-      'misoai-mcp'
+      'misoai-mcp',
     ];
 
-    packagesToForceUpdate.forEach(pkg => {
+    packagesToForceUpdate.forEach((pkg) => {
       if (depsObject[pkg] && packageVersions[pkg]) {
         if (depsObject[pkg] !== packageVersions[pkg]) {
-          console.log(`  Updated ${pkg} from ${depsObject[pkg]} to ${packageVersions[pkg]}`);
+          console.log(
+            `  Updated ${pkg} from ${depsObject[pkg]} to ${packageVersions[pkg]}`,
+          );
           depsObject[pkg] = packageVersions[pkg];
           updated = true;
         }
@@ -98,11 +105,16 @@ for (const pkg of packages) {
     });
 
     // Update external dependencies from root
-    Object.keys(dependencies).forEach(dep => {
-      if (depsObject[dep] && depsObject[dep] !== dependencies[dep] &&
-          !depsObject[dep].startsWith('workspace:') &&
-          !packagesToForceUpdate.includes(dep)) {
-        console.log(`  Updated ${dep} from ${depsObject[dep]} to ${dependencies[dep]}`);
+    Object.keys(dependencies).forEach((dep) => {
+      if (
+        depsObject[dep] &&
+        depsObject[dep] !== dependencies[dep] &&
+        !depsObject[dep].startsWith('workspace:') &&
+        !packagesToForceUpdate.includes(dep)
+      ) {
+        console.log(
+          `  Updated ${dep} from ${depsObject[dep]} to ${dependencies[dep]}`,
+        );
         depsObject[dep] = dependencies[dep];
         updated = true;
       }
@@ -122,7 +134,10 @@ for (const pkg of packages) {
   }
 
   if (depsUpdated || packageJson.version !== packageVersions[packageName]) {
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+    fs.writeFileSync(
+      packageJsonPath,
+      `${JSON.stringify(packageJson, null, 2)}\n`,
+    );
     console.log(`Updated ${packageName} package.json`);
   }
 }

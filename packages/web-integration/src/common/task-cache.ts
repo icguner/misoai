@@ -1,10 +1,10 @@
 import assert from 'node:assert';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import yaml from 'js-yaml';
 import { getMidsceneRunSubDir } from 'misoai-shared/common';
 import { getDebug } from 'misoai-shared/logger';
 import { ifInBrowser } from 'misoai-shared/utils';
-import yaml from 'js-yaml';
 import semver from 'semver';
 import { version } from '../../package.json';
 import { replaceIllegalPathCharsAndSpace } from './utils';

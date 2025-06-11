@@ -94,13 +94,9 @@ export interface VideoRecordingOptions {
  */
 export async function takeScreenshot(
   device: AppiumDevice,
-  options: ScreenshotOptions = {}
-): Promise<string | void> {
-  const {
-    filePath,
-    createDir = true,
-    returnBase64 = true
-  } = options;
+  options: ScreenshotOptions = {},
+): Promise<string | undefined> {
+  const { filePath, createDir = true, returnBase64 = true } = options;
 
   debugMedia('Taking screenshot');
 
@@ -122,7 +118,10 @@ export async function takeScreenshot(
       }
 
       // Remove the data URL prefix and convert to buffer
-      const base64Data = base64Screenshot.replace(/^data:image\/\w+;base64,/, '');
+      const base64Data = base64Screenshot.replace(
+        /^data:image\/\w+;base64,/,
+        '',
+      );
       const buffer = Buffer.from(base64Data, 'base64');
 
       // Write to file
@@ -165,25 +164,21 @@ export async function takeScreenshot(
  */
 export async function startVideoRecording(
   device: AppiumDevice,
-  options: Partial<VideoRecordingOptions> = {}
+  options: Partial<VideoRecordingOptions> = {},
 ): Promise<void> {
-  const {
-    timeLimit = 180,
-    bitRate = 4000000,
-    size = '1280x720'
-  } = options;
+  const { timeLimit = 180, bitRate = 4000000, size = '1280x720' } = options;
 
   debugMedia('Starting video recording');
 
   try {
     // Get the WebdriverIO driver
-    const driver = await device['getDriver']();
+    const driver = await device.getDriver();
 
     // Start recording
     await driver.startRecordingScreen({
       timeLimit,
       videoSize: size,
-      bitRate
+      bitRate,
     });
 
     debugMedia('Video recording started');
@@ -210,7 +205,7 @@ export async function startVideoRecording(
  */
 export async function stopVideoRecording(
   device: AppiumDevice,
-  options: VideoRecordingOptions
+  options: VideoRecordingOptions,
 ): Promise<string> {
   const { filePath, createDir = true } = options;
 
@@ -218,7 +213,7 @@ export async function stopVideoRecording(
 
   try {
     // Get the WebdriverIO driver
-    const driver = await device['getDriver']();
+    const driver = await device.getDriver();
 
     // Stop recording and get the base64 video data
     const base64Video = await driver.stopRecordingScreen();

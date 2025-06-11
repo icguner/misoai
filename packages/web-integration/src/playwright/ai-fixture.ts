@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type { PageAgent, PageAgentOpt } from '@/common/agent';
 import { replaceIllegalPathCharsAndSpace } from '@/common/utils';
 import { PlaywrightAgent } from '@/playwright/index';
+import { type TestInfo, type TestType, test } from '@playwright/test';
 import type { AgentWaitForOpt } from 'misoai-core';
 import { getDebug } from 'misoai-shared/logger';
-import { type TestInfo, type TestType, test } from '@playwright/test';
 import type { Page as OriginPlaywrightPage } from 'playwright';
 export type APITestType = Pick<TestType<any, any>, 'step'>;
 

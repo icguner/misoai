@@ -1,5 +1,9 @@
 import { getDebug } from 'misoai-shared/logger';
-import type { WindowsUIElement, WindowsAutomationConfig, WindowsApplication } from '../types';
+import type {
+  WindowsApplication,
+  WindowsAutomationConfig,
+  WindowsUIElement,
+} from '../types';
 
 // Dynamic imports for optional dependencies
 let nutjs: any;
@@ -21,8 +25,13 @@ export class WindowsElementDetector {
   /**
    * Detects UI elements in the target application
    */
-  public async detectElements(application: WindowsApplication): Promise<WindowsUIElement[]> {
-    debugElementDetector('Detecting elements with method: %s', this.config.elementDetection);
+  public async detectElements(
+    application: WindowsApplication,
+  ): Promise<WindowsUIElement[]> {
+    debugElementDetector(
+      'Detecting elements with method: %s',
+      this.config.elementDetection,
+    );
 
     try {
       switch (this.config.elementDetection) {
@@ -33,18 +42,24 @@ export class WindowsElementDetector {
         case 'accessibility-api':
           return await this.detectWithAccessibilityAPI(application);
         default:
-          throw new Error(`Unsupported element detection method: ${this.config.elementDetection}`);
+          throw new Error(
+            `Unsupported element detection method: ${this.config.elementDetection}`,
+          );
       }
     } catch (error: any) {
       debugElementDetector('Element detection failed: %s', error.message);
-      throw new Error(`Element detection failed: ${error.message}`, { cause: error });
+      throw new Error(`Element detection failed: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
   /**
    * Detects elements using AI vision (screenshot analysis)
    */
-  private async detectWithAIVision(application: WindowsApplication): Promise<WindowsUIElement[]> {
+  private async detectWithAIVision(
+    application: WindowsApplication,
+  ): Promise<WindowsUIElement[]> {
     debugElementDetector('Detecting elements with AI vision');
 
     try {
@@ -101,7 +116,9 @@ export class WindowsElementDetector {
   /**
    * Detects elements using Windows UI Automation API
    */
-  private async detectWithWin32UIA(application: WindowsApplication): Promise<WindowsUIElement[]> {
+  private async detectWithWin32UIA(
+    application: WindowsApplication,
+  ): Promise<WindowsUIElement[]> {
     debugElementDetector('Detecting elements with Win32 UI Automation');
 
     try {
@@ -110,13 +127,16 @@ export class WindowsElementDetector {
           ffi = require('node-ffi-napi');
           ref = require('ref-napi');
         } catch (error) {
-          throw new Error('FFI dependencies not available. Install with: npm install node-ffi-napi ref-napi');
+          throw new Error(
+            'FFI dependencies not available. Install with: npm install node-ffi-napi ref-napi',
+          );
         }
       }
 
       // This would implement actual Win32 UI Automation API calls
       // For now, return mock elements
-      const elements: WindowsUIElement[] = await this.getUIAutomationElements(application);
+      const elements: WindowsUIElement[] =
+        await this.getUIAutomationElements(application);
       return elements;
     } catch (error: any) {
       throw new Error(`Win32 UIA element detection failed: ${error.message}`);
@@ -126,7 +146,9 @@ export class WindowsElementDetector {
   /**
    * Detects elements using Accessibility API
    */
-  private async detectWithAccessibilityAPI(application: WindowsApplication): Promise<WindowsUIElement[]> {
+  private async detectWithAccessibilityAPI(
+    application: WindowsApplication,
+  ): Promise<WindowsUIElement[]> {
     debugElementDetector('Detecting elements with Accessibility API');
 
     try {
@@ -134,7 +156,9 @@ export class WindowsElementDetector {
         try {
           nutjs = require('@nut-tree/nut-js');
         } catch (error) {
-          throw new Error('Nut.js not available. Install with: npm install @nut-tree/nut-js');
+          throw new Error(
+            'Nut.js not available. Install with: npm install @nut-tree/nut-js',
+          );
         }
       }
 
@@ -143,14 +167,18 @@ export class WindowsElementDetector {
       const elements: WindowsUIElement[] = [];
       return elements;
     } catch (error: any) {
-      throw new Error(`Accessibility API element detection failed: ${error.message}`);
+      throw new Error(
+        `Accessibility API element detection failed: ${error.message}`,
+      );
     }
   }
 
   /**
    * Gets UI Automation elements (mock implementation)
    */
-  private async getUIAutomationElements(application: WindowsApplication): Promise<WindowsUIElement[]> {
+  private async getUIAutomationElements(
+    application: WindowsApplication,
+  ): Promise<WindowsUIElement[]> {
     // This would be a real implementation using Win32 UI Automation API
     // For demonstration, return mock elements
     const elements: WindowsUIElement[] = [
@@ -178,47 +206,62 @@ export class WindowsElementDetector {
   /**
    * Finds elements by text content
    */
-  public async findElementsByText(application: WindowsApplication, text: string): Promise<WindowsUIElement[]> {
+  public async findElementsByText(
+    application: WindowsApplication,
+    text: string,
+  ): Promise<WindowsUIElement[]> {
     debugElementDetector('Finding elements by text: %s', text);
 
     const allElements = await this.detectElements(application);
-    return allElements.filter(element => 
-      element.text?.toLowerCase().includes(text.toLowerCase()) ||
-      element.name?.toLowerCase().includes(text.toLowerCase())
+    return allElements.filter(
+      (element) =>
+        element.text?.toLowerCase().includes(text.toLowerCase()) ||
+        element.name?.toLowerCase().includes(text.toLowerCase()),
     );
   }
 
   /**
    * Finds elements by type
    */
-  public async findElementsByType(application: WindowsApplication, type: string): Promise<WindowsUIElement[]> {
+  public async findElementsByType(
+    application: WindowsApplication,
+    type: string,
+  ): Promise<WindowsUIElement[]> {
     debugElementDetector('Finding elements by type: %s', type);
 
     const allElements = await this.detectElements(application);
-    return allElements.filter(element => element.type.toLowerCase() === type.toLowerCase());
+    return allElements.filter(
+      (element) => element.type.toLowerCase() === type.toLowerCase(),
+    );
   }
 
   /**
    * Finds element by automation ID
    */
-  public async findElementByAutomationId(application: WindowsApplication, automationId: string): Promise<WindowsUIElement | null> {
+  public async findElementByAutomationId(
+    application: WindowsApplication,
+    automationId: string,
+  ): Promise<WindowsUIElement | null> {
     debugElementDetector('Finding element by automation ID: %s', automationId);
 
     const allElements = await this.detectElements(application);
-    return allElements.find(element => element.automationId === automationId) || null;
+    return (
+      allElements.find((element) => element.automationId === automationId) ||
+      null
+    );
   }
 
   /**
    * Finds elements within a specific region
    */
   public async findElementsInRegion(
-    application: WindowsApplication, 
-    region: { x: number; y: number; width: number; height: number }
+    application: WindowsApplication,
+    region: { x: number; y: number; width: number; height: number },
   ): Promise<WindowsUIElement[]> {
     debugElementDetector('Finding elements in region: %o', region);
 
     const allElements = await this.detectElements(application);
-    return allElements.filter(element => {
+    return allElements.filter((element) => {
       const elementCenter = element.center;
       return (
         elementCenter.left >= region.x &&

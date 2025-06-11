@@ -7,15 +7,15 @@
  * 3. Use other media-related utilities
  */
 
-import {
-  agentFromLocalAppium,
-  type AppiumBaseCapabilities,
-  takeScreenshot,
-  startVideoRecording,
-  stopVideoRecording
-} from 'misoai-android';
+import { existsSync, mkdirSync } from 'node:fs';
 import * as path from 'node:path';
-import { mkdirSync, existsSync } from 'node:fs';
+import {
+  type AppiumBaseCapabilities,
+  agentFromLocalAppium,
+  startVideoRecording,
+  stopVideoRecording,
+  takeScreenshot,
+} from 'misoai-android';
 
 async function main() {
   try {
@@ -28,7 +28,7 @@ async function main() {
       'appium:deviceName': 'Android Device',
       // Uncomment and set your device ID if you have multiple devices connected
       // 'appium:udid': 'your_device_id_here',
-      'appium:autoGrantPermissions': true
+      'appium:autoGrantPermissions': true,
     };
 
     // Create an agent using the local Appium server
@@ -61,7 +61,7 @@ async function main() {
     console.log('Starting video recording...');
     await startVideoRecording(agent.page, {
       timeLimit: 30, // 30 seconds max
-      bitRate: 6000000 // 6 Mbps
+      bitRate: 6000000, // 6 Mbps
     });
 
     // Perform some actions while recording
@@ -69,15 +69,15 @@ async function main() {
 
     // Scroll down
     await agent.page.scrollDown(300);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
 
     // Scroll up
     await agent.page.scrollUp(300);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
 
     // Use AI to find and tap on an element
     await agent.aiAction('Find and tap on the Network & Internet option');
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds
 
     // Take another screenshot
     console.log('Taking another screenshot...');
@@ -87,7 +87,7 @@ async function main() {
 
     // Go back
     await agent.page.back();
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
 
     // Stop recording and save the video
     console.log('Stopping video recording...');

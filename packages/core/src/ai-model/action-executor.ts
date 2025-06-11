@@ -6,10 +6,10 @@ import type {
   ExecutionTaskProgressOptions,
   ExecutionTaskReturn,
   ExecutorContext,
-  MemoryItem,
   MemoryConfig,
-  MemoryStats,
   MemoryContext,
+  MemoryItem,
+  MemoryStats,
 } from '@/types';
 import { getVersion } from '@/utils';
 import {
@@ -19,7 +19,7 @@ import {
   vlLocateMode,
 } from 'misoai-shared/env';
 import { assert } from 'misoai-shared/utils';
-import { MemoryStore, MemoryAnalytics } from './memory-store';
+import { MemoryAnalytics, MemoryStore } from './memory-store';
 
 export class Executor {
   name: string;
@@ -59,7 +59,7 @@ export class Executor {
       enablePersistence: true,
       enableAnalytics: true,
       filterStrategy: 'hybrid',
-      ...options?.memoryConfig
+      ...options?.memoryConfig,
     };
 
     this.memoryStore = new MemoryStore(this.memoryConfig);
@@ -98,7 +98,7 @@ export class Executor {
    */
   private getMemoryAsLog(): string {
     const items = this.memoryStore.getRecent(10);
-    return items.map(item => item.summary).join('\n');
+    return items.map((item) => item.summary).join('\n');
   }
 
   /**
@@ -123,7 +123,7 @@ export class Executor {
     return {
       totalItems: this.memoryStore.size(),
       analytics: this.memoryAnalytics.getMetrics(),
-      config: this.memoryConfig
+      config: this.memoryConfig,
     };
   }
 
@@ -191,15 +191,19 @@ export class Executor {
       const contextualMemory = this.getContextualMemory(task.type, {
         url: (task as any).context?.url,
         pageTitle: (task as any).context?.pageTitle,
-        taskType: task.type
+        taskType: task.type,
       });
 
       // Planning görevleri için hafızayı log olarak geç
       if (task.type === 'Planning' && task.param) {
-        const memoryLog = contextualMemory.map(item => item.summary).join('\n');
+        const memoryLog = contextualMemory
+          .map((item) => item.summary)
+          .join('\n');
         if (memoryLog) {
           const existingLog = (task.param as any).log || '';
-          (task.param as any).log = existingLog ? `${existingLog}\n\nPrevious Context:\n${memoryLog}` : memoryLog;
+          (task.param as any).log = existingLog
+            ? `${existingLog}\n\nPrevious Context:\n${memoryLog}`
+            : memoryLog;
         }
       }
 
@@ -207,7 +211,10 @@ export class Executor {
         task.status = 'running';
 
         // Hafıza analitiklerini kaydet
-        this.memoryAnalytics.recordTaskStart(task.type, contextualMemory.length);
+        this.memoryAnalytics.recordTaskStart(
+          task.type,
+          contextualMemory.length,
+        );
 
         try {
           if (this.onTaskStart) {
@@ -262,13 +269,21 @@ export class Executor {
         task.timing.aiCost = (returnValue as any)?.aiCost || 0;
 
         // YENİ: Gelişmiş hafıza öğesi oluştur
-        const memoryItem = this.createMemoryItem(task, returnValue, taskStartTime);
+        const memoryItem = this.createMemoryItem(
+          task,
+          returnValue,
+          taskStartTime,
+        );
         if (memoryItem) {
           this.addToMemory(memoryItem);
         }
 
         // Hafıza analitiklerini güncelle
-        this.memoryAnalytics.recordTaskCompletion(task.type, true, memoryItem !== null);
+        this.memoryAnalytics.recordTaskCompletion(
+          task.type,
+          true,
+          memoryItem !== null,
+        );
 
         taskIndex++;
       } catch (e: any) {
@@ -285,7 +300,11 @@ export class Executor {
         this.memoryAnalytics.recordTaskCompletion(task.type, false, false);
 
         // Hata bilgisini hafızaya ekle
-        const errorMemoryItem = this.createErrorMemoryItem(task, e, taskStartTime);
+        const errorMemoryItem = this.createErrorMemoryItem(
+          task,
+          e,
+          taskStartTime,
+        );
         if (errorMemoryItem) {
           this.addToMemory(errorMemoryItem);
         }
@@ -354,7 +373,11 @@ export class Executor {
   /**
    * Görev sonucundan hafıza öğesi oluşturur
    */
-  private createMemoryItem(task: ExecutionTask, returnValue: any, startTime: number): MemoryItem | null {
+  private createMemoryItem(
+    task: ExecutionTask,
+    returnValue: any,
+    startTime: number,
+  ): MemoryItem | null {
     const summary = this.extractSummary(task, returnValue);
     if (!summary) return null;
 
@@ -368,9 +391,9 @@ export class Executor {
         executionTime: Date.now() - startTime,
         success: task.status === 'finished',
         confidence: this.calculateConfidence(task, returnValue),
-        sessionId: this.getSessionId()
+        sessionId: this.getSessionId(),
       },
-      tags: this.generateTags(task, returnValue)
+      tags: this.generateTags(task, returnValue),
     };
 
     return memoryItem;
@@ -379,7 +402,11 @@ export class Executor {
   /**
    * Hata durumu için hafıza öğesi oluşturur
    */
-  private createErrorMemoryItem(task: ExecutionTask, error: any, startTime: number): MemoryItem | null {
+  private createErrorMemoryItem(
+    task: ExecutionTask,
+    error: any,
+    startTime: number,
+  ): MemoryItem | null {
     const memoryItem: MemoryItem = {
       id: this.generateMemoryId(task, 'error'),
       timestamp: Date.now(),
@@ -387,14 +414,14 @@ export class Executor {
       summary: `Failed to execute ${task.type}: ${error.message || 'Unknown error'}`,
       context: {
         ...this.extractContext(task, null),
-        errorInfo: error.message || error.toString()
+        errorInfo: error.message || error.toString(),
       },
       metadata: {
         executionTime: Date.now() - startTime,
         success: false,
-        sessionId: this.getSessionId()
+        sessionId: this.getSessionId(),
       },
-      tags: ['error', task.type.toLowerCase()]
+      tags: ['error', task.type.toLowerCase()],
     };
 
     return memoryItem;
@@ -418,30 +445,44 @@ export class Executor {
    */
   private generateAutoSummary(task: ExecutionTask): string | null {
     switch (task.type) {
-      case 'Action':
-        const actionDetail = (task.param as any)?.action || task.subType || 'action';
+      case 'Action': {
+        const actionDetail =
+          (task.param as any)?.action || task.subType || 'action';
         const target = (task.param as any)?.target || 'element';
         return `Performed ${actionDetail} on ${target}`;
+      }
 
       case 'Insight':
         if (task.subType === 'Locate') {
           const element = (task.param as any)?.prompt || 'element';
           return `Located element: ${element}`;
-        } else if (task.subType === 'Assert') {
+        }
+        if (task.subType === 'Assert') {
           const assertion = (task.param as any)?.assertion || 'condition';
           const result = task.output?.pass ? 'passed' : 'failed';
           return `Assertion "${assertion}" ${result}`;
-        } else if (task.subType === 'Query' || task.subType === 'Boolean' || task.subType === 'Number' || task.subType === 'String') {
+        }
+        if (
+          task.subType === 'Query' ||
+          task.subType === 'Boolean' ||
+          task.subType === 'Number' ||
+          task.subType === 'String'
+        ) {
           const demand = (task.param as any)?.dataDemand;
           const result = task.output;
 
           // Daha detaylı özet oluştur
-          if (typeof demand === 'object' && result && typeof result === 'object') {
+          if (
+            typeof demand === 'object' &&
+            result &&
+            typeof result === 'object'
+          ) {
             const extractedData = Object.entries(result)
               .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
               .join(', ');
             return `Extracted data - ${extractedData}`;
-          } else if (typeof demand === 'string' && result !== undefined) {
+          }
+          if (typeof demand === 'string' && result !== undefined) {
             return `Extracted "${demand}": ${JSON.stringify(result)}`;
           }
 
@@ -449,10 +490,12 @@ export class Executor {
         }
         return `Performed ${task.subType} insight`;
 
-      case 'Planning':
+      case 'Planning': {
         const actionCount = task.output?.actions?.length || 0;
-        const actionTypes = task.output?.actions?.map((a: any) => a.type).join(', ') || '';
+        const actionTypes =
+          task.output?.actions?.map((a: any) => a.type).join(', ') || '';
         return `Planned ${actionCount} action(s): ${actionTypes}`;
+      }
 
       default:
         return `Executed ${task.type} task`;
@@ -469,14 +512,18 @@ export class Executor {
     if ((task as any).context?.url) context.url = (task as any).context.url;
 
     // Sayfa başlığı
-    if ((task as any).context?.pageTitle) context.pageTitle = (task as any).context.pageTitle;
+    if ((task as any).context?.pageTitle)
+      context.pageTitle = (task as any).context.pageTitle;
 
     // Element bilgisi
-    if ((task.param as any)?.prompt) context.elementInfo = (task.param as any).prompt;
-    if ((task.param as any)?.target) context.elementInfo = (task.param as any).target;
+    if ((task.param as any)?.prompt)
+      context.elementInfo = (task.param as any).prompt;
+    if ((task.param as any)?.target)
+      context.elementInfo = (task.param as any).target;
 
     // Kullanıcı aksiyonu
-    if ((task.param as any)?.action) context.userAction = (task.param as any).action;
+    if ((task.param as any)?.action)
+      context.userAction = (task.param as any).action;
 
     // Çıkarılan veri - daha kapsamlı veri saklama
     if (returnValue?.output?.data) {
@@ -486,7 +533,11 @@ export class Executor {
     } else if (returnValue?.output && task.subType === 'Query') {
       // Query sonuçlarını direkt sakla
       context.dataExtracted = returnValue.output;
-    } else if (task.subType === 'Boolean' || task.subType === 'Number' || task.subType === 'String') {
+    } else if (
+      task.subType === 'Boolean' ||
+      task.subType === 'Number' ||
+      task.subType === 'String'
+    ) {
       // Diğer extraction tiplerini de sakla
       context.dataExtracted = { result: returnValue?.output };
     }
@@ -503,18 +554,19 @@ export class Executor {
 
     // Görev tipine göre varsayılan güven skoru
     switch (task.type) {
-      case 'Action': return 0.9; // Aksiyonlar genelde başarılı
-      case 'Planning': return 0.8; // Planlama orta güven
+      case 'Action':
+        return 0.9; // Aksiyonlar genelde başarılı
+      case 'Planning':
+        return 0.8; // Planlama orta güven
       case 'Insight':
         if (task.subType === 'Assert') {
           return task.output?.pass ? 0.95 : 0.7; // Başarılı assertion yüksek güven
         }
         return 0.85;
-      default: return 0.75;
+      default:
+        return 0.75;
     }
   }
-
-
 
   /**
    * Etiketler oluşturur
@@ -523,7 +575,8 @@ export class Executor {
     const tags: string[] = [task.type.toLowerCase()];
 
     if (task.subType) tags.push(task.subType.toLowerCase());
-    if ((task.param as any)?.action) tags.push((task.param as any).action.toLowerCase());
+    if ((task.param as any)?.action)
+      tags.push((task.param as any).action.toLowerCase());
     if (returnValue?.success === false) tags.push('failed');
     if (returnValue?.data) tags.push('data-extraction');
 

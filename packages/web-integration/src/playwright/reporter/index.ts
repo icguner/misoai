@@ -3,8 +3,6 @@ import {
   replaceIllegalPathCharsAndSpace,
   reportFileName,
 } from '@/common/utils';
-import type { ReportDumpWithAttributes } from 'misoai-core';
-import { writeDumpReport } from 'misoai-core/utils';
 import type {
   FullConfig,
   FullResult,
@@ -13,6 +11,8 @@ import type {
   TestCase,
   TestResult,
 } from '@playwright/test/reporter';
+import type { ReportDumpWithAttributes } from 'misoai-core';
+import { writeDumpReport } from 'misoai-core/utils';
 
 function logger(...message: any[]) {
   if (process.env.DEBUG === 'true') {

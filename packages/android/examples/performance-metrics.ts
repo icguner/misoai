@@ -1,7 +1,10 @@
 /**
  * Example for retrieving performance metrics from Android devices using misoai-android
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import {
+  type AppiumBaseCapabilities,
+  agentFromLocalAppium,
+} from 'misoai-android';
 
 async function main() {
   try {
@@ -14,7 +17,7 @@ async function main() {
       'appium:deviceName': 'Android Device',
       // Uncomment and set your device ID if you have multiple devices connected
       // 'appium:udid': 'your_device_id_here',
-      'appium:autoGrantPermissions': true
+      'appium:autoGrantPermissions': true,
     };
 
     // Create an agent using the local Appium server
@@ -36,28 +39,44 @@ async function main() {
     // 2. Get CPU info
     if (performanceTypes.includes('cpuinfo')) {
       console.log('Getting CPU info...');
-      const cpuInfo = await driver.getPerformanceData('com.android.settings', 'cpuinfo', 5);
+      const cpuInfo = await driver.getPerformanceData(
+        'com.android.settings',
+        'cpuinfo',
+        5,
+      );
       console.log('CPU info:', cpuInfo);
     }
 
     // 3. Get memory info
     if (performanceTypes.includes('memoryinfo')) {
       console.log('Getting memory info...');
-      const memoryInfo = await driver.getPerformanceData('com.android.settings', 'memoryinfo', 5);
+      const memoryInfo = await driver.getPerformanceData(
+        'com.android.settings',
+        'memoryinfo',
+        5,
+      );
       console.log('Memory info:', memoryInfo);
     }
 
     // 4. Get battery info
     if (performanceTypes.includes('batteryinfo')) {
       console.log('Getting battery info...');
-      const batteryInfo = await driver.getPerformanceData('com.android.settings', 'batteryinfo', 5);
+      const batteryInfo = await driver.getPerformanceData(
+        'com.android.settings',
+        'batteryinfo',
+        5,
+      );
       console.log('Battery info:', batteryInfo);
     }
 
     // 5. Get network info
     if (performanceTypes.includes('networkinfo')) {
       console.log('Getting network info...');
-      const networkInfo = await driver.getPerformanceData('com.android.settings', 'networkinfo', 5);
+      const networkInfo = await driver.getPerformanceData(
+        'com.android.settings',
+        'networkinfo',
+        5,
+      );
       console.log('Network info:', networkInfo);
     }
 
@@ -86,47 +105,63 @@ async function main() {
     console.log('Current activity:', currentActivity);
 
     // 10. Custom adb shell commands for additional metrics
-    console.log('Executing custom adb shell commands for additional metrics...');
+    console.log(
+      'Executing custom adb shell commands for additional metrics...',
+    );
 
     // Get device model and manufacturer
-    const deviceModel = await driver.executeScript('mobile: shell', [{
-      command: 'getprop ro.product.model'
-    }]);
+    const deviceModel = await driver.executeScript('mobile: shell', [
+      {
+        command: 'getprop ro.product.model',
+      },
+    ]);
     console.log('Device model:', deviceModel);
 
-    const deviceManufacturer = await driver.executeScript('mobile: shell', [{
-      command: 'getprop ro.product.manufacturer'
-    }]);
+    const deviceManufacturer = await driver.executeScript('mobile: shell', [
+      {
+        command: 'getprop ro.product.manufacturer',
+      },
+    ]);
     console.log('Device manufacturer:', deviceManufacturer);
 
     // Get Android version
-    const androidVersion = await driver.executeScript('mobile: shell', [{
-      command: 'getprop ro.build.version.release'
-    }]);
+    const androidVersion = await driver.executeScript('mobile: shell', [
+      {
+        command: 'getprop ro.build.version.release',
+      },
+    ]);
     console.log('Android version:', androidVersion);
 
     // Get total RAM
-    const totalRam = await driver.executeScript('mobile: shell', [{
-      command: 'cat /proc/meminfo | grep MemTotal'
-    }]);
+    const totalRam = await driver.executeScript('mobile: shell', [
+      {
+        command: 'cat /proc/meminfo | grep MemTotal',
+      },
+    ]);
     console.log('Total RAM:', totalRam);
 
     // Get CPU architecture
-    const cpuArch = await driver.executeScript('mobile: shell', [{
-      command: 'uname -m'
-    }]);
+    const cpuArch = await driver.executeScript('mobile: shell', [
+      {
+        command: 'uname -m',
+      },
+    ]);
     console.log('CPU architecture:', cpuArch);
 
     // Get CPU cores
-    const cpuCores = await driver.executeScript('mobile: shell', [{
-      command: 'cat /proc/cpuinfo | grep processor | wc -l'
-    }]);
+    const cpuCores = await driver.executeScript('mobile: shell', [
+      {
+        command: 'cat /proc/cpuinfo | grep processor | wc -l',
+      },
+    ]);
     console.log('CPU cores:', cpuCores);
 
     // Get screen density
-    const screenDensity = await driver.executeScript('mobile: shell', [{
-      command: 'wm density'
-    }]);
+    const screenDensity = await driver.executeScript('mobile: shell', [
+      {
+        command: 'wm density',
+      },
+    ]);
     console.log('Screen density:', screenDensity);
 
     // Disconnect from the Appium server

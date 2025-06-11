@@ -1,4 +1,4 @@
-import { type ElementTreeNode, type Point, type Size } from 'misoai-core';
+import type { ElementTreeNode, Point, Size } from 'misoai-core';
 import type { PageType } from 'misoai-core';
 import { NodeType } from 'misoai-shared/constants';
 import type { ElementInfo } from 'misoai-shared/extractor';
@@ -49,7 +49,10 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param serverConfig - Appium server configuration
    * @param capabilities - Appium capabilities
    */
-  constructor(serverConfig: AppiumServerConfig, capabilities: AppiumBaseCapabilities) {
+  constructor(
+    serverConfig: AppiumServerConfig,
+    capabilities: AppiumBaseCapabilities,
+  ) {
     this.serverConfig = serverConfig;
     this.capabilities = capabilities;
   }
@@ -64,11 +67,12 @@ export class AppiumDevice implements AndroidDevicePage {
     }
 
     try {
-      debugDevice('Connecting to Appium server at %s://%s:%d%s',
+      debugDevice(
+        'Connecting to Appium server at %s://%s:%d%s',
         this.serverConfig.protocol || 'http',
         this.serverConfig.hostname,
         this.serverConfig.port,
-        this.serverConfig.path || '/wd/hub'
+        this.serverConfig.path || '/wd/hub',
       );
 
       const options = {
@@ -79,12 +83,18 @@ export class AppiumDevice implements AndroidDevicePage {
         capabilities: this.capabilities,
         logLevel: 'info' as const,
         connectionRetryTimeout: 120000,
-        connectionRetryCount: 3
+        connectionRetryCount: 3,
       };
 
-      debugDevice('Starting Appium session with capabilities: %O', this.capabilities);
+      debugDevice(
+        'Starting Appium session with capabilities: %O',
+        this.capabilities,
+      );
       this.driver = await remote(options);
-      debugDevice('Successfully connected to Appium server, session ID: %s', this.driver.sessionId);
+      debugDevice(
+        'Successfully connected to Appium server, session ID: %s',
+        this.driver.sessionId,
+      );
 
       return this.driver;
     } catch (error: any) {
@@ -117,12 +127,17 @@ export class AppiumDevice implements AndroidDevicePage {
         try {
           // First try to execute a custom script to set test status if possible
           // This helps with proper reporting in Sauce Labs dashboard
-          await this.driver.executeScript('sauce:job-result', [{
-            passed: true
-          }]);
+          await this.driver.executeScript('sauce:job-result', [
+            {
+              passed: true,
+            },
+          ]);
         } catch (e) {
           // Ignore errors from this command as it's optional
-          debugDevice('Could not set Sauce Labs job result: %s', (e as Error).message);
+          debugDevice(
+            'Could not set Sauce Labs job result: %s',
+            (e as Error).message,
+          );
         }
 
         // Then delete the session
@@ -152,7 +167,11 @@ export class AppiumDevice implements AndroidDevicePage {
     this.uri = uri;
 
     try {
-      if (uri.startsWith('http://') || uri.startsWith('https://') || uri.includes('://')) {
+      if (
+        uri.startsWith('http://') ||
+        uri.startsWith('https://') ||
+        uri.includes('://')
+      ) {
         // If it's a URI with scheme
         debugDevice('Opening URL: %s', uri);
         await driver.url(uri);
@@ -235,12 +254,12 @@ export class AppiumDevice implements AndroidDevicePage {
         nodeType: NodeType.CONTAINER,
         content: 'Root Element',
         rect: { left: 0, top: 0, width: 0, height: 0 },
-        center: [0, 0]
+        center: [0, 0],
       };
 
       return {
         node: rootElement,
-        children: []
+        children: [],
       };
     } catch (error: any) {
       debugDevice('Error getting element tree: %s', error.message);
@@ -293,18 +312,34 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param appActivity - Activity name
    * @param opts - Additional options
    */
-  public async startActivity(appPackage: string, appActivity: string, opts?: string): Promise<void> {
+  public async startActivity(
+    appPackage: string,
+    appActivity: string,
+    opts?: string,
+  ): Promise<void> {
     debugDevice('Starting activity: %s/%s', appPackage, appActivity);
     const driver = await this.getDriver();
 
     try {
       await driver.startActivity(appPackage, appActivity, opts);
-      debugDevice('Successfully started activity: %s/%s', appPackage, appActivity);
+      debugDevice(
+        'Successfully started activity: %s/%s',
+        appPackage,
+        appActivity,
+      );
     } catch (error: any) {
-      debugDevice('Error starting activity %s/%s: %s', appPackage, appActivity, error.message);
-      throw new Error(`Failed to start activity ${appPackage}/${appActivity}: ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error starting activity %s/%s: %s',
+        appPackage,
+        appActivity,
+        error.message,
+      );
+      throw new Error(
+        `Failed to start activity ${appPackage}/${appActivity}: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -401,10 +436,17 @@ export class AppiumDevice implements AndroidDevicePage {
       debugDevice('App %s installed: %s', appId, result);
       return result;
     } catch (error: any) {
-      debugDevice('Error checking if app %s is installed: %s', appId, error.message);
-      throw new Error(`Failed to check if app ${appId} is installed: ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error checking if app %s is installed: %s',
+        appId,
+        error.message,
+      );
+      throw new Error(
+        `Failed to check if app ${appId} is installed: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -476,7 +518,12 @@ export class AppiumDevice implements AndroidDevicePage {
       const size = await this.size();
       // Determine orientation based on screen dimensions
       const orientation = size.width > size.height ? 'LANDSCAPE' : 'PORTRAIT';
-      debugDevice('Screen orientation: %s (based on dimensions %dx%d)', orientation, size.width, size.height);
+      debugDevice(
+        'Screen orientation: %s (based on dimensions %dx%d)',
+        orientation,
+        size.width,
+        size.height,
+      );
       return orientation;
     } catch (error: any) {
       debugDevice('Error getting screen orientation: %s', error.message);
@@ -491,7 +538,9 @@ export class AppiumDevice implements AndroidDevicePage {
    *
    * @param orientation - Orientation to set
    */
-  public async setScreenOrientation(orientation: 'PORTRAIT' | 'LANDSCAPE'): Promise<void> {
+  public async setScreenOrientation(
+    orientation: 'PORTRAIT' | 'LANDSCAPE',
+  ): Promise<void> {
     debugDevice('Setting screen orientation to: %s', orientation);
     const driver = await this.getDriver();
 
@@ -504,7 +553,11 @@ export class AppiumDevice implements AndroidDevicePage {
       }
       debugDevice('Successfully set screen orientation to: %s', orientation);
     } catch (error: any) {
-      debugDevice('Error setting screen orientation to %s: %s', orientation, error.message);
+      debugDevice(
+        'Error setting screen orientation to %s: %s',
+        orientation,
+        error.message,
+      );
       // Fallback: try using key events to rotate screen
       try {
         // Some devices support rotation via key events
@@ -515,10 +568,16 @@ export class AppiumDevice implements AndroidDevicePage {
         }
         debugDevice('Successfully set screen orientation using key events');
       } catch (keyError) {
-        debugDevice('Key event rotation also failed: %s', (keyError as Error).message);
-        throw new Error(`Failed to set screen orientation to ${orientation}: ${error.message}`, {
-          cause: error,
-        });
+        debugDevice(
+          'Key event rotation also failed: %s',
+          (keyError as Error).message,
+        );
+        throw new Error(
+          `Failed to set screen orientation to ${orientation}: ${error.message}`,
+          {
+            cause: error,
+          },
+        );
       }
     }
   }
@@ -573,9 +632,12 @@ export class AppiumDevice implements AndroidDevicePage {
       return isShown;
     } catch (error: any) {
       debugDevice('Error checking if keyboard is shown: %s', error.message);
-      throw new Error(`Failed to check if keyboard is shown: ${error.message}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Failed to check if keyboard is shown: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -586,7 +648,11 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param metastate - Meta state
    * @param flags - Flags
    */
-  public async pressKeyCode(keycode: number, metastate?: number, flags?: number): Promise<void> {
+  public async pressKeyCode(
+    keycode: number,
+    metastate?: number,
+    flags?: number,
+  ): Promise<void> {
     debugDevice('Pressing key code: %d', keycode);
     const driver = await this.getDriver();
 
@@ -608,7 +674,11 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param metastate - Meta state
    * @param flags - Flags
    */
-  public async longPressKeyCode(keycode: number, metastate?: number, flags?: number): Promise<void> {
+  public async longPressKeyCode(
+    keycode: number,
+    metastate?: number,
+    flags?: number,
+  ): Promise<void> {
     debugDevice('Long pressing key code: %d', keycode);
     const driver = await this.getDriver();
 
@@ -616,10 +686,17 @@ export class AppiumDevice implements AndroidDevicePage {
       await driver.longPressKeyCode(keycode, metastate, flags);
       debugDevice('Successfully long pressed key code: %d', keycode);
     } catch (error: any) {
-      debugDevice('Error long pressing key code %d: %s', keycode, error.message);
-      throw new Error(`Failed to long press key code ${keycode}: ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error long pressing key code %d: %s',
+        keycode,
+        error.message,
+      );
+      throw new Error(
+        `Failed to long press key code ${keycode}: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -632,7 +709,9 @@ export class AppiumDevice implements AndroidDevicePage {
 
     try {
       const contexts = await driver.getContexts();
-      const contextStrings = contexts.map(ctx => typeof ctx === 'string' ? ctx : ctx.id);
+      const contextStrings = contexts.map((ctx) =>
+        typeof ctx === 'string' ? ctx : ctx.id,
+      );
       debugDevice('Available contexts: %O', contextStrings);
       return contextStrings;
     } catch (error: any) {
@@ -676,10 +755,17 @@ export class AppiumDevice implements AndroidDevicePage {
       await driver.switchContext(contextName);
       debugDevice('Successfully switched to context: %s', contextName);
     } catch (error: any) {
-      debugDevice('Error switching to context %s: %s', contextName, error.message);
-      throw new Error(`Failed to switch to context ${contextName}: ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error switching to context %s: %s',
+        contextName,
+        error.message,
+      );
+      throw new Error(
+        `Failed to switch to context ${contextName}: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -722,7 +808,12 @@ export class AppiumDevice implements AndroidDevicePage {
         await this.swipe(start.x, start.y, end.x, end.y);
       } else {
         // Scroll from middle bottom to middle top
-        await this.swipe(size.width / 2, size.height * 0.8, size.width / 2, size.height * 0.2);
+        await this.swipe(
+          size.width / 2,
+          size.height * 0.8,
+          size.width / 2,
+          size.height * 0.2,
+        );
       }
       debugDevice('Successfully scrolled to top');
     } catch (error: any) {
@@ -750,7 +841,12 @@ export class AppiumDevice implements AndroidDevicePage {
         await this.swipe(start.x, start.y, end.x, end.y);
       } else {
         // Scroll from middle top to middle bottom
-        await this.swipe(size.width / 2, size.height * 0.2, size.width / 2, size.height * 0.8);
+        await this.swipe(
+          size.width / 2,
+          size.height * 0.2,
+          size.width / 2,
+          size.height * 0.8,
+        );
       }
       debugDevice('Successfully scrolled to bottom');
     } catch (error: any) {
@@ -778,7 +874,12 @@ export class AppiumDevice implements AndroidDevicePage {
         await this.swipe(start.x, start.y, end.x, end.y);
       } else {
         // Scroll from middle right to middle left
-        await this.swipe(size.width * 0.8, size.height / 2, size.width * 0.2, size.height / 2);
+        await this.swipe(
+          size.width * 0.8,
+          size.height / 2,
+          size.width * 0.2,
+          size.height / 2,
+        );
       }
       debugDevice('Successfully scrolled to left');
     } catch (error: any) {
@@ -806,7 +907,12 @@ export class AppiumDevice implements AndroidDevicePage {
         await this.swipe(start.x, start.y, end.x, end.y);
       } else {
         // Scroll from middle left to middle right
-        await this.swipe(size.width * 0.2, size.height / 2, size.width * 0.8, size.height / 2);
+        await this.swipe(
+          size.width * 0.2,
+          size.height / 2,
+          size.width * 0.8,
+          size.height / 2,
+        );
       }
       debugDevice('Successfully scrolled to right');
     } catch (error: any) {
@@ -823,7 +929,7 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param distance - Distance to scroll (default: 200)
    * @param startingPoint - Optional starting point for the scroll
    */
-  public async scrollUp(distance: number = 200, startingPoint?: Point): Promise<void> {
+  public async scrollUp(distance = 200, startingPoint?: Point): Promise<void> {
     debugDevice('Scrolling up by %d pixels', distance);
     const size = await this.size();
 
@@ -854,14 +960,20 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param distance - Distance to scroll (default: 200)
    * @param startingPoint - Optional starting point for the scroll
    */
-  public async scrollDown(distance: number = 200, startingPoint?: Point): Promise<void> {
+  public async scrollDown(
+    distance = 200,
+    startingPoint?: Point,
+  ): Promise<void> {
     debugDevice('Scrolling down by %d pixels', distance);
     const size = await this.size();
 
     try {
       if (startingPoint) {
         const start = { x: startingPoint.left, y: startingPoint.top };
-        const end = { x: start.x, y: Math.min(size.height, start.y + distance) };
+        const end = {
+          x: start.x,
+          y: Math.min(size.height, start.y + distance),
+        };
 
         await this.swipe(start.x, start.y, end.x, end.y);
       } else {
@@ -885,7 +997,10 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param distance - Distance to scroll (default: 200)
    * @param startingPoint - Optional starting point for the scroll
    */
-  public async scrollLeft(distance: number = 200, startingPoint?: Point): Promise<void> {
+  public async scrollLeft(
+    distance = 200,
+    startingPoint?: Point,
+  ): Promise<void> {
     debugDevice('Scrolling left by %d pixels', distance);
     const size = await this.size();
 
@@ -916,7 +1031,10 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param distance - Distance to scroll (default: 200)
    * @param startingPoint - Optional starting point for the scroll
    */
-  public async scrollRight(distance: number = 200, startingPoint?: Point): Promise<void> {
+  public async scrollRight(
+    distance = 200,
+    startingPoint?: Point,
+  ): Promise<void> {
     debugDevice('Scrolling right by %d pixels', distance);
     const size = await this.size();
 
@@ -950,24 +1068,38 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param endY - Ending Y coordinate
    * @param duration - Duration of the swipe in milliseconds (default: 800)
    */
-  public async swipe(startX: number, startY: number, endX: number, endY: number, duration: number = 800): Promise<void> {
-    debugDevice('Swiping from (%d, %d) to (%d, %d)', startX, startY, endX, endY);
+  public async swipe(
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    duration = 800,
+  ): Promise<void> {
+    debugDevice(
+      'Swiping from (%d, %d) to (%d, %d)',
+      startX,
+      startY,
+      endX,
+      endY,
+    );
     const driver = await this.getDriver();
 
     try {
       // Use W3C Actions API instead of deprecated touchAction
-      await driver.performActions([{
-        type: 'pointer',
-        id: 'finger1',
-        parameters: { pointerType: 'touch' },
-        actions: [
-          { type: 'pointerMove', duration: 0, x: startX, y: startY },
-          { type: 'pointerDown', button: 0 },
-          { type: 'pause', duration: 100 },
-          { type: 'pointerMove', duration: duration, x: endX, y: endY },
-          { type: 'pointerUp', button: 0 }
-        ]
-      }]);
+      await driver.performActions([
+        {
+          type: 'pointer',
+          id: 'finger1',
+          parameters: { pointerType: 'touch' },
+          actions: [
+            { type: 'pointerMove', duration: 0, x: startX, y: startY },
+            { type: 'pointerDown', button: 0 },
+            { type: 'pause', duration: 100 },
+            { type: 'pointerMove', duration: duration, x: endX, y: endY },
+            { type: 'pointerUp', button: 0 },
+          ],
+        },
+      ]);
       debugDevice('Successfully performed swipe');
     } catch (error: any) {
       debugDevice('Error performing swipe: %s', error.message);
@@ -1087,10 +1219,19 @@ export class AppiumDevice implements AndroidDevicePage {
         debugDevice('Mouse move to (%d, %d)', x, y);
         // Not directly supported in Appium, but can be simulated if needed
       },
-      drag: async (from: { x: number; y: number }, to: { x: number; y: number }) => {
-        debugDevice('Mouse drag from (%d, %d) to (%d, %d)', from.x, from.y, to.x, to.y);
+      drag: async (
+        from: { x: number; y: number },
+        to: { x: number; y: number },
+      ) => {
+        debugDevice(
+          'Mouse drag from (%d, %d) to (%d, %d)',
+          from.x,
+          from.y,
+          to.x,
+          to.y,
+        );
         await this.swipe(from.x, from.y, to.x, to.y);
-      }
+      },
     };
   }
 
@@ -1113,31 +1254,41 @@ export class AppiumDevice implements AndroidDevicePage {
             await driver.keys(text);
           } catch (error) {
             // Fallback to using W3C Actions API
-            await driver.performActions([{
-              type: 'key',
-              id: 'keyboard',
-              actions: text.split('').flatMap(char => [
-                { type: 'keyDown', value: char },
-                { type: 'keyUp', value: char }
-              ])
-            }]);
+            await driver.performActions([
+              {
+                type: 'key',
+                id: 'keyboard',
+                actions: text.split('').flatMap((char) => [
+                  { type: 'keyDown', value: char },
+                  { type: 'keyUp', value: char },
+                ]),
+              },
+            ]);
           }
         } else {
           // For non-ASCII characters (like Chinese), use keys which handles IME better
           try {
             await driver.keys(text);
           } catch (error) {
-            debugDevice('Error typing Chinese text: %s', (error as Error).message);
+            debugDevice(
+              'Error typing Chinese text: %s',
+              (error as Error).message,
+            );
             // Try alternative approach with setValue on a found input element
             try {
-              const inputElements = await driver.$$('//android.widget.EditText');
+              const inputElements = await driver.$$(
+                '//android.widget.EditText',
+              );
               if (inputElements.length > 0) {
                 await inputElements[0].setValue(text);
               } else {
                 throw new Error('No input elements found');
               }
             } catch (setValueError) {
-              debugDevice('setValue also failed: %s', (setValueError as Error).message);
+              debugDevice(
+                'setValue also failed: %s',
+                (setValueError as Error).message,
+              );
               throw error; // Re-throw original error
             }
           }
@@ -1151,27 +1302,31 @@ export class AppiumDevice implements AndroidDevicePage {
           debugDevice('Could not hide keyboard: %s', (error as Error).message);
         }
       },
-      press: async (action: { key: string; command?: string } | { key: string; command?: string }[]) => {
+      press: async (
+        action:
+          | { key: string; command?: string }
+          | { key: string; command?: string }[],
+      ) => {
         debugDevice('Keyboard press: %O', action);
         const driver = await this.getDriver();
 
         const pressKey = async (key: string) => {
           // Map common keys to Android key codes
           const keyCodeMap: Record<string, number> = {
-            'Enter': 66,
-            'Tab': 61,
-            'Backspace': 67,
-            'Delete': 112,
-            'Escape': 111,
-            'ArrowUp': 19,
-            'ArrowDown': 20,
-            'ArrowLeft': 21,
-            'ArrowRight': 22,
-            'Home': 122,
-            'End': 123,
-            'PageUp': 92,
-            'PageDown': 93,
-            'Space': 62
+            Enter: 66,
+            Tab: 61,
+            Backspace: 67,
+            Delete: 112,
+            Escape: 111,
+            ArrowUp: 19,
+            ArrowDown: 20,
+            ArrowLeft: 21,
+            ArrowRight: 22,
+            Home: 122,
+            End: 123,
+            PageUp: 92,
+            PageDown: 93,
+            Space: 62,
           };
 
           if (key in keyCodeMap) {
@@ -1179,14 +1334,16 @@ export class AppiumDevice implements AndroidDevicePage {
             await driver.pressKeyCode(keyCodeMap[key]);
           } else if (key.length === 1) {
             // For single characters, use W3C Actions API
-            await driver.performActions([{
-              type: 'key',
-              id: 'keyboard',
-              actions: [
-                { type: 'keyDown', value: key },
-                { type: 'keyUp', value: key }
-              ]
-            }]);
+            await driver.performActions([
+              {
+                type: 'key',
+                id: 'keyboard',
+                actions: [
+                  { type: 'keyDown', value: key },
+                  { type: 'keyUp', value: key },
+                ],
+              },
+            ]);
           }
         };
 
@@ -1197,7 +1354,7 @@ export class AppiumDevice implements AndroidDevicePage {
         } else {
           await pressKey(action.key);
         }
-      }
+      },
     };
   }
 
@@ -1219,7 +1376,9 @@ export class AppiumDevice implements AndroidDevicePage {
       try {
         // Method 1: Try to find the element and clear it directly
         if (element.attributes['resource-id']) {
-          const elem = await driver.$(`[resource-id="${element.attributes['resource-id']}"]`);
+          const elem = await driver.$(
+            `[resource-id="${element.attributes['resource-id']}"]`,
+          );
           if (await elem.isExisting()) {
             await elem.clearValue();
             debugDevice('Successfully cleared input using clearValue');
@@ -1234,7 +1393,7 @@ export class AppiumDevice implements AndroidDevicePage {
       try {
         // Send Ctrl+A to select all text (using META key for Android)
         await driver.pressKeyCode(29, 1); // 29 is 'A', 1 is META_SHIFT_ON for Ctrl+A
-        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay
 
         // Then send Delete to clear the selection
         await driver.pressKeyCode(67); // 67 is DELETE/BACKSPACE
@@ -1245,16 +1404,19 @@ export class AppiumDevice implements AndroidDevicePage {
         // Method 3: Fallback - send multiple backspace keys
         try {
           // Send backspace multiple times to clear the field
-          for (let i = 0; i < 50; i++) { // Arbitrary limit to prevent infinite loop
+          for (let i = 0; i < 50; i++) {
+            // Arbitrary limit to prevent infinite loop
             await driver.pressKeyCode(67); // BACKSPACE
           }
           debugDevice('Successfully cleared input using multiple backspaces');
         } catch (backspaceError) {
-          debugDevice('Backspace method also failed: %s', (backspaceError as Error).message);
+          debugDevice(
+            'Backspace method also failed: %s',
+            (backspaceError as Error).message,
+          );
           throw new Error('All clear input methods failed');
         }
       }
-
     } catch (error: any) {
       debugDevice('Error clearing input: %s', error.message);
       throw new Error(`Failed to clear input: ${error.message}`, {
@@ -1275,17 +1437,19 @@ export class AppiumDevice implements AndroidDevicePage {
 
     try {
       // Use W3C Actions API instead of deprecated touchAction
-      await driver.performActions([{
-        type: 'pointer',
-        id: 'finger1',
-        parameters: { pointerType: 'touch' },
-        actions: [
-          { type: 'pointerMove', duration: 0, x, y },
-          { type: 'pointerDown', button: 0 },
-          { type: 'pause', duration: 100 },
-          { type: 'pointerUp', button: 0 }
-        ]
-      }]);
+      await driver.performActions([
+        {
+          type: 'pointer',
+          id: 'finger1',
+          parameters: { pointerType: 'touch' },
+          actions: [
+            { type: 'pointerMove', duration: 0, x, y },
+            { type: 'pointerDown', button: 0 },
+            { type: 'pause', duration: 100 },
+            { type: 'pointerUp', button: 0 },
+          ],
+        },
+      ]);
       debugDevice('Successfully tapped at (%d, %d)', x, y);
     } catch (error: any) {
       debugDevice('Error tapping at (%d, %d): %s', x, y, error.message);
@@ -1337,7 +1501,7 @@ export class AppiumDevice implements AndroidDevicePage {
     try {
       const element = await driver.$(xpath);
 
-      if (!await element.isExisting()) {
+      if (!(await element.isExisting())) {
         throw new Error(`Element not found for XPath: ${xpath}`);
       }
 
@@ -1358,7 +1522,7 @@ export class AppiumDevice implements AndroidDevicePage {
         attributes: {
           nodeType: this.getNodeTypeFromClassName(className),
           'resource-id': resourceId,
-          'class': className,
+          class: className,
           'content-desc': contentDesc,
         },
         nodeType: this.getNodeTypeFromClassName(className),
@@ -1367,18 +1531,25 @@ export class AppiumDevice implements AndroidDevicePage {
           left: location.x,
           top: location.y,
           width: size.width,
-          height: size.height
+          height: size.height,
         },
-        center: [location.x + size.width / 2, location.y + size.height / 2]
+        center: [location.x + size.width / 2, location.y + size.height / 2],
       };
 
       debugDevice('Successfully got element info for XPath: %s', xpath);
       return elementInfo;
     } catch (error: any) {
-      debugDevice('Error getting element info for XPath %s: %s', xpath, error.message);
-      throw new Error(`Failed to get element info for XPath ${xpath}: ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error getting element info for XPath %s: %s',
+        xpath,
+        error.message,
+      );
+      throw new Error(
+        `Failed to get element info for XPath ${xpath}: ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -1391,9 +1562,11 @@ export class AppiumDevice implements AndroidDevicePage {
     const lowerClassName = className.toLowerCase();
 
     if (lowerClassName.includes('button')) return NodeType.BUTTON;
-    if (lowerClassName.includes('text') || lowerClassName.includes('edit')) return NodeType.TEXT;
+    if (lowerClassName.includes('text') || lowerClassName.includes('edit'))
+      return NodeType.TEXT;
     if (lowerClassName.includes('image')) return NodeType.IMG;
-    if (lowerClassName.includes('input') || lowerClassName.includes('edit')) return NodeType.FORM_ITEM;
+    if (lowerClassName.includes('input') || lowerClassName.includes('edit'))
+      return NodeType.FORM_ITEM;
 
     return NodeType.CONTAINER;
   }
@@ -1411,12 +1584,18 @@ export class AppiumDevice implements AndroidDevicePage {
     debugDevice('Getting device information');
 
     try {
-      const [screenSize, orientation, deviceTime, currentPackage, currentActivity] = await Promise.all([
+      const [
+        screenSize,
+        orientation,
+        deviceTime,
+        currentPackage,
+        currentActivity,
+      ] = await Promise.all([
         this.size(),
         this.getScreenOrientation(),
         this.getDeviceTime(),
         this.getCurrentPackage(),
-        this.getCurrentActivity()
+        this.getCurrentActivity(),
       ]);
 
       const deviceInfo = {
@@ -1424,7 +1603,7 @@ export class AppiumDevice implements AndroidDevicePage {
         orientation,
         deviceTime,
         currentPackage,
-        currentActivity
+        currentActivity,
       };
 
       debugDevice('Device info: %O', deviceInfo);
@@ -1443,7 +1622,10 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param selector - Element selector
    * @param timeout - Timeout in milliseconds (default: 10000)
    */
-  public async waitForElement(selector: string, timeout: number = 10000): Promise<WebdriverIO.Element> {
+  public async waitForElement(
+    selector: string,
+    timeout = 10000,
+  ): Promise<WebdriverIO.Element> {
     debugDevice('Waiting for element: %s (timeout: %dms)', selector, timeout);
     const driver = await this.getDriver();
 
@@ -1466,8 +1648,15 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param selector - Element selector
    * @param timeout - Timeout in milliseconds (default: 10000)
    */
-  public async waitForElementToDisappear(selector: string, timeout: number = 10000): Promise<void> {
-    debugDevice('Waiting for element to disappear: %s (timeout: %dms)', selector, timeout);
+  public async waitForElementToDisappear(
+    selector: string,
+    timeout = 10000,
+  ): Promise<void> {
+    debugDevice(
+      'Waiting for element to disappear: %s (timeout: %dms)',
+      selector,
+      timeout,
+    );
     const driver = await this.getDriver();
 
     try {
@@ -1476,9 +1665,12 @@ export class AppiumDevice implements AndroidDevicePage {
       debugDevice('Element disappeared: %s', selector);
     } catch (error: any) {
       debugDevice('Element did not disappear within timeout: %s', selector);
-      throw new Error(`Element did not disappear within ${timeout}ms: ${selector}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Element did not disappear within ${timeout}ms: ${selector}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -1489,28 +1681,38 @@ export class AppiumDevice implements AndroidDevicePage {
    * @param y - Y coordinate
    * @param duration - Duration of the long press in milliseconds (default: 1000)
    */
-  public async longPress(x: number, y: number, duration: number = 1000): Promise<void> {
+  public async longPress(x: number, y: number, duration = 1000): Promise<void> {
     debugDevice('Long pressing at (%d, %d) for %dms', x, y, duration);
     const driver = await this.getDriver();
 
     try {
-      await driver.performActions([{
-        type: 'pointer',
-        id: 'finger1',
-        parameters: { pointerType: 'touch' },
-        actions: [
-          { type: 'pointerMove', duration: 0, x, y },
-          { type: 'pointerDown', button: 0 },
-          { type: 'pause', duration },
-          { type: 'pointerUp', button: 0 }
-        ]
-      }]);
+      await driver.performActions([
+        {
+          type: 'pointer',
+          id: 'finger1',
+          parameters: { pointerType: 'touch' },
+          actions: [
+            { type: 'pointerMove', duration: 0, x, y },
+            { type: 'pointerDown', button: 0 },
+            { type: 'pause', duration },
+            { type: 'pointerUp', button: 0 },
+          ],
+        },
+      ]);
       debugDevice('Successfully performed long press at (%d, %d)', x, y);
     } catch (error: any) {
-      debugDevice('Error performing long press at (%d, %d): %s', x, y, error.message);
-      throw new Error(`Failed to perform long press at (${x}, ${y}): ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error performing long press at (%d, %d): %s',
+        x,
+        y,
+        error.message,
+      );
+      throw new Error(
+        `Failed to perform long press at (${x}, ${y}): ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -1525,14 +1727,22 @@ export class AppiumDevice implements AndroidDevicePage {
 
     try {
       await this.tap(x, y);
-      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between taps
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay between taps
       await this.tap(x, y);
       debugDevice('Successfully performed double tap at (%d, %d)', x, y);
     } catch (error: any) {
-      debugDevice('Error performing double tap at (%d, %d): %s', x, y, error.message);
-      throw new Error(`Failed to perform double tap at (${x}, ${y}): ${error.message}`, {
-        cause: error,
-      });
+      debugDevice(
+        'Error performing double tap at (%d, %d): %s',
+        x,
+        y,
+        error.message,
+      );
+      throw new Error(
+        `Failed to perform double tap at (${x}, ${y}): ${error.message}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
