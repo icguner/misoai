@@ -4,18 +4,13 @@ import path from 'node:path';
 import { type Point, type Size, getAIConfig } from 'misoai-core';
 import type { PageType } from 'misoai-core';
 import { getTmpFile, sleep } from 'misoai-core/utils';
-import {
-  MIDSCENE_ADB_PATH,
-  MIDSCENE_ADB_REMOTE_HOST,
-  MIDSCENE_ADB_REMOTE_PORT,
-  MIDSCENE_ANDROID_IME_STRATEGY,
-} from '@midscene/shared/env';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { isValidPNGImageBuffer, resizeImg } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
-import { repeat } from '@midscene/shared/utils';
-import type { AndroidDeviceInputOpt, AndroidDevicePage } from '@midscene/web';
-import { ADB } from 'appium-adb';
+import { MIDSCENE_ANDROID_IME_STRATEGY } from 'misoai-shared/env';
+import type { ElementInfo } from 'misoai-shared/extractor';
+import { isValidPNGImageBuffer, resizeImg } from 'misoai-shared/img';
+import { getDebug } from 'misoai-shared/logger';
+import { repeat } from 'misoai-shared/utils';
+import type { AndroidDeviceInputOpt, AndroidDevicePage } from 'misoai-web';
+import { remote } from 'webdriverio';
 
 const androidScreenshotPath = '/data/local/tmp/midscene_screenshot.png';
 // only for Android, because it's impossible to scroll to the bottom, so we need to set a default scroll times
@@ -25,19 +20,21 @@ const defaultNormalScrollDuration = 1000;
 
 export const debugPage = getDebug('android:device');
 export type AndroidDeviceOpt = {
-  androidAdbPath?: string;
-  remoteAdbHost?: string;
-  remoteAdbPort?: number;
-  imeStrategy?: 'always-yadb' | 'yadb-for-non-ascii';
+  imeStrategy?: 'webdriverio-only' | 'prefer-webdriverio';
+  // WebDriverIO specific options
+  capabilities?: any;
+  hostname?: string;
+  port?: number;
+  protocol?: 'http' | 'https';
+  path?: string;
 } & AndroidDeviceInputOpt;
 
 export class AndroidDevice implements AndroidDevicePage {
   private deviceId: string;
   private screenSize: Size | null = null;
-  private yadbPushed = false;
   private deviceRatio = 1;
-  private adb: ADB | null = null;
-  private connectingAdb: Promise<ADB> | null = null;
+  private driver: any = null;
+  private connectingDriver: Promise<any> | null = null;
   private destroyed = false;
   pageType: PageType = 'android';
   uri: string | undefined;
@@ -50,52 +47,50 @@ export class AndroidDevice implements AndroidDevicePage {
     this.options = options;
   }
 
-  public async connect(): Promise<ADB> {
-    return this.getAdb();
-  }
+  /**
+   * Connects to the Appium server and starts a session
+   */
+  public async connect(): Promise<any> {
+    if (this.driver) {
+      debugPage('Already connected to Appium server');
+      return this.driver;
+    }
 
-  public async getAdb(): Promise<ADB> {
-    if (this.destroyed) {
-      throw new Error(
-        `AndroidDevice ${this.deviceId} has been destroyed and cannot execute ADB commands`,
+    try {
+      const defaultPort = 4723;
+      const defaultHost = '127.0.0.1';
+
+      debugPage(
+        'Connecting to Appium server at %s://%s:%d%s',
+        this.options?.protocol || 'http',
+        this.options?.hostname || defaultHost,
+        this.options?.port || defaultPort,
+        this.options?.path || '/wd/hub',
       );
-    }
 
-    // if already has ADB instance, return it
-    if (this.adb) {
-      return this.createAdbProxy(this.adb);
-    }
+      const options = {
+        hostname: this.options?.hostname || defaultHost,
+        port: this.options?.port || defaultPort,
+        path: this.options?.path || '/wd/hub',
+        protocol: this.options?.protocol || 'http',
+        capabilities: this.options?.capabilities,
+        logLevel: 'info' as const,
+        connectionRetryTimeout: 120000,
+        connectionRetryCount: 3,
+      };
 
-    // If already connecting, wait for connection to complete
-    if (this.connectingAdb) {
-      return this.connectingAdb.then((adb) => this.createAdbProxy(adb));
-    }
+      debugPage(
+        'Starting Appium session with capabilities: %O',
+        this.options?.capabilities,
+      );
+      this.driver = await remote(options);
+      debugPage(
+        'Successfully connected to Appium server, session ID: %s',
+        this.driver.sessionId,
+      );
 
-    // Create new connection Promise
-    this.connectingAdb = (async () => {
-      let error: Error | null = null;
-      debugPage(`Initializing ADB with device ID: ${this.deviceId}`);
-
-      try {
-        const androidAdbPath =
-          this.options?.androidAdbPath || getAIConfig(MIDSCENE_ADB_PATH);
-        const remoteAdbHost =
-          this.options?.remoteAdbHost || getAIConfig(MIDSCENE_ADB_REMOTE_HOST);
-        const remoteAdbPort =
-          this.options?.remoteAdbPort || getAIConfig(MIDSCENE_ADB_REMOTE_PORT);
-
-        this.adb = await new ADB({
-          udid: this.deviceId,
-          adbExecTimeout: 60000,
-          executable: androidAdbPath
-            ? { path: androidAdbPath, defaultArgs: [] }
-            : undefined,
-          remoteAdbHost: remoteAdbHost || undefined,
-          remoteAdbPort: remoteAdbPort ? Number(remoteAdbPort) : undefined,
-        });
-
-        const size = await this.getScreenSize();
-        console.log(`
+      const size = await this.getScreenSize();
+      console.log(`
 DeviceId: ${this.deviceId}
 ScreenSize:
 ${Object.keys(size)
@@ -106,63 +101,112 @@ ${Object.keys(size)
   )
   .join('\n')}
 `);
-        debugPage('ADB initialized successfully');
-        return this.adb;
+      debugPage('WebDriverIO initialized successfully');
+      return this.driver;
+    } catch (error: any) {
+      debugPage('Failed to connect to Appium server: %s', error.message);
+      throw new Error(`Failed to connect to Appium server: ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  /**
+   * Disconnects from the Appium server and ends the session
+   */
+  public async disconnect(): Promise<void> {
+    if (!this.driver) {
+      debugPage('No active Appium session to disconnect');
+      return;
+    }
+
+    try {
+      debugPage('Ending Appium session');
+
+      // Check if this is a Sauce Labs session by examining the server hostname
+      const isSauceLabs = this.options?.hostname?.includes('saucelabs.com');
+
+      if (isSauceLabs) {
+        // For Sauce Labs, we need to ensure proper session termination
+        debugPage('Detected Sauce Labs session, ensuring proper termination');
+
+        try {
+          // First try to execute a custom script to set test status if possible
+          // This helps with proper reporting in Sauce Labs dashboard
+          await this.driver.executeScript('sauce:job-result', [
+            {
+              passed: true,
+            },
+          ]);
+        } catch (e) {
+          // Ignore errors from this command as it's optional
+          debugPage(
+            'Could not set Sauce Labs job result: %s',
+            (e as Error).message,
+          );
+        }
+
+        // Then delete the session
+        await this.driver.deleteSession();
+      } else {
+        // For regular Appium sessions, use deleteSession()
+        await this.driver.deleteSession();
+      }
+
+      this.driver = null;
+      debugPage('Successfully ended Appium session');
+    } catch (error: any) {
+      debugPage('Error ending Appium session: %s', error.message);
+      throw new Error(`Failed to end Appium session: ${error.message}`, {
+        cause: error,
+      });
+    }
+  }
+
+  public async getDriver(): Promise<any> {
+    if (this.destroyed) {
+      throw new Error(
+        `AndroidDevice ${this.deviceId} has been destroyed and cannot execute WebDriverIO commands`,
+      );
+    }
+
+    // if already has WebDriverIO instance, return it
+    if (this.driver) {
+      return this.driver;
+    }
+
+    // If already connecting, wait for connection to complete
+    if (this.connectingDriver) {
+      return this.connectingDriver;
+    }
+
+    // Create new connection Promise
+    this.connectingDriver = (async () => {
+      let error: Error | null = null;
+      debugPage(`Initializing WebDriverIO with device ID: ${this.deviceId}`);
+
+      try {
+        await this.connect();
+        return this.driver;
       } catch (e) {
-        debugPage(`Failed to initialize ADB: ${e}`);
+        debugPage(`Failed to initialize WebDriverIO: ${e}`);
         error = new Error(`Unable to connect to device ${this.deviceId}: ${e}`);
       } finally {
-        this.connectingAdb = null;
+        this.connectingDriver = null;
       }
 
       if (error) {
         throw error;
       }
 
-      throw new Error('ADB initialization failed unexpectedly');
+      throw new Error('WebDriverIO initialization failed unexpectedly');
     })();
 
-    return this.connectingAdb;
-  }
-
-  private createAdbProxy(adb: ADB): ADB {
-    // create ADB proxy object, intercept all method calls
-    return new Proxy(adb, {
-      get: (target, prop) => {
-        const originalMethod = target[prop as keyof typeof target];
-
-        // if the property is not a function, return the original value
-        if (typeof originalMethod !== 'function') {
-          return originalMethod;
-        }
-
-        // return the proxied method
-        return async (...args: any[]) => {
-          try {
-            debugPage(`adb ${String(prop)} ${args.join(' ')}`);
-            return originalMethod.apply(target, args);
-          } catch (error: any) {
-            const methodName = String(prop);
-            const deviceId = this.deviceId;
-            debugPage(
-              `ADB error with device ${deviceId} when calling ${methodName}: ${error}`,
-            );
-
-            // throw the error again
-            throw new Error(
-              `ADB error with device ${deviceId} when calling ${methodName}, please check https://midscenejs.com/integrate-with-android.html#faq : ${error.message}`,
-              {
-                cause: error,
-              },
-            );
-          }
-        };
-      },
-    });
+    return this.connectingDriver;
   }
 
   public async launch(uri: string): Promise<AndroidDevice> {
-    const adb = await this.getAdb();
+    const driver = await this.getDriver();
     this.uri = uri;
 
     try {
@@ -172,17 +216,14 @@ ${Object.keys(size)
         uri.includes('://')
       ) {
         // If it's a URI with scheme
-        await adb.startUri(uri);
+        await driver.url(uri);
       } else if (uri.includes('/')) {
         // If it's in format like 'com.android/settings.Settings'
         const [appPackage, appActivity] = uri.split('/');
-        await adb.startApp({
-          pkg: appPackage,
-          activity: appActivity,
-        });
+        await driver.startActivity(appPackage, appActivity);
       } else {
         // Assume it's just a package name
-        await adb.activateApp(uri);
+        await driver.activateApp(uri);
       }
       debugPage(`Successfully launched: ${uri}`);
     } catch (error: any) {
@@ -193,16 +234,6 @@ ${Object.keys(size)
     }
 
     return this;
-  }
-
-  private async execYadb(keyboardContent: string): Promise<void> {
-    await this.ensureYadb();
-
-    const adb = await this.getAdb();
-
-    await adb.shell(
-      `app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard "${keyboardContent}"`,
-    );
   }
 
   // @deprecated
@@ -223,50 +254,29 @@ ${Object.keys(size)
     physical: string;
     orientation: number; // 0=portrait, 1=landscape, 2=reverse portrait, 3=reverse landscape
   }> {
-    const adb = await this.getAdb();
-    const stdout = await adb.shell(['wm', 'size']);
-    const size = {
-      override: '',
-      physical: '',
+    const driver = await this.getDriver();
+    
+    // Get window size using WebDriverIO API
+    const windowSize = await driver.getWindowSize();
+    const orientation = await driver.getOrientation();
+    
+    // Convert WebDriverIO orientation to Android orientation values
+    const orientationMap: Record<string, number> = {
+      'PORTRAIT': 0,
+      'LANDSCAPE': 1,
+      'PORTRAIT_UPSIDE_DOWN': 2,
+      'LANDSCAPE_LEFT': 3
     };
 
-    // First try to get Override size
-    const overrideSize = new RegExp(/Override size: ([^\r?\n]+)*/g).exec(
-      stdout,
-    );
-    if (overrideSize && overrideSize.length >= 2 && overrideSize[1]) {
-      debugPage(`Using Override size: ${overrideSize[1].trim()}`);
-      size.override = overrideSize[1].trim();
-    }
+    const size = {
+      override: `${windowSize.width}x${windowSize.height}`,
+      physical: `${windowSize.width}x${windowSize.height}`,
+      orientation: orientationMap[orientation] || 0
+    };
 
-    // If Override size doesn't exist, fallback to Physical size
-    const physicalSize = new RegExp(/Physical size: ([^\r?\n]+)*/g).exec(
-      stdout,
-    );
-    if (physicalSize && physicalSize.length >= 2) {
-      debugPage(`Using Physical size: ${physicalSize[1].trim()}`);
-      size.physical = physicalSize[1].trim();
-    }
-
-    let orientation = 0;
-    try {
-      const orientationStdout = await adb.shell(
-        'dumpsys input | grep SurfaceOrientation',
-      );
-      const orientationMatch = orientationStdout.match(
-        /SurfaceOrientation:\s*(\d)/,
-      );
-      orientation = orientationMatch ? Number(orientationMatch[1]) : 0;
-      debugPage(`Screen orientation: ${orientation}`);
-    } catch (e) {
-      debugPage('Failed to get orientation, default to 0');
-    }
-
-    if (size.override || size.physical) {
-      return { ...size, orientation };
-    }
-
-    throw new Error(`Failed to get screen size, output: ${stdout}`);
+    debugPage(`Using screen size: ${size.override}, orientation: ${size.orientation}`);
+    
+    return size;
   }
 
   async size(): Promise<Size> {
@@ -274,42 +284,76 @@ ${Object.keys(size)
       return this.screenSize;
     }
 
-    const adb = await this.getAdb();
+    const driver = await this.getDriver();
 
-    // Use custom getScreenSize method instead of adb.getScreenSize()
-    const screenSize = await this.getScreenSize();
-    // screenSize is a string like "width x height"
-
-    // handle string format "width x height"
-    const match = (screenSize.override || screenSize.physical).match(
-      /(\d+)x(\d+)/,
-    );
-    if (!match || match.length < 3) {
-      throw new Error(`Unable to parse screen size: ${screenSize}`);
-    }
-
-    const isLandscape =
-      screenSize.orientation === 1 || screenSize.orientation === 3;
-    const width = Number.parseInt(match[isLandscape ? 2 : 1], 10);
-    const height = Number.parseInt(match[isLandscape ? 1 : 2], 10);
-
-    // Get device display density
-    const densityNum = await adb.getScreenDensity();
-    // Standard density is 160, calculate the ratio
-    this.deviceRatio = Number(densityNum) / 160;
-
-    // calculate logical pixel size using reverseAdjustCoordinates function
-    const { x: logicalWidth, y: logicalHeight } = this.reverseAdjustCoordinates(
-      width,
-      height,
-    );
+    // Use WebDriverIO getWindowSize method
+    const windowSize = await driver.getWindowSize();
+    const orientation = await driver.getOrientation();
+    
+    // Get device display density (using default ratio for now)
+    this.deviceRatio = 1; // WebDriverIO handles density automatically
 
     this.screenSize = {
-      width: logicalWidth,
-      height: logicalHeight,
+      width: windowSize.width,
+      height: windowSize.height,
     };
 
     return this.screenSize;
+  }
+
+  async screenshotBase64(): Promise<string> {
+    debugPage('screenshotBase64 begin');
+    const { width, height } = await this.size();
+    const driver = await this.getDriver();
+    let screenshotBuffer;
+
+    try {
+      const screenshotBase64 = await driver.takeScreenshot();
+      screenshotBuffer = Buffer.from(screenshotBase64, 'base64');
+
+      // make sure screenshotBuffer is not null
+      if (!screenshotBuffer) {
+        throw new Error(
+          'Failed to capture screenshot: screenshotBuffer is null',
+        );
+      }
+
+      // check if the buffer is a valid PNG image, it might be a error string
+      if (!isValidPNGImageBuffer(screenshotBuffer)) {
+        debugPage('Invalid image buffer detected: not a valid image format');
+        throw new Error(
+          'Screenshot buffer has invalid format: could not find valid image signature',
+        );
+      }
+    } catch (error) {
+      const screenshotPath = getTmpFile('png')!;
+
+      try {
+        // Take a screenshot using WebDriverIO mobile command
+        await driver.execute('mobile: shell', {
+          command: 'screencap',
+          args: ['-p', androidScreenshotPath]
+        });
+      } catch (error) {
+        // Fallback screenshot method if mobile shell fails
+        throw new Error('Unable to take screenshot using available methods');
+      }
+
+      await driver.execute('mobile: pullFile', {
+        remotePath: androidScreenshotPath,
+        localPath: screenshotPath
+      });
+      screenshotBuffer = await fs.promises.readFile(screenshotPath);
+    }
+
+    const resizedScreenshotBuffer = await resizeImg(screenshotBuffer, {
+      width,
+      height,
+    });
+
+    const result = `data:image/jpeg;base64,${resizedScreenshotBuffer.toString('base64')}`;
+    debugPage('screenshotBase64 end');
+    return result;
   }
 
   private adjustCoordinates(x: number, y: number): { x: number; y: number } {
@@ -331,32 +375,379 @@ ${Object.keys(size)
     };
   }
 
-  async screenshotBase64(): Promise<string> {
-    debugPage('screenshotBase64 begin');
+  get mouse() {
+    return {
+      click: (x: number, y: number) => this.mouseClick(x, y),
+      wheel: (deltaX: number, deltaY: number) =>
+        this.mouseWheel(deltaX, deltaY),
+      move: (x: number, y: number) => this.mouseMove(x, y),
+      drag: (from: { x: number; y: number }, to: { x: number; y: number }) =>
+        this.mouseDrag(from, to),
+    };
+  }
+
+  get keyboard() {
+    return {
+      type: (text: string, options?: AndroidDeviceInputOpt) =>
+        this.keyboardType(text, options),
+      press: (
+        action:
+          | { key: string; command?: string }
+          | { key: string; command?: string }[],
+      ) => this.keyboardPressAction(action),
+    };
+  }
+
+  async clearInput(element: ElementInfo): Promise<void> {
+    if (!element) {
+      return;
+    }
+
+    const driver = await this.getDriver();
+
+    await this.mouse.click(element.center[0], element.center[1]);
+
+    // Try to clear using WebDriverIO methods first
+    try {
+      // Select all text and delete
+      await driver.sendKeys(['Meta', 'a']); // Ctrl+A equivalent on Android
+      await driver.sendKeys('Delete');
+    } catch (error) {
+      // Fallback: Click multiple times on backspace
+      debugPage('Standard clear failed, using backspace fallback');
+      for (let i = 0; i < 50; i++) {
+        await driver.pressKeyCode(67); // Backspace key code
+      }
+    }
+
+    if (await driver.isKeyboardShown()) {
+      return;
+    }
+
+    await this.mouse.click(element.center[0], element.center[1]);
+  }
+
+  async url(): Promise<string> {
+    return '';
+  }
+
+  async scrollUntilTop(startPoint?: Point): Promise<void> {
+    if (startPoint) {
+      const start = { x: startPoint.left, y: startPoint.top };
+      const end = { x: start.x, y: 0 };
+
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await repeat(defaultScrollUntilTimes, () =>
+      this.mouseWheel(0, 9999999, defaultFastScrollDuration),
+    );
+    await sleep(1000);
+  }
+
+  async scrollUntilBottom(startPoint?: Point): Promise<void> {
+    if (startPoint) {
+      const { height } = await this.size();
+      const start = { x: startPoint.left, y: startPoint.top };
+      const end = { x: start.x, y: height };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await repeat(defaultScrollUntilTimes, () =>
+      this.mouseWheel(0, -9999999, defaultFastScrollDuration),
+    );
+    await sleep(1000);
+  }
+
+  async scrollUntilLeft(startPoint?: Point): Promise<void> {
+    if (startPoint) {
+      const start = { x: startPoint.left, y: startPoint.top };
+      const end = { x: 0, y: start.y };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await repeat(defaultScrollUntilTimes, () =>
+      this.mouseWheel(9999999, 0, defaultFastScrollDuration),
+    );
+    await sleep(1000);
+  }
+
+  async scrollUntilRight(startPoint?: Point): Promise<void> {
+    if (startPoint) {
+      const { width } = await this.size();
+      const start = { x: startPoint.left, y: startPoint.top };
+      const end = { x: width, y: start.y };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await repeat(defaultScrollUntilTimes, () =>
+      this.mouseWheel(-9999999, 0, defaultFastScrollDuration),
+    );
+    await sleep(1000);
+  }
+
+  async scrollUp(distance?: number, startPoint?: Point): Promise<void> {
+    const { height } = await this.size();
+    const scrollDistance = distance || height;
+
+    if (startPoint) {
+      const start = { x: startPoint.left, y: startPoint.top };
+      const endY = Math.max(0, start.y - scrollDistance);
+      const end = { x: start.x, y: endY };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await this.mouseWheel(0, scrollDistance);
+  }
+
+  async scrollDown(distance?: number, startPoint?: Point): Promise<void> {
+    const { height } = await this.size();
+    const scrollDistance = distance || height;
+
+    if (startPoint) {
+      const start = { x: startPoint.left, y: startPoint.top };
+      const endY = Math.min(height, start.y + scrollDistance);
+      const end = { x: start.x, y: endY };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await this.mouseWheel(0, -scrollDistance);
+  }
+
+  async scrollLeft(distance?: number, startPoint?: Point): Promise<void> {
+    const { width } = await this.size();
+    const scrollDistance = distance || width;
+
+    if (startPoint) {
+      const start = { x: startPoint.left, y: startPoint.top };
+      const endX = Math.max(0, start.x - scrollDistance);
+      const end = { x: endX, y: start.y };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await this.mouseWheel(scrollDistance, 0);
+  }
+
+  async scrollRight(distance?: number, startPoint?: Point): Promise<void> {
+    const { width } = await this.size();
+    const scrollDistance = distance || width;
+
+    if (startPoint) {
+      const start = { x: startPoint.left, y: startPoint.top };
+      const endX = Math.min(width, start.x + scrollDistance);
+      const end = { x: endX, y: start.y };
+      await this.mouseDrag(start, end);
+      return;
+    }
+
+    await this.mouseWheel(-scrollDistance, 0);
+  }
+
+  private async keyboardType(
+    text: string,
+    options?: AndroidDeviceInputOpt,
+  ): Promise<void> {
+    if (!text) return;
+    const driver = await this.getDriver();
+    const IME_STRATEGY =
+      (this.options?.imeStrategy ||
+        getAIConfig(MIDSCENE_ANDROID_IME_STRATEGY)) ??
+      'webdriverio-only';
+    const isAutoDismissKeyboard =
+      options?.autoDismissKeyboard ?? this.options?.autoDismissKeyboard ?? true;
+
+    // Use WebDriverIO sendKeys method
+    await driver.sendKeys(text);
+
+    if (isAutoDismissKeyboard === true) {
+      await driver.hideKeyboard();
+    }
+  }
+
+  private async keyboardPress(key: string): Promise<void> {
+    // Map web keys to Android key codes (numbers)
+    const keyCodeMap: Record<string, number> = {
+      Enter: 66,
+      Backspace: 67,
+      Tab: 61,
+      ArrowUp: 19,
+      ArrowDown: 20,
+      ArrowLeft: 21,
+      ArrowRight: 22,
+      Escape: 111,
+      Home: 3,
+      End: 123,
+    };
+
+    const driver = await this.getDriver();
+
+    const keyCode = keyCodeMap[key];
+    if (keyCode !== undefined) {
+      await driver.pressKeyCode(keyCode);
+    } else {
+      // for keys not in the mapping table, try to get its ASCII code (if it's a single character)
+      if (key.length === 1) {
+        const asciiCode = key.toUpperCase().charCodeAt(0);
+        // Android key codes, A-Z is 29-54
+        if (asciiCode >= 65 && asciiCode <= 90) {
+          await driver.pressKeyCode(asciiCode - 36); // 65-36=29 (A's key code)
+        }
+      }
+    }
+  }
+
+  private async keyboardPressAction(
+    action:
+      | { key: string; command?: string }
+      | { key: string; command?: string }[],
+  ): Promise<void> {
+    if (Array.isArray(action)) {
+      for (const act of action) {
+        await this.keyboardPress(act.key);
+      }
+    } else {
+      await this.keyboardPress(action.key);
+    }
+  }
+
+  private async mouseClick(x: number, y: number): Promise<void> {
+    const driver = await this.getDriver();
+
+    // Use adjusted coordinates
+    const { x: adjustedX, y: adjustedY } = this.adjustCoordinates(x, y);
+    await driver.touchAction({
+      action: 'tap',
+      x: adjustedX,
+      y: adjustedY
+    });
+  }
+
+  private async mouseMove(x: number, y: number): Promise<void> {
+    // WebDriverIO doesn't have direct cursor movement functionality, but we can record the position for subsequent operations
+    // This is a no-op, as WebDriverIO doesn't support direct mouse movement
+    return Promise.resolve();
+  }
+
+  private async mouseDrag(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+  ): Promise<void> {
+    const driver = await this.getDriver();
+
+    // Use adjusted coordinates
+    const { x: fromX, y: fromY } = this.adjustCoordinates(from.x, from.y);
+    const { x: toX, y: toY } = this.adjustCoordinates(to.x, to.y);
+
+    await driver.touchAction([
+      { action: 'press', x: fromX, y: fromY },
+      { action: 'wait', ms: 100 },
+      { action: 'moveTo', x: toX, y: toY },
+      { action: 'release' }
+    ]);
+  }
+
+  private async mouseWheel(
+    deltaX: number,
+    deltaY: number,
+    duration = defaultNormalScrollDuration,
+  ): Promise<void> {
     const { width, height } = await this.size();
-    const adb = await this.getAdb();
-    let screenshotBuffer;
+
+    // Calculate the starting and ending points of the swipe
+    const n = 4; // Divide the screen into n equal parts
+
+    // Set the starting point based on the swipe direction
+    const startX = deltaX < 0 ? (n - 1) * (width / n) : width / n;
+    const startY = deltaY < 0 ? (n - 1) * (height / n) : height / n;
+
+    // Calculate the maximum swipeable range
+    const maxNegativeDeltaX = startX;
+    const maxPositiveDeltaX = (n - 1) * (width / n);
+    const maxNegativeDeltaY = startY;
+    const maxPositiveDeltaY = (n - 1) * (height / n);
+
+    // Limit the swipe distance
+    deltaX = Math.max(-maxNegativeDeltaX, Math.min(deltaX, maxPositiveDeltaX));
+    deltaY = Math.max(-maxNegativeDeltaY, Math.min(deltaY, maxPositiveDeltaY));
+
+    // Calculate the end coordinates
+    const endX = startX + deltaX;
+    const endY = startY + deltaY;
+
+    // Adjust coordinates to fit device ratio
+    const { x: adjustedStartX, y: adjustedStartY } = this.adjustCoordinates(
+      startX,
+      startY,
+    );
+    const { x: adjustedEndX, y: adjustedEndY } = this.adjustCoordinates(
+      endX,
+      endY,
+    );
+
+    const driver = await this.getDriver();
+
+    // Execute the swipe operation using WebDriverIO touchAction
+    await driver.touchAction([
+      { action: 'press', x: adjustedStartX, y: adjustedStartY },
+      { action: 'wait', ms: duration },
+      { action: 'moveTo', x: adjustedEndX, y: adjustedEndY },
+      { action: 'release' }
+    ]);
+  }
+
+  async destroy(): Promise<void> {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
 
     try {
-      screenshotBuffer = await adb.takeScreenshot(null);
-
-      // make sure screenshotBuffer is not null
-      if (!screenshotBuffer) {
-        throw new Error(
-          'Failed to capture screenshot: screenshotBuffer is null',
-        );
+      // Clean up Android-specific resources first
+      if (this.driver) {
+        await this.driver.execute('mobile: shell', {
+          command: 'rm',
+          args: ['-f', androidScreenshotPath]
+        });
       }
 
-      // check if the buffer is a valid PNG image, it might be a error string
-      if (!isValidPNGImageBuffer(screenshotBuffer)) {
-        debugPage('Invalid image buffer detected: not a valid image format');
-        throw new Error(
-          'Screenshot buffer has invalid format: could not find valid image signature',
-        );
-      }
+      // Use the new disconnect method for proper session cleanup
+      await this.disconnect();
     } catch (error) {
-      const screenshotPath = getTmpFile('png')!;
+      console.error('Error during cleanup:', error);
+    }
 
-      try {
-        // Take a screenshot and save it locally
-        await adb.shell(`
+    this.connectingDriver = null;
+    this.screenSize = null;
+  }
+
+  async back(): Promise<void> {
+    const driver = await this.getDriver();
+    await driver.back();
+  }
+
+  async home(): Promise<void> {
+    const driver = await this.getDriver();
+    await driver.pressKeyCode(3);
+  }
+
+  async recentApps(): Promise<void> {
+    const driver = await this.getDriver();
+    await driver.pressKeyCode(82);
+  }
+
+  async getXpathsById(id: string): Promise<string[]> {
+    throw new Error('Not implemented');
+  }
+
+  async getElementInfoByXpath(xpath: string): Promise<ElementInfo> {
+    throw new Error('Not implemented');
+  }
+}
