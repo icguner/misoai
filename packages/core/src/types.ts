@@ -24,9 +24,10 @@ export type {
 export * from './yaml';
 
 export type AIUsageInfo = Record<string, any> & {
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
+  prompt_tokens: number | undefined;
+  completion_tokens: number | undefined;
+  total_tokens: number | undefined;
+  time_cost: number | undefined;
 };
 
 /**
@@ -133,9 +134,6 @@ export interface AgentDescribeElementAtPointResult {
 export abstract class UIContext<ElementType extends BaseElement = BaseElement> {
   abstract screenshotBase64: string;
 
-  // @deprecated('use tree instead')
-  abstract content: ElementType[];
-
   abstract tree: ElementTreeNode<ElementType>;
 
   abstract size: Size;
@@ -153,14 +151,6 @@ export interface InsightOptions {
   taskInfo?: Omit<InsightTaskInfo, 'durationMs'>;
   aiVendorFn?: CallAIFn;
 }
-
-// export interface UISection {
-//   name: string;
-//   description: string;
-//   sectionCharacteristics: string;
-//   rect: Rect;
-//   content: BaseElement[];
-// }
 
 export type EnsureObject<T> = { [K in keyof T]: any };
 
@@ -388,10 +378,6 @@ export interface ExecutorContext {
   element?: LocateResultElement | null;
 }
 
-export interface TaskCacheInfo {
-  hit: boolean;
-}
-
 export interface ExecutionTaskApply<
   Type extends ExecutionTaskType = any,
   TaskParam = any,
@@ -413,11 +399,16 @@ export interface ExecutionTaskApply<
     | void;
 }
 
+export interface ExecutionTaskHitBy {
+  from: string;
+  context: Record<string, any>;
+}
+
 export interface ExecutionTaskReturn<TaskOutput = unknown, TaskLog = unknown> {
   output?: TaskOutput;
   log?: TaskLog;
   recorder?: ExecutionRecorderItem[];
-  cache?: TaskCacheInfo;
+  hitBy?: ExecutionTaskHitBy;
 }
 
 export type ExecutionTask<
@@ -442,7 +433,6 @@ export type ExecutionTask<
       start: number;
       end?: number;
       cost?: number;
-      aiCost?: number;
     };
     usage?: AIUsageInfo;
   };

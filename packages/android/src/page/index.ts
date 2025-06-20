@@ -8,12 +8,13 @@ import {
   MIDSCENE_ADB_PATH,
   MIDSCENE_ADB_REMOTE_HOST,
   MIDSCENE_ADB_REMOTE_PORT,
-} from 'misoai-shared/env';
-import type { ElementInfo } from 'misoai-shared/extractor';
-import { isValidPNGImageBuffer, resizeImg } from 'misoai-shared/img';
-import { getDebug } from 'misoai-shared/logger';
-import { repeat } from 'misoai-shared/utils';
-import type { AndroidDeviceInputOpt, AndroidDevicePage } from 'misoai-web';
+  MIDSCENE_ANDROID_IME_STRATEGY,
+} from '@midscene/shared/env';
+import type { ElementInfo } from '@midscene/shared/extractor';
+import { isValidPNGImageBuffer, resizeImg } from '@midscene/shared/img';
+import { getDebug } from '@midscene/shared/logger';
+import { repeat } from '@midscene/shared/utils';
+import type { AndroidDeviceInputOpt, AndroidDevicePage } from '@midscene/web';
 import { ADB } from 'appium-adb';
 
 const androidScreenshotPath = '/data/local/tmp/midscene_screenshot.png';
@@ -27,6 +28,7 @@ export type AndroidDeviceOpt = {
   androidAdbPath?: string;
   remoteAdbHost?: string;
   remoteAdbPort?: number;
+  imeStrategy?: 'always-yadb' | 'yadb-for-non-ascii';
 } & AndroidDeviceInputOpt;
 
 export class AndroidDevice implements AndroidDevicePage {
@@ -36,6 +38,7 @@ export class AndroidDevice implements AndroidDevicePage {
   private deviceRatio = 1;
   private adb: ADB | null = null;
   private connectingAdb: Promise<ADB> | null = null;
+  private destroyed = false;
   pageType: PageType = 'android';
   uri: string | undefined;
   options?: AndroidDeviceOpt;
@@ -52,6 +55,12 @@ export class AndroidDevice implements AndroidDevicePage {
   }
 
   public async getAdb(): Promise<ADB> {
+    if (this.destroyed) {
+      throw new Error(
+        `AndroidDevice ${this.deviceId} has been destroyed and cannot execute ADB commands`,
+      );
+    }
+
     // if already has ADB instance, return it
     if (this.adb) {
       return this.createAdbProxy(this.adb);
@@ -196,6 +205,7 @@ ${Object.keys(size)
     );
   }
 
+  // @deprecated
   async getElementsInfo(): Promise<ElementInfo[]> {
     return [];
   }
@@ -349,388 +359,4 @@ ${Object.keys(size)
 
       try {
         // Take a screenshot and save it locally
-        await adb.shell(`screencap -p ${androidScreenshotPath}`);
-      } catch (error) {
-        await this.forceScreenshot(androidScreenshotPath);
-      }
-
-      await adb.pull(androidScreenshotPath, screenshotPath);
-      screenshotBuffer = await fs.promises.readFile(screenshotPath);
-    }
-
-    const resizedScreenshotBuffer = await resizeImg(screenshotBuffer, {
-      width,
-      height,
-    });
-
-    const result = `data:image/jpeg;base64,${resizedScreenshotBuffer.toString('base64')}`;
-    debugPage('screenshotBase64 end');
-    return result;
-  }
-
-  get mouse() {
-    return {
-      click: (x: number, y: number) => this.mouseClick(x, y),
-      wheel: (deltaX: number, deltaY: number) =>
-        this.mouseWheel(deltaX, deltaY),
-      move: (x: number, y: number) => this.mouseMove(x, y),
-      drag: (from: { x: number; y: number }, to: { x: number; y: number }) =>
-        this.mouseDrag(from, to),
-    };
-  }
-
-  get keyboard() {
-    return {
-      type: (text: string, options?: AndroidDeviceInputOpt) =>
-        this.keyboardType(text, options),
-      press: (
-        action:
-          | { key: string; command?: string }
-          | { key: string; command?: string }[],
-      ) => this.keyboardPressAction(action),
-    };
-  }
-
-  async clearInput(element: ElementInfo): Promise<void> {
-    if (!element) {
-      return;
-    }
-
-    await this.ensureYadb();
-
-    const adb = await this.getAdb();
-
-    await this.mouse.click(element.center[0], element.center[1]);
-
-    // Use the yadb tool to clear the input box
-    await adb.shell(
-      'app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard "~CLEAR~"',
-    );
-
-    if (await adb.isSoftKeyboardPresent()) {
-      return;
-    }
-
-    await this.mouse.click(element.center[0], element.center[1]);
-  }
-
-  private async forceScreenshot(path: string): Promise<void> {
-    // screenshot which is forbidden by app
-    await this.ensureYadb();
-
-    const adb = await this.getAdb();
-
-    await adb.shell(
-      `app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -screenshot ${path}`,
-    );
-  }
-
-  async url(): Promise<string> {
-    return '';
-  }
-
-  async scrollUntilTop(startPoint?: Point): Promise<void> {
-    if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: start.x, y: 0 };
-
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(0, 9999999, defaultFastScrollDuration),
-    );
-    await sleep(1000);
-  }
-
-  async scrollUntilBottom(startPoint?: Point): Promise<void> {
-    if (startPoint) {
-      const { height } = await this.size();
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: start.x, y: height };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(0, -9999999, defaultFastScrollDuration),
-    );
-    await sleep(1000);
-  }
-
-  async scrollUntilLeft(startPoint?: Point): Promise<void> {
-    if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: 0, y: start.y };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(9999999, 0, defaultFastScrollDuration),
-    );
-    await sleep(1000);
-  }
-
-  async scrollUntilRight(startPoint?: Point): Promise<void> {
-    if (startPoint) {
-      const { width } = await this.size();
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: width, y: start.y };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(-9999999, 0, defaultFastScrollDuration),
-    );
-    await sleep(1000);
-  }
-
-  async scrollUp(distance?: number, startPoint?: Point): Promise<void> {
-    const { height } = await this.size();
-    const scrollDistance = distance || height;
-
-    if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endY = Math.max(0, start.y - scrollDistance);
-      const end = { x: start.x, y: endY };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await this.mouseWheel(0, scrollDistance);
-  }
-
-  async scrollDown(distance?: number, startPoint?: Point): Promise<void> {
-    const { height } = await this.size();
-    const scrollDistance = distance || height;
-
-    if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endY = Math.min(height, start.y + scrollDistance);
-      const end = { x: start.x, y: endY };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await this.mouseWheel(0, -scrollDistance);
-  }
-
-  async scrollLeft(distance?: number, startPoint?: Point): Promise<void> {
-    const { width } = await this.size();
-    const scrollDistance = distance || width;
-
-    if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endX = Math.max(0, start.x - scrollDistance);
-      const end = { x: endX, y: start.y };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await this.mouseWheel(scrollDistance, 0);
-  }
-
-  async scrollRight(distance?: number, startPoint?: Point): Promise<void> {
-    const { width } = await this.size();
-    const scrollDistance = distance || width;
-
-    if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endX = Math.min(width, start.x + scrollDistance);
-      const end = { x: endX, y: start.y };
-      await this.mouseDrag(start, end);
-      return;
-    }
-
-    await this.mouseWheel(-scrollDistance, 0);
-  }
-
-  private async ensureYadb() {
-    // Push the YADB tool to the device only once
-    if (!this.yadbPushed) {
-      const adb = await this.getAdb();
-      const yadbBin = path.join(__dirname, '../../bin/yadb');
-      await adb.push(yadbBin, '/data/local/tmp');
-      this.yadbPushed = true;
-    }
-  }
-
-  private async keyboardType(
-    text: string,
-    options?: AndroidDeviceInputOpt,
-  ): Promise<void> {
-    if (!text) return;
-    const adb = await this.getAdb();
-    const isChinese = /[\p{Script=Han}\p{sc=Hani}]/u.test(text);
-    const isAutoDismissKeyboard =
-      options?.autoDismissKeyboard ?? this.options?.autoDismissKeyboard ?? true;
-
-    // for pure ASCII characters, directly use inputText
-    if (!isChinese) {
-      await adb.inputText(text);
-    } else {
-      // for non-ASCII characters, use yadb
-      await this.execYadb(text);
-    }
-
-    if (isAutoDismissKeyboard === true) {
-      await adb.hideKeyboard();
-    }
-  }
-
-  private async keyboardPress(key: string): Promise<void> {
-    // Map web keys to Android key codes (numbers)
-    const keyCodeMap: Record<string, number> = {
-      Enter: 66,
-      Backspace: 67,
-      Tab: 61,
-      ArrowUp: 19,
-      ArrowDown: 20,
-      ArrowLeft: 21,
-      ArrowRight: 22,
-      Escape: 111,
-      Home: 3,
-      End: 123,
-    };
-
-    const adb = await this.getAdb();
-
-    const keyCode = keyCodeMap[key];
-    if (keyCode !== undefined) {
-      await adb.keyevent(keyCode);
-    } else {
-      // for keys not in the mapping table, try to get its ASCII code (if it's a single character)
-      if (key.length === 1) {
-        const asciiCode = key.toUpperCase().charCodeAt(0);
-        // Android key codes, A-Z is 29-54
-        if (asciiCode >= 65 && asciiCode <= 90) {
-          await adb.keyevent(asciiCode - 36); // 65-36=29 (A's key code)
-        }
-      }
-    }
-  }
-
-  private async keyboardPressAction(
-    action:
-      | { key: string; command?: string }
-      | { key: string; command?: string }[],
-  ): Promise<void> {
-    if (Array.isArray(action)) {
-      for (const act of action) {
-        await this.keyboardPress(act.key);
-      }
-    } else {
-      await this.keyboardPress(action.key);
-    }
-  }
-
-  private async mouseClick(x: number, y: number): Promise<void> {
-    const adb = await this.getAdb();
-
-    // Use adjusted coordinates
-    const { x: adjustedX, y: adjustedY } = this.adjustCoordinates(x, y);
-    await adb.shell(`input tap ${adjustedX} ${adjustedY}`);
-  }
-
-  private async mouseMove(x: number, y: number): Promise<void> {
-    // ADB doesn't have direct cursor movement functionality, but we can record the position for subsequent operations
-    // This is a no-op, as ADB doesn't support direct mouse movement
-    return Promise.resolve();
-  }
-
-  private async mouseDrag(
-    from: { x: number; y: number },
-    to: { x: number; y: number },
-  ): Promise<void> {
-    const adb = await this.getAdb();
-
-    // Use adjusted coordinates
-    const { x: fromX, y: fromY } = this.adjustCoordinates(from.x, from.y);
-    const { x: toX, y: toY } = this.adjustCoordinates(to.x, to.y);
-
-    await adb.shell(`input swipe ${fromX} ${fromY} ${toX} ${toY} 300`);
-  }
-
-  private async mouseWheel(
-    deltaX: number,
-    deltaY: number,
-    duration = defaultNormalScrollDuration,
-  ): Promise<void> {
-    const { width, height } = await this.size();
-
-    // Calculate the starting and ending points of the swipe
-    const n = 4; // Divide the screen into n equal parts
-
-    // Set the starting point based on the swipe direction
-    const startX = deltaX < 0 ? (n - 1) * (width / n) : width / n;
-    const startY = deltaY < 0 ? (n - 1) * (height / n) : height / n;
-
-    // Calculate the maximum swipeable range
-    const maxNegativeDeltaX = startX;
-    const maxPositiveDeltaX = (n - 1) * (width / n);
-    const maxNegativeDeltaY = startY;
-    const maxPositiveDeltaY = (n - 1) * (height / n);
-
-    // Limit the swipe distance
-    deltaX = Math.max(-maxNegativeDeltaX, Math.min(deltaX, maxPositiveDeltaX));
-    deltaY = Math.max(-maxNegativeDeltaY, Math.min(deltaY, maxPositiveDeltaY));
-
-    // Calculate the end coordinates
-    const endX = startX + deltaX;
-    const endY = startY + deltaY;
-
-    // Adjust coordinates to fit device ratio
-    const { x: adjustedStartX, y: adjustedStartY } = this.adjustCoordinates(
-      startX,
-      startY,
-    );
-    const { x: adjustedEndX, y: adjustedEndY } = this.adjustCoordinates(
-      endX,
-      endY,
-    );
-
-    const adb = await this.getAdb();
-
-    // Execute the swipe operation
-    await adb.shell(
-      `input swipe ${adjustedStartX} ${adjustedStartY} ${adjustedEndX} ${adjustedEndY} ${duration}`,
-    );
-  }
-
-  async destroy(): Promise<void> {
-    // Clean up temporary files
-    try {
-      const adb = await this.getAdb();
-
-      await adb.shell(`rm -f ${androidScreenshotPath}`);
-    } catch (error) {
-      console.error('Error during cleanup:', error);
-    }
-  }
-
-  async back(): Promise<void> {
-    const adb = await this.getAdb();
-    await adb.shell('input keyevent 4');
-  }
-
-  async home(): Promise<void> {
-    const adb = await this.getAdb();
-    await adb.shell('input keyevent 3');
-  }
-
-  async recentApps(): Promise<void> {
-    const adb = await this.getAdb();
-    await adb.shell('input keyevent 82');
-  }
-
-  async getXpathsById(id: string): Promise<string[]> {
-    throw new Error('Not implemented');
-  }
-
-  async getElementInfoByXpath(xpath: string): Promise<ElementInfo> {
-    throw new Error('Not implemented');
-  }
-}
+        await adb.shell(`

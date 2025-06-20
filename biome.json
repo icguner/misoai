@@ -25,7 +25,10 @@
       "**/todo-report.spec.ts-snapshots/**",
       "**/visualizer/scripts/fixture/*",
       "**/unpacked-extension/*",
-      "**/page-data/**"
+      "**/page-data/**",
+      "**/dump.json",
+      "**/dump-with-invisible.json",
+      "**/dump-for-utils-test.json"
     ]
   },
   "javascript": {
@@ -43,7 +46,8 @@
       },
       "style": {
         "noParameterAssign": "off",
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "noUselessElse": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "off"

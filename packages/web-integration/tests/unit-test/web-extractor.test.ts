@@ -2,9 +2,14 @@ import { join } from 'node:path';
 import { parseContextFromWebPage } from '@/common/utils';
 import StaticPage from '@/playground/static-page';
 import type { WebElementInfo } from '@/web-element';
+<<<<<<< HEAD
 import { sleep } from 'misoai-core/utils';
 import { traverseTree } from 'misoai-shared/extractor';
 import { getElementInfosScriptContent } from 'misoai-shared/fs';
+=======
+import { traverseTree, treeToList } from '@midscene/shared/extractor';
+import { getElementInfosScriptContent } from '@midscene/shared/fs';
+>>>>>>> upstream/main
 import {
   compositeElementInfoImg,
   imageInfoOfBase64,
@@ -45,9 +50,8 @@ describe(
         },
       });
 
-      const { content, tree, screenshotBase64 } =
-        await parseContextFromWebPage(page);
-
+      const { tree, screenshotBase64 } = await parseContextFromWebPage(page);
+      const content = treeToList(tree);
       const markedImg = await compositeElementInfoImg({
         inputImgBase64: await page.screenshotBase64(),
         elementsPositionInfo: content,
@@ -94,8 +98,8 @@ describe(
         },
       );
 
-      const { content } = await parseContextFromWebPage(page);
-
+      const { tree } = await parseContextFromWebPage(page);
+      const content = treeToList(tree);
       // Merge children rects of html element
       expect(content[0].rect.width).toBeGreaterThan(25);
       expect(content[0].rect.height).toBeGreaterThan(25);
@@ -128,7 +132,8 @@ describe(
         return items.find((item) => item.attributes?.id === 'J_resize');
       };
 
-      const { content } = await parseContextFromWebPage(page);
+      const { tree } = await parseContextFromWebPage(page);
+      const content = treeToList(tree);
       const item = filterTargetElement(content);
       expect(item).toBeDefined();
       // check all the ids are different
@@ -138,7 +143,8 @@ describe(
 
       await new Promise((resolve) => setTimeout(resolve, 3000 + 1000));
 
-      const { content: content2 } = await parseContextFromWebPage(page);
+      const { tree: tree2 } = await parseContextFromWebPage(page);
+      const content2 = treeToList(tree2);
       const item2 = filterTargetElement(content2);
       expect(item2).toBeDefined();
       expect(item2?.id).toBe(item?.id);
@@ -284,7 +290,7 @@ describe(
         `${elementInfosScriptContent}midscene_element_inspector.webExtractNodeTreeAsString(document, false)`,
       );
       expect(description).toContain('This should be collected');
-      expect(description.split('\n').length).toBeGreaterThan(300);
+      expect(description.split('\n').length).toBeGreaterThan(200);
       await reset();
     });
   },

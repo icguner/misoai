@@ -1,7 +1,7 @@
 {
-  "name": "misoai-android-playground",
-  "version": "0.17.2",
-  "description": "Android playground for MisoAI",
+  "name": "@midscene/android-playground",
+  "version": "0.20.0",
+  "description": "Android playground for Midscene",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
   "files": [
@@ -15,20 +15,18 @@
     "midscene-android-playground": "./bin/android-playground"
   },
   "scripts": {
-    "postinstall": "fetch-scrcpy-server 3.1",
     "dev": "modern dev",
     "dev:server": "npm run build && ./bin/playground",
     "build": "modern build -c ./modern.config.ts",
     "build:watch": "modern build -w -c ./modern.config.ts"
   },
   "dependencies": {
-    "misoai-android": "3.0.4",
-    "misoai-shared": "1.0.0",
-    "misoai-web": "1.0.2",
+    "@midscene/android": "workspace:*",
+    "@midscene/shared": "workspace:*",
+    "@midscene/web": "workspace:*",
     "@yume-chan/adb": "^1.1.0",
     "@yume-chan/adb-scrcpy": "^1.1.0",
     "@yume-chan/adb-server-node-tcp": "^1.1.0",
-    "@yume-chan/fetch-scrcpy-server": "^1.0.0",
     "@yume-chan/scrcpy": "^1.1.0",
     "@yume-chan/stream-extra": "^1.0.0",
     "cors": "2.8.5",
@@ -41,7 +39,7 @@
     "@types/cors": "2.8.12",
     "@types/express": "^4.17.21",
     "@types/node": "^18.0.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   },
   "license": "MIT"
 }

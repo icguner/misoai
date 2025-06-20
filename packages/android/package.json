@@ -1,7 +1,7 @@
 {
-  "name": "misoai-android",
-  "version": "3.0.5",
-  "description": "Appium-based Android automation library for misoAI",
+  "name": "@midscene/android",
+  "version": "0.20.0",
+  "description": "Android automation library for Midscene",
   "keywords": [
     "Android UI automation",
     "Android AI testing",
@@ -41,17 +41,16 @@
     "example:media": "ts-node examples/media-utils.ts"
   },
   "dependencies": {
-    "misoai-core": "1.0.2",
-    "misoai-shared": "1.0.0",
-    "misoai-web": "1.0.2",
+    "@midscene/core": "workspace:*",
+    "@midscene/shared": "workspace:*",
+    "@midscene/web": "workspace:*",
     "webdriverio": "^8.32.3"
   },
   "devDependencies": {
     "@modern-js/module-tools": "2.60.6",
     "@types/node": "^18.0.0",
     "dotenv": "16.4.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "vitest": "3.0.5"
   },
   "keywords": [

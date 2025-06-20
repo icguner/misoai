@@ -12,18 +12,14 @@ import {
   MIDSCENE_OPENAI_INIT_CONFIG_JSON,
   getAIConfig,
   getAIConfigInJson,
-} from 'misoai-shared/env';
-import { getRunningPkgInfo } from 'misoai-shared/fs';
-import { assert } from 'misoai-shared/utils';
-import { escapeHtml, ifInBrowser, uuid } from 'misoai-shared/utils';
-import xss from 'xss';
+} from '@midscene/shared/env';
+import { getRunningPkgInfo } from '@midscene/shared/fs';
+import { assert, logMsg } from '@midscene/shared/utils';
+import { escapeScriptTag, ifInBrowser, uuid } from '@midscene/shared/utils';
 import type { Rect, ReportDumpWithAttributes } from './types';
 
 let logEnvReady = false;
 
-const xssOptions = {
-  escapeHtml,
-};
 export const groupedActionDumpFileExt = 'web-dump.json';
 
 const reportTpl = 'REPLACE_ME_WITH_REPORT_HTML';
@@ -105,7 +101,7 @@ export function reportHTMLContent(
     const dumpContent =
       // biome-ignore lint/style/useTemplate: <explanation> do not use template string here, will cause bundle error
       '<script type="midscene_web_dump" type="application/json">\n' +
-      xss(dumpData, xssOptions) +
+      escapeScriptTag(dumpData) +
       '\n</script>';
     appendOrWrite(dumpContent);
   }
@@ -123,7 +119,7 @@ export function reportHTMLContent(
         '<script type="midscene_web_dump" type="application/json" ' +
         attributesArr.join(' ') +
         '>\n' +
-        xss(dumpString, xssOptions) +
+        escapeScriptTag(dumpString) +
         '\n</script>';
       appendOrWrite(dumpContent);
     }
@@ -163,12 +159,26 @@ export function writeDumpReport(
   reportHTMLContent(dumpData, reportPath);
 
   if (process.env.MIDSCENE_DEBUG_LOG_JSON) {
+    const jsonPath = `${reportPath}.json`;
+    let data = dumpData as ReportDumpWithAttributes[];
+
+    if (typeof dumpData === 'string') {
+      data = JSON.parse(dumpData) as ReportDumpWithAttributes[];
+    }
+
     writeFileSync(
-      `${reportPath}.json`,
-      typeof dumpData === 'string'
-        ? dumpData
-        : JSON.stringify(dumpData, null, 2),
+      jsonPath,
+      JSON.stringify(
+        data.map((item) => ({
+          dumpString: JSON.parse(item.dumpString),
+          attributes: item.attributes,
+        })),
+        null,
+        2,
+      ),
     );
+
+    logMsg(`Midscene - dump file written: ${jsonPath}`);
   }
 
   return reportPath;

@@ -1,5 +1,5 @@
 {
-  "name": "misoai-evaluation",
+  "name": "@midscene/evaluation",
   "private": true,
   "scripts": {
     "update-page-data:headless": "playwright test ./data-generator/generator-headless.spec.ts && npm run format",
@@ -25,9 +25,9 @@
   ],
   "type": "module",
   "dependencies": {
-    "misoai-core": "1.0.2",
-    "misoai-shared": "1.0.0",
-    "misoai-web": "1.0.2"
+    "@midscene/core": "workspace:*",
+    "@midscene/shared": "workspace:*",
+    "@midscene/web": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",
@@ -35,7 +35,7 @@
     "dotenv": "16.4.5",
     "playwright": "1.44.1",
     "sharp": "0.34.1",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "vitest": "3.0.5"
   },
   "engines": {
@@ -46,5 +46,5 @@
     "registry": "https://registry.npmjs.org"
   },
   "license": "MIT",
-  "version": "1.0.0"
+  "version": "0.20.0"
 }

@@ -113,6 +113,7 @@ export async function agentFromSauceLabs(
     androidAdbPath: opts?.androidAdbPath,
     remoteAdbHost: opts?.remoteAdbHost,
     remoteAdbPort: opts?.remoteAdbPort,
+    imeStrategy: opts?.imeStrategy,
   });
 
   return agentFromAppiumServer(sauceServerConfig, capabilities, agentOpts);

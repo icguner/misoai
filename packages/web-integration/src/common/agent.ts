@@ -133,6 +133,7 @@ import {
 } from './ui-utils';
 import { printReportMsg, reportFileName } from './utils';
 import { type WebUIContext, parseContextFromWebPage } from './utils';
+import { trimContextByViewport } from './utils';
 
 const debug = getDebug('web-integration');
 
@@ -280,8 +281,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   appendExecutionDump(execution: ExecutionDump) {
+    // use trimContextByViewport to process execution
+    const trimmedExecution = trimContextByViewport(execution);
     const currentDump = this.dump;
-    currentDump.executions.push(execution);
+    currentDump.executions.push(trimmedExecution);
   }
 
   dumpDataString() {
@@ -423,10 +426,13 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       const prompt = opt.prompt ?? locatePrompt;
       const deepThink = opt.deepThink ?? false;
       const cacheable = opt.cacheable ?? true;
+      const xpath = opt.xpath;
+
       return {
         prompt,
         deepThink,
         cacheable,
+        xpath,
       };
     }
     return {
@@ -647,6 +653,13 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       result: output,
       metadata
     };
+  }
+
+  async aiAsk(
+    prompt: string,
+    opt: InsightExtractOption = defaultInsightExtractOption,
+  ) {
+    return this.aiString(prompt, opt);
   }
 
   async describeElementAtPoint(
@@ -1044,4 +1057,78 @@ Return only "complex" or "simple" based on your analysis.
   async destroy() {
     await this.page.destroy();
   }
+<<<<<<< HEAD
+=======
+
+  async logScreenshot(
+    title?: string,
+    opt?: {
+      content: string;
+    },
+  ) {
+    // 1. screenshot
+    const base64 = await this.page.screenshotBase64();
+    const now = Date.now();
+    // 2. build recorder
+    const recorder: ExecutionRecorderItem[] = [
+      {
+        type: 'screenshot',
+        ts: now,
+        screenshot: base64,
+      },
+    ];
+    // 3. build ExecutionTaskLog
+    const task: ExecutionTaskLog = {
+      type: 'Log',
+      subType: 'Screenshot',
+      status: 'finished',
+      recorder,
+      timing: {
+        start: now,
+        end: now,
+        cost: 0,
+      },
+      param: {
+        content: opt?.content || '',
+      },
+      executor: async () => {},
+    };
+    // 4. build ExecutionDump
+    const executionDump: ExecutionDump = {
+      sdkVersion: '',
+      logTime: now,
+      model_name: '',
+      model_description: '',
+      name: `Log - ${title || 'untitled'}`,
+      description: opt?.content || '',
+      tasks: [task],
+    };
+    // 5. append to execution dump
+    this.appendExecutionDump(executionDump);
+    this.writeOutActionDumps();
+  }
+
+  _unstableLogContent() {
+    const { groupName, groupDescription, executions } = this.dump;
+    const newExecutions = Array.isArray(executions)
+      ? executions.map((execution: any) => {
+          const { tasks, ...restExecution } = execution;
+          let newTasks = tasks;
+          if (Array.isArray(tasks)) {
+            newTasks = tasks.map((task: any) => {
+              // only remove pageContext and log from task
+              const { pageContext, log, ...restTask } = task;
+              return restTask;
+            });
+          }
+          return { ...restExecution, ...(newTasks ? { tasks: newTasks } : {}) };
+        })
+      : [];
+    return {
+      groupName,
+      groupDescription,
+      executions: newExecutions,
+    };
+  }
+>>>>>>> upstream/main
 }

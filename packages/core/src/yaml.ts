@@ -4,10 +4,11 @@ export interface LocateOption {
   prompt?: string;
   deepThink?: boolean; // only available in vl model
   cacheable?: boolean; // user can set this param to false to disable the cache for a single agent api
+  xpath?: string; // only available in web
 }
 
 export interface InsightExtractOption {
-  domIncluded?: boolean;
+  domIncluded?: boolean | 'visible-only';
   screenshotIncluded?: boolean;
 }
 
@@ -43,6 +44,7 @@ export interface MidsceneYamlTask {
 
 export interface MidsceneYamlScriptEnvBase {
   output?: string;
+  unstableLogContent?: boolean | string;
   aiActionContext?: string;
 }
 
@@ -104,8 +106,13 @@ export interface MidsceneYamlFlowItemAINumber extends InsightExtractOption {
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAINString extends InsightExtractOption {
+export interface MidsceneYamlFlowItemAIString extends InsightExtractOption {
   aiString: string;
+  name?: string;
+}
+
+export interface MidsceneYamlFlowItemAIAsk extends InsightExtractOption {
+  aiAsk: string;
   name?: string;
 }
 
@@ -114,7 +121,7 @@ export interface MidsceneYamlFlowItemAIBoolean extends InsightExtractOption {
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAILocate {
+export interface MidsceneYamlFlowItemAILocate extends LocateOption {
   aiLocate: string;
   name?: string;
 }

@@ -11,6 +11,7 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import type { BaseElement, LocateResultElement, Rect } from '@midscene/core';
+import { treeToList } from '@midscene/shared/extractor';
 import { Spin, Tooltip } from 'antd';
 import { rectMarkForItem } from './blackboard';
 import { getTextureFromCache, loadTexture } from './pixi-loader';
@@ -170,7 +171,7 @@ export function Player(props?: {
   imageHeight?: number;
   reportFileContent?: string | null;
   key?: string | number;
-}): JSX.Element {
+}) {
   const [titleText, setTitleText] = useState('');
   const [subTitleText, setSubTitleText] = useState('');
 
@@ -697,7 +698,9 @@ export function Player(props?: {
             }
             currentImg.current = item.img;
             await repaintImage();
-            const elements = item.context?.content || [];
+            const elements = item.context?.tree
+              ? treeToList(item.context.tree)
+              : [];
             const highlightElements = item.highlightElement
               ? [item.highlightElement]
               : [];

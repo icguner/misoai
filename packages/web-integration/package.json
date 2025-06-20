@@ -1,5 +1,5 @@
 {
-  "name": "misoai-web",
+  "name": "@midscene/web",
   "description": "Automate browser actions, extract data, and perform assertions using AI. It offers JavaScript SDK, Chrome extension, and support for scripting in YAML. See https://midscenejs.com/ for details.",
   "keywords": [
     "AI UI automation",
@@ -8,7 +8,7 @@
     "Browser use",
     "Android use"
   ],
-  "version": "1.0.2",
+  "version": "0.20.0",
   "repository": "https://github.com/web-infra-dev/midscene",
   "homepage": "https://midscenejs.com/",
   "jsnext:source": "./src/index.ts",
@@ -53,6 +53,10 @@
     "./playwright-report": {
       "types": "./dist/types/playwright-report.d.ts",
       "default": "./dist/lib/playwright-report.js"
+    },
+    "./playwright-reporter": {
+      "types": "./dist/types/playwright-reporter.d.ts",
+      "default": "./dist/lib/playwright-reporter.js"
     },
     "./playground": {
       "types": "./dist/types/playground.d.ts",
@@ -102,30 +106,15 @@
       "puppeteer-agent-launcher": [
         "./dist/types/puppeteer-agent-launcher.d.ts"
       ],
-      "playwright": [
-        "./dist/types/playwright.d.ts"
-      ],
-      "playwright-report": [
-        "./dist/types/playwright-report.d.ts"
-      ],
-      "playground": [
-        "./dist/types/playground.d.ts"
-      ],
-      "midscene-playground": [
-        "./dist/types/midscene-playground.d.ts"
-      ],
-      "midscene-server": [
-        "./dist/types/midscene-server.d.ts"
-      ],
-      "chrome-extension": [
-        "./dist/types/chrome-extension.d.ts"
-      ],
-      "yaml": [
-        "./dist/types/yaml.d.ts"
-      ],
-      "agent": [
-        "./dist/types/agent.d.ts"
-      ]
+      "playwright": ["./dist/types/playwright.d.ts"],
+      "playwright-report": ["./dist/types/playwright-report.d.ts"],
+      "playwright-reporter": ["./dist/types/playwright-reporter.d.ts"],
+      "playground": ["./dist/types/playground.d.ts"],
+      "midscene-playground": ["./dist/types/midscene-playground.d.ts"],
+      "midscene-server": ["./dist/types/midscene-server.d.ts"],
+      "chrome-extension": ["./dist/types/chrome-extension.d.ts"],
+      "yaml": ["./dist/types/yaml.d.ts"],
+      "agent": ["./dist/types/agent.d.ts"]
     }
   },
   "watch": {
@@ -163,11 +152,11 @@
     "bin"
   ],
   "dependencies": {
-    "misoai-core": "1.0.2",
-    "misoai-shared": "1.0.0",
+    "@midscene/core": "workspace:*",
+    "@midscene/shared": "workspace:*",
     "@xmldom/xmldom": "0.8.10",
     "cors": "2.8.5",
-    "dayjs": "1.11.11",
+    "dayjs": "^1.11.11",
     "devtools-protocol": "0.0.1380148",
     "dotenv": "16.4.5",
     "express": "^4.21.2",
@@ -193,7 +182,7 @@
     "@types/semver": "7.7.0",
     "playwright": "1.44.1",
     "puppeteer": "24.2.0",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "vitest": "3.0.5"
   },
   "peerDependencies": {

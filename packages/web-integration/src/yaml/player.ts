@@ -6,17 +6,18 @@ import type { PageAgent } from '@/common/agent';
 import type {
   FreeFn,
   MidsceneYamlFlowItemAIAction,
+  MidsceneYamlFlowItemAIAsk,
   MidsceneYamlFlowItemAIAssert,
   MidsceneYamlFlowItemAIBoolean,
   MidsceneYamlFlowItemAIHover,
   MidsceneYamlFlowItemAIInput,
   MidsceneYamlFlowItemAIKeyboardPress,
   MidsceneYamlFlowItemAILocate,
-  MidsceneYamlFlowItemAINString,
   MidsceneYamlFlowItemAINumber,
   MidsceneYamlFlowItemAIQuery,
   MidsceneYamlFlowItemAIRightClick,
   MidsceneYamlFlowItemAIScroll,
+  MidsceneYamlFlowItemAIString,
   MidsceneYamlFlowItemAITap,
   MidsceneYamlFlowItemAIWaitFor,
   MidsceneYamlFlowItemEvaluateJavaScript,
@@ -37,9 +38,11 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
   public result: Record<string, any>;
   private unnamedResultIndex = 0;
   public output?: string | null;
+  public unstableLogContent?: string | null;
   public errorInSetup?: Error;
   private pageAgent: PageAgent | null = null;
   public agentStatusTip?: string;
+  public target?: MidsceneYamlScriptEnv;
   constructor(
     private script: MidsceneYamlScript,
     private setupAgent: (platform: T) => Promise<{
@@ -50,14 +53,28 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
   ) {
     this.result = {};
 
-    const target = script.target || script.web || script.android;
+    this.target = script.target || script.web || script.android;
 
     if (ifInBrowser) {
       this.output = undefined;
-    } else if (target?.output) {
-      this.output = resolve(process.cwd(), target.output);
+    } else if (this.target?.output) {
+      this.output = resolve(process.cwd(), this.target.output);
     } else {
       this.output = join(getMidsceneRunSubDir('output'), `${process.pid}.json`);
+    }
+
+    if (ifInBrowser) {
+      this.unstableLogContent = undefined;
+    } else if (typeof this.target?.unstableLogContent === 'string') {
+      this.unstableLogContent = resolve(
+        process.cwd(),
+        this.target.unstableLogContent,
+      );
+    } else if (this.target?.unstableLogContent === true) {
+      this.unstableLogContent = join(
+        getMidsceneRunSubDir('output'),
+        'unstableLogContent.json',
+      );
     }
 
     this.taskStatusList = (script.tasks || []).map((task, taskIndex) => ({
@@ -75,7 +92,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
     }
     this.result[keyToUse] = value;
 
-    this.flushResult();
+    return this.flushResult();
   }
 
   private setPlayerStatus(status: ScriptPlayerStatusValue, error?: Error) {
@@ -122,6 +139,18 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         mkdirSync(outputDir, { recursive: true });
       }
       writeFileSync(output, JSON.stringify(this.result, undefined, 2));
+    }
+  }
+
+  private flushUnstableLogContent() {
+    if (this.unstableLogContent) {
+      const content = this.pageAgent?._unstableLogContent();
+      const filePath = resolve(process.cwd(), this.unstableLogContent);
+      const outputDir = dirname(filePath);
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir, { recursive: true });
+      }
+      writeFileSync(filePath, JSON.stringify(content, null, 2));
     }
   }
 
@@ -178,21 +207,21 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           domIncluded: numberTask.domIncluded,
           screenshotIncluded: numberTask.screenshotIncluded,
         };
-        assert(prompt, 'missing prompt for number');
+        assert(prompt, 'missing prompt for aiNumber');
         assert(
           typeof prompt === 'string',
           'prompt for number must be a string',
         );
         const numberResult = await agent.aiNumber(prompt, options);
         this.setResult(numberTask.name, numberResult);
-      } else if ('aiString' in (flowItem as MidsceneYamlFlowItemAINString)) {
-        const stringTask = flowItem as MidsceneYamlFlowItemAINString;
+      } else if ('aiString' in (flowItem as MidsceneYamlFlowItemAIString)) {
+        const stringTask = flowItem as MidsceneYamlFlowItemAIString;
         const prompt = stringTask.aiString;
         const options = {
           domIncluded: stringTask.domIncluded,
           screenshotIncluded: stringTask.screenshotIncluded,
         };
-        assert(prompt, 'missing prompt for string');
+        assert(prompt, 'missing prompt for aiNumber');
         assert(
           typeof prompt === 'string',
           'prompt for string must be a string',
@@ -206,13 +235,20 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           domIncluded: booleanTask.domIncluded,
           screenshotIncluded: booleanTask.screenshotIncluded,
         };
-        assert(prompt, 'missing prompt for boolean');
+        assert(prompt, 'missing prompt for aiBoolean');
         assert(
           typeof prompt === 'string',
           'prompt for boolean must be a string',
         );
         const booleanResult = await agent.aiBoolean(prompt, options);
         this.setResult(booleanTask.name, booleanResult);
+      } else if ('aiAsk' in (flowItem as MidsceneYamlFlowItemAIAsk)) {
+        const askTask = flowItem as MidsceneYamlFlowItemAIAsk;
+        const prompt = askTask.aiAsk;
+        assert(prompt, 'missing prompt for aiAsk');
+        assert(typeof prompt === 'string', 'prompt for aiAsk must be a string');
+        const askResult = await agent.aiAsk(prompt);
+        this.setResult(askTask.name, askResult);
       } else if ('aiLocate' in (flowItem as MidsceneYamlFlowItemAILocate)) {
         const locateTask = flowItem as MidsceneYamlFlowItemAILocate;
         const prompt = locateTask.aiLocate;
@@ -221,7 +257,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           typeof prompt === 'string',
           'prompt for aiLocate must be a string',
         );
-        const locateResult = await agent.aiLocate(prompt);
+        const locateResult = await agent.aiLocate(prompt, locateTask);
         this.setResult(locateTask.name, locateResult);
       } else if ('aiWaitFor' in (flowItem as MidsceneYamlFlowItemAIWaitFor)) {
         const waitForTask = flowItem as MidsceneYamlFlowItemAIWaitFor;
@@ -295,6 +331,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
       }
     }
     this.reportFile = agent.reportFile;
+    await this.flushUnstableLogContent();
   }
 
   async run() {

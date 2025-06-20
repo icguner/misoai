@@ -7,6 +7,7 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import type { BaseElement, Rect, UIContext } from '../../../core';
 import { colorForName, highlightColorForType } from './color';
 import './blackboard.less';
+import { treeToList } from '@midscene/shared/extractor';
 import { DropShadowFilter } from 'pixi-filters';
 import { useBlackboardPreference } from './store/store';
 
@@ -81,7 +82,7 @@ export const Blackboard = (props: {
   highlightPoints?: [number, number][];
   hideController?: boolean;
   onCanvasClick?: (position: [number, number]) => void;
-}): JSX.Element => {
+}) => {
   const highlightElements: BaseElement[] = props.highlightElements || [];
   const highlightIds = highlightElements.map((e) => e.id);
   const highlightRect = props.highlightRect;
@@ -103,7 +104,7 @@ export const Blackboard = (props: {
   const [hoverElement, setHoverElement] = useState<BaseElement | null>(null);
 
   // key overlays
-  const pixiBgRef = useRef<PIXI.Sprite>();
+  const pixiBgRef = useRef<PIXI.Sprite | undefined>(undefined);
   const { markerVisible, setMarkerVisible, elementsVisible, setTextsVisible } =
     useBlackboardPreference();
 
@@ -233,7 +234,8 @@ export const Blackboard = (props: {
     }
 
     // element rects
-    context.content.forEach((element) => {
+    const elements = treeToList(context.tree);
+    elements.forEach((element) => {
       const { rect, content, id } = element;
       const ifHighlight = highlightIds.includes(id) || hoverElement?.id === id;
 
@@ -253,7 +255,7 @@ export const Blackboard = (props: {
     app,
     appInitialed,
     highlightElements,
-    context.content,
+    context.tree,
     hoverElement,
     highlightRect,
     highlightPoints,

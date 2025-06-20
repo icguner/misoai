@@ -89,7 +89,7 @@ export const PlaywrightAiFixture = (options?: {
       | 'aiNumber'
       | 'aiString'
       | 'aiBoolean'
-      | 'logScreenshot';
+      | 'aiAsk';
   }) {
     const { page, testInfo, use, aiActionType } = options;
     const agent = createOrReuseAgentForPage(page, testInfo) as PlaywrightAgent;
@@ -340,7 +340,7 @@ export const PlaywrightAiFixture = (options?: {
         aiActionType: 'aiBoolean',
       });
     },
-    logScreenshot: async (
+    aiAsk: async (
       { page }: { page: OriginPlaywrightPage },
       use: any,
       testInfo: TestInfo,
@@ -349,7 +349,7 @@ export const PlaywrightAiFixture = (options?: {
         page,
         testInfo,
         use,
-        aiActionType: 'logScreenshot',
+        aiActionType: 'aiAsk',
       });
     },
   };
@@ -396,7 +396,7 @@ export type PlayWrightAiFixtureType = {
   aiBoolean: (
     ...args: Parameters<PageAgent['aiBoolean']>
   ) => ReturnType<PageAgent['aiBoolean']>;
-  logScreenshot: (
-    ...args: Parameters<PageAgent['logScreenshot']>
-  ) => ReturnType<PageAgent['logScreenshot']>;
+  aiAsk: (
+    ...args: Parameters<PageAgent['aiAsk']>
+  ) => ReturnType<PageAgent['aiAsk']>;
 };
