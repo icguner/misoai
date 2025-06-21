@@ -2,6 +2,8 @@
 export const MIDSCENE_OPENAI_INIT_CONFIG_JSON =
   'MIDSCENE_OPENAI_INIT_CONFIG_JSON';
 export const MIDSCENE_MODEL_NAME = 'MIDSCENE_MODEL_NAME';
+export const AI_TEMPERATURE = 'AI_TEMPERATURE';
+export const AI_SEED = 'AI_SEED';
 export const MIDSCENE_LANGSMITH_DEBUG = 'MIDSCENE_LANGSMITH_DEBUG';
 export const MIDSCENE_DEBUG_AI_PROFILE = 'MIDSCENE_DEBUG_AI_PROFILE';
 export const MIDSCENE_DEBUG_AI_RESPONSE = 'MIDSCENE_DEBUG_AI_RESPONSE';
@@ -59,6 +61,8 @@ export const allConfigFromEnv = () => {
     [MIDSCENE_OPENAI_INIT_CONFIG_JSON]:
       process.env[MIDSCENE_OPENAI_INIT_CONFIG_JSON] || undefined,
     [MIDSCENE_MODEL_NAME]: process.env[MIDSCENE_MODEL_NAME] || undefined,
+    [AI_TEMPERATURE]: process.env[AI_TEMPERATURE] || undefined,
+    [AI_SEED]: process.env[AI_SEED] || undefined,
     [MIDSCENE_DEBUG_MODE]: process.env[MIDSCENE_DEBUG_MODE] || undefined,
     [MIDSCENE_FORCE_DEEP_THINK]:
       process.env[MIDSCENE_FORCE_DEEP_THINK] || undefined,

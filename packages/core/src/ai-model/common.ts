@@ -85,6 +85,13 @@ export function fillBboxParam(
 export function adaptQwenBbox(
   bbox: number[],
 ): [number, number, number, number] {
+  // Handle the case when AI model cannot find the element (returns empty bbox)
+  if (bbox.length === 0) {
+    // Return a zero-sized bbox to indicate element not found
+    // This will be caught and handled properly by the calling function
+    return [0, 0, 0, 0];
+  }
+  
   if (bbox.length < 2) {
     const msg = `invalid bbox data for qwen-vl mode: ${JSON.stringify(bbox)} `;
     throw new Error(msg);
@@ -236,7 +243,19 @@ export function adaptBboxToRect(
   offsetY = 0,
 ): Rect {
   debugInspectUtils('adaptBboxToRect', bbox, width, height, offsetX, offsetY);
+  
+  // Handle empty bbox (element not found case)
+  if (bbox.length === 0) {
+    throw new Error('Element not found - AI model returned empty bbox');
+  }
+  
   const [left, top, right, bottom] = adaptBbox(bbox, width, height);
+  
+  // Check if bbox represents "not found" (all zeros from adaptQwenBbox)
+  if (left === 0 && top === 0 && right === 0 && bottom === 0) {
+    throw new Error('Element not found - AI model could not locate the element');
+  }
+  
   const rect = {
     left: left + offsetX,
     top: top + offsetY,

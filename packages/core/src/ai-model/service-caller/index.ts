@@ -47,6 +47,10 @@ import { assertSchema } from '../prompt/assertion';
 import { locatorSchema } from '../prompt/llm-locator';
 import { planSchema } from '../prompt/llm-planning';
 
+// Constants for temperature and seed configuration
+const AI_TEMPERATURE = 'AI_TEMPERATURE';
+const AI_SEED = 'AI_SEED';
+
 export function checkAIConfig() {
   if (getAIConfig(OPENAI_API_KEY)) return true;
   if (getAIConfig(MIDSCENE_USE_AZURE_OPENAI)) return true;
@@ -253,8 +257,22 @@ export async function call(
   let content: string | undefined;
   let usage: OpenAI.CompletionUsage | undefined;
   let timeCost: number | undefined;
+  
+  // Get configurable temperature and seed for consistent LLM responses
+  const configuredTemperature = process.env[AI_TEMPERATURE];
+  const configuredSeed = process.env[AI_SEED];
+  
+  // Default temperature based on VL mode, but allow override - preserve UI Tars settings
+  const defaultTemperature = vlLocateMode() === 'vlm-ui-tars' ? 0.0 : 0.1;
+  const temperature = configuredTemperature ? 
+    Number.parseFloat(configuredTemperature) : defaultTemperature;
+  
+  // Default seed for consistency (42 is a common choice)
+  const seed = configuredSeed ? Number.parseInt(configuredSeed, 10) : 42;
+  
   const commonConfig = {
-    temperature: vlLocateMode() === 'vlm-ui-tars' ? 0.0 : 0.1,
+    temperature,
+    seed,
     stream: false,
     max_tokens:
       typeof maxTokens === 'number'
