@@ -1,13 +1,16 @@
 {
-  "name": "@midscene/android",
-  "version": "0.20.0",
+  "name": "rfi-ai-android",
+  "version": "0.20.1",
   "description": "Android automation library for Midscene",
   "keywords": [
-    "Android UI automation",
-    "Android AI testing",
-    "Android automation library",
-    "Android automation tool",
-    "Android use"
+    "android",
+    "automation",
+    "testing",
+    "ai",
+    "misoai",
+    "appium",
+    "webdriverio",
+    "mobile"
   ],
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
@@ -41,9 +44,9 @@
     "example:media": "ts-node examples/media-utils.ts"
   },
   "dependencies": {
-    "@midscene/core": "workspace:*",
-    "@midscene/shared": "workspace:*",
-    "@midscene/web": "workspace:*",
+    "rfi-ai-core": "^0.20.1",
+    "rfi-ai-shared": "^0.20.1",
+    "rfi-ai-web": "^0.20.1",
     "webdriverio": "^8.32.3"
   },
   "devDependencies": {
@@ -53,16 +56,6 @@
     "typescript": "^5.8.3",
     "vitest": "3.0.5"
   },
-  "keywords": [
-    "android",
-    "automation",
-    "testing",
-    "ai",
-    "misoai",
-    "appium",
-    "webdriverio",
-    "mobile"
-  ],
   "license": "MIT",
   "peerDependencies": {
     "webdriverio": "^8.32.3"

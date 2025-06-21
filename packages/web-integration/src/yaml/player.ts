@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { assert, ifInBrowser } from 'misoai-shared/utils';
+import { assert, ifInBrowser } from 'rfi-ai-shared/utils';
 
 import type { PageAgent } from '@/common/agent';
 import type {
@@ -27,8 +27,8 @@ import type {
   MidsceneYamlScriptEnv,
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
-} from 'misoai-core';
-import { getMidsceneRunSubDir } from 'misoai-shared/common';
+} from 'rfi-ai-core';
+import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
 
 export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
   public currentTaskIndex?: number;
@@ -189,58 +189,42 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
       } else if ('aiQuery' in (flowItem as MidsceneYamlFlowItemAIQuery)) {
         const queryTask = flowItem as MidsceneYamlFlowItemAIQuery;
         const prompt = queryTask.aiQuery;
-        const options = {
-          domIncluded: queryTask.domIncluded,
-          screenshotIncluded: queryTask.screenshotIncluded,
-        };
         assert(prompt, 'missing prompt for aiQuery');
         assert(
           typeof prompt === 'string',
           'prompt for aiQuery must be a string',
         );
-        const queryResult = await agent.aiQuery(prompt, options);
+        const queryResult = await agent.aiQuery(prompt);
         this.setResult(queryTask.name, queryResult);
       } else if ('aiNumber' in (flowItem as MidsceneYamlFlowItemAINumber)) {
         const numberTask = flowItem as MidsceneYamlFlowItemAINumber;
         const prompt = numberTask.aiNumber;
-        const options = {
-          domIncluded: numberTask.domIncluded,
-          screenshotIncluded: numberTask.screenshotIncluded,
-        };
         assert(prompt, 'missing prompt for aiNumber');
         assert(
           typeof prompt === 'string',
           'prompt for number must be a string',
         );
-        const numberResult = await agent.aiNumber(prompt, options);
+        const numberResult = await agent.aiNumber(prompt);
         this.setResult(numberTask.name, numberResult);
       } else if ('aiString' in (flowItem as MidsceneYamlFlowItemAIString)) {
         const stringTask = flowItem as MidsceneYamlFlowItemAIString;
         const prompt = stringTask.aiString;
-        const options = {
-          domIncluded: stringTask.domIncluded,
-          screenshotIncluded: stringTask.screenshotIncluded,
-        };
         assert(prompt, 'missing prompt for aiNumber');
         assert(
           typeof prompt === 'string',
           'prompt for string must be a string',
         );
-        const stringResult = await agent.aiString(prompt, options);
+        const stringResult = await agent.aiString(prompt);
         this.setResult(stringTask.name, stringResult);
       } else if ('aiBoolean' in (flowItem as MidsceneYamlFlowItemAIBoolean)) {
         const booleanTask = flowItem as MidsceneYamlFlowItemAIBoolean;
         const prompt = booleanTask.aiBoolean;
-        const options = {
-          domIncluded: booleanTask.domIncluded,
-          screenshotIncluded: booleanTask.screenshotIncluded,
-        };
         assert(prompt, 'missing prompt for aiBoolean');
         assert(
           typeof prompt === 'string',
           'prompt for boolean must be a string',
         );
-        const booleanResult = await agent.aiBoolean(prompt, options);
+        const booleanResult = await agent.aiBoolean(prompt);
         this.setResult(booleanTask.name, booleanResult);
       } else if ('aiAsk' in (flowItem as MidsceneYamlFlowItemAIAsk)) {
         const askTask = flowItem as MidsceneYamlFlowItemAIAsk;

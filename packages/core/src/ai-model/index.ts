@@ -5,7 +5,8 @@ export {
   elementByPositionWithElementInfo,
 } from './prompt/util';
 export { generatePlaywrightTest } from './prompt/playwright-generator';
-export { generateYamlTest } from './prompt/yaml-generator';
+// Temporarily disabled due to rfi-ai-recorder dependency
+// export { generateYamlTest } from './prompt/yaml-generator';
 
 export type { ChatCompletionMessageParam } from 'openai/resources';
 

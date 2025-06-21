@@ -10,8 +10,8 @@ import {
   type KeyDefinition,
   type KeyInput,
   _keyDefinitions,
-} from 'misoai-shared/keyboard-layout';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/keyboard-layout';
+import { assert } from 'rfi-ai-shared/utils';
 
 type KeyDescription = Required<
   Pick<KeyDefinition, 'keyCode' | 'key' | 'text' | 'code' | 'location'>

@@ -1,8 +1,10 @@
 /**
  * Performance monitoring utilities for Android devices
  */
-import { AppiumDevice } from '../page/appium-device';
-import { debugDevice } from '../page/appium-device';
+import { AppiumDevice } from '../agent';
+import { getDebug } from 'rfi-ai-shared/logger';
+
+const debugDevice = getDebug('android-device');
 
 /**
  * Interface for CPU information
@@ -124,7 +126,7 @@ export class PerformanceMonitor {
    */
   public async initialize(): Promise<string[]> {
     debugDevice('Initializing performance monitor');
-    const driver = await this.device['getDriver']();
+    const driver = await this.device.getDriver();
     this.availableMetrics = await driver.getPerformanceDataTypes();
     debugDevice('Available performance metrics: %O', this.availableMetrics);
     return this.availableMetrics;
@@ -135,7 +137,7 @@ export class PerformanceMonitor {
    */
   public async getDeviceInfo(): Promise<DeviceInfo> {
     debugDevice('Getting device information');
-    const driver = await this.device['getDriver']();
+    const driver = await this.device.getDriver();
 
     const executeShellCommand = async (command: string): Promise<string> => {
       return await driver.executeScript('mobile: shell', [{

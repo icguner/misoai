@@ -1,9 +1,15 @@
-import { PageAgent, type PageAgentOpt } from 'misoai-web/agent';
+import { PageAgent, type PageAgentOpt } from 'rfi-ai-web/agent';
 import { AndroidDevice, type AndroidDeviceOpt } from '../page';
-import { vlLocateMode } from 'misoai-shared/env';
+import { vlLocateMode } from 'rfi-ai-shared/env';
 import { getConnectedDevices } from '../utils';
+import { getDebug } from 'rfi-ai-shared/logger';
 
 import { debugPage } from '../page';
+
+const debugDevice = getDebug('android-device');
+
+// Re-export AndroidDevice for external use
+export { AndroidDevice, type AndroidDeviceOpt };
 
 type AndroidAgentOpt = PageAgentOpt;
 
@@ -13,7 +19,7 @@ export class AndroidAgent extends PageAgent<AndroidDevice> {
 
     if (!vlLocateMode()) {
       throw new Error(
-        'Android Agent only supports vl-model. https://acabai.com/choose-a-model.html',
+        'Android Agent only supports vl-model. RFI-AI',
       );
     }
   }
@@ -26,12 +32,47 @@ export class AndroidAgent extends PageAgent<AndroidDevice> {
 
 import { AppiumServerConfig, AppiumBaseCapabilities, SauceLabsConfig, SauceLabsCapabilities } from '../types';
 
+// AppiumDevice class for Appium integration
+export class AppiumDevice extends AndroidDevice {
+  constructor(private config: AppiumServerConfig, private capabilities: AppiumBaseCapabilities) {
+    super('appium-device');
+  }
+
+  async connect(): Promise<void> {
+    debugDevice('Connecting to Appium server at %s://%s:%s', 
+      this.config.protocol, this.config.hostname, this.config.port);
+  }
+
+  async getCurrentPackage(): Promise<string> {
+    // TODO: Implement getting current package from Appium
+    return 'com.example.app';
+  }
+
+  async getDriver(): Promise<any> {
+    // TODO: Implement getting WebDriver instance
+    return {};
+  }
+}
+
 export async function agentFromAdbDevice(
   deviceId?: string,
   opts?: AndroidAgentOpt & AndroidDeviceOpt,
 ) {
   if (!deviceId) {
     const devices = await getConnectedDevices();
+    if (devices.length === 0) {
+      throw new Error('No connected Android devices found');
+    }
+    deviceId = devices[0];
+  }
+
+  const page = new AndroidDevice(deviceId, {
+    autoDismissKeyboard: opts?.autoDismissKeyboard,
+    imeStrategy: opts?.imeStrategy,
+  });
+
+  return new AndroidAgent(page, opts);
+}
 
 /**
  * Creates an AndroidAgent from an Appium server
@@ -107,14 +148,6 @@ export async function agentFromSauceLabs(
 
   capabilities['sauce:options'].username = slConfig.user;
   capabilities['sauce:options'].accessKey = slConfig.key;
-
-  const page = new AndroidDevice(deviceId, {
-    autoDismissKeyboard: opts?.autoDismissKeyboard,
-    androidAdbPath: opts?.androidAdbPath,
-    remoteAdbHost: opts?.remoteAdbHost,
-    remoteAdbPort: opts?.remoteAdbPort,
-    imeStrategy: opts?.imeStrategy,
-  });
 
   return agentFromAppiumServer(sauceServerConfig, capabilities, agentOpts);
 }

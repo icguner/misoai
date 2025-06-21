@@ -7,7 +7,7 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import type { BaseElement, Rect, UIContext } from '../../../core';
 import { colorForName, highlightColorForType } from './color';
 import './blackboard.less';
-import { treeToList } from '@midscene/shared/extractor';
+import { treeToList } from 'rfi-ai-shared/extractor';
 import { DropShadowFilter } from 'pixi-filters';
 import { useBlackboardPreference } from './store/store';
 

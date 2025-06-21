@@ -1,14 +1,14 @@
-import type { ElementTreeNode, Point, Size } from 'misoai-core';
-import { sleep } from 'misoai-core/utils';
-import { DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT } from 'misoai-shared/constants';
-import type { ElementInfo } from 'misoai-shared/extractor';
-import { treeToList } from 'misoai-shared/extractor';
+import type { ElementTreeNode, Point, Size } from 'rfi-ai-core';
+import { sleep } from 'rfi-ai-core/utils';
+import { DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT } from 'rfi-ai-shared/constants';
+import type { ElementInfo } from 'rfi-ai-shared/extractor';
+import { treeToList } from 'rfi-ai-shared/extractor';
 import {
   getElementInfosScriptContent,
   getExtraReturnLogic,
-} from 'misoai-shared/fs';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/fs';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';
 import type { WebKeyInput } from '../common/page';

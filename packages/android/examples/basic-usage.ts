@@ -1,7 +1,7 @@
 /**
  * Basic usage example for misoai-android with local Appium server
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'rfi-ai-android';
 
 async function main() {
   try {

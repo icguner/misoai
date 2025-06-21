@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { NodeType } from 'misoai-shared/constants';
+import type { NodeType } from 'rfi-ai-shared/constants';
 import type {
   BaseElement,
   ElementTreeNode,
   Rect,
   Size,
-} from 'misoai-shared/types';
+  Point,
+} from 'rfi-ai-shared/types';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import type {
   DetailedLocateParam,
@@ -20,7 +21,7 @@ export type {
   Rect,
   Size,
   Point,
-} from '@midscene/shared/types';
+} from 'rfi-ai-shared/types';
 export * from './yaml';
 
 export type AIUsageInfo = Record<string, any> & {

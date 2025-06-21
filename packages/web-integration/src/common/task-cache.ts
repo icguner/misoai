@@ -1,9 +1,9 @@
 import assert from 'node:assert';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { getMidsceneRunSubDir } from 'misoai-shared/common';
-import { getDebug } from 'misoai-shared/logger';
-import { ifInBrowser } from 'misoai-shared/utils';
+import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { ifInBrowser } from 'rfi-ai-shared/utils';
 import yaml from 'js-yaml';
 import semver from 'semver';
 import { version } from '../../package.json';

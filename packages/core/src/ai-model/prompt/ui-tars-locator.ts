@@ -1,4 +1,4 @@
-import { getPreferredLanguage } from '@midscene/shared/env';
+import { getPreferredLanguage } from 'rfi-ai-shared/env';
 
 // claude 3.5 sonnet computer The ability to understand the content of the image is better, Does not provide element snapshot effect
 export function systemPromptToLocateElementPosition() {

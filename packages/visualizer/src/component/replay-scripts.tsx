@@ -1,9 +1,9 @@
 'use client';
 import './player.less';
 import { mousePointer } from '@/utils';
-import { paramStr, typeStr } from '@midscene/web/ui-utils';
+import { paramStr, typeStr } from 'rfi-ai-web/ui-utils';
 
-import type {
+import {
   ExecutionDump,
   ExecutionTask,
   ExecutionTaskInsightLocate,
@@ -12,8 +12,8 @@ import type {
   LocateResultElement,
   Rect,
   UIContext,
-} from '@midscene/core';
-import { treeToList } from '@midscene/shared/extractor';
+} from 'rfi-ai-core';
+import { treeToList } from 'rfi-ai-shared/extractor';
 
 export interface CameraState {
   left: number;

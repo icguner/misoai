@@ -1,11 +1,12 @@
 'use client';
 
-import type {
+import {
   AgentDescribeElementAtPointResult,
-  Rect,
-  UIContext,
-} from '@midscene/core';
-import type { WebUIContext } from '@midscene/web/utils';
+  type GroupedActionDump,
+  type UIContext,
+  type Rect,
+} from 'rfi-ai-core';
+import type { WebUIContext } from 'rfi-ai-web/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useStaticPageAgent } from './playground/useStaticPageAgent';
 import './describer.less';

@@ -1,7 +1,7 @@
 /**
  * Example for continuous performance monitoring during test execution using misoai-android
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'rfi-ai-android';
 import { PerformanceMonitor } from '../src/performance';
 import * as fs from 'fs';
 import * as path from 'path';

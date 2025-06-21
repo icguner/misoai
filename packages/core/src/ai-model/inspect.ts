@@ -19,10 +19,10 @@ import {
   MIDSCENE_FORCE_DEEP_THINK,
   getAIConfigInBoolean,
   vlLocateMode,
-} from 'misoai-shared/env';
-import { cropByRect, paddingToMatchBlockByBase64 } from 'misoai-shared/img';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/env';
+import { cropByRect, paddingToMatchBlockByBase64 } from 'rfi-ai-shared/img';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 import type {
   ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,

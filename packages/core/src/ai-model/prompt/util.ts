@@ -1,13 +1,13 @@
 import { imageInfoOfBase64 } from '@/image/index';
 import type { BaseElement, ElementTreeNode, Size, UIContext } from '@/types';
-import { NodeType } from '@midscene/shared/constants';
-import { vlLocateMode } from '@midscene/shared/env';
+import { NodeType } from 'rfi-ai-shared/constants';
+import { vlLocateMode } from 'rfi-ai-shared/env';
 import {
   descriptionOfTree,
   generateElementByPosition,
   treeToList,
-} from 'misoai-shared/extractor';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/extractor';
+import { assert } from 'rfi-ai-shared/utils';
 
 export function describeSize(size: Size) {
   return `${size.width} x ${size.height}`;

@@ -6,7 +6,7 @@ import {
   type SauceLabsConfig,
   type AppiumBaseCapabilities,
   type SauceLabsCapabilities
-} from 'misoai-android';
+} from 'rfi-ai-android';
 
 async function main() {
   try {

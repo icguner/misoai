@@ -7,9 +7,9 @@ import type {
   PlanningActionParamSleep,
   PlanningActionParamTap,
   PlanningLocateParam,
-} from 'misoai-core';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-core';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 
 const debug = getDebug('plan-builder');
 

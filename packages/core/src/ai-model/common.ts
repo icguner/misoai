@@ -10,7 +10,7 @@ import type {
   Rect,
   Size,
 } from '@/types';
-import { assert } from 'misoai-shared/utils';
+import { assert } from 'rfi-ai-shared/utils';
 
 import type {
   ChatCompletionSystemMessageParam,
@@ -23,11 +23,11 @@ import {
 } from './service-caller/index';
 
 import type { PlanningLocateParam } from '@/types';
-import { NodeType } from 'misoai-shared/constants';
-import { vlLocateMode } from 'misoai-shared/env';
-import { treeToList } from 'misoai-shared/extractor';
-import { compositeElementInfoImg } from 'misoai-shared/img';
-import { getDebug } from 'misoai-shared/logger';
+import { NodeType } from 'rfi-ai-shared/constants';
+import { vlLocateMode } from 'rfi-ai-shared/env';
+import { treeToList } from 'rfi-ai-shared/extractor';
+import { compositeElementInfoImgSharp } from 'rfi-ai-shared/img';
+import { getDebug } from 'rfi-ai-shared/logger';
 
 export type AIArgs = [
   ChatCompletionSystemMessageParam,
@@ -322,7 +322,7 @@ export async function markupImageForLLM(
     },
   );
 
-  const imagePayload = await compositeElementInfoImg({
+  const imagePayload = await compositeElementInfoImgSharp({
     inputImgBase64: screenshotBase64,
     elementsPositionInfo: elementsPositionInfoWithoutText,
     size,

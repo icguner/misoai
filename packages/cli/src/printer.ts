@@ -2,8 +2,8 @@ import { basename, dirname, relative } from 'node:path';
 import type {
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
-} from 'misoai-core';
-import type { ScriptPlayer } from 'misoai-web/yaml';
+} from 'rfi-ai-core';
+import type { ScriptPlayer } from 'rfi-ai-web/yaml';
 import chalk from 'chalk';
 
 export interface MidsceneYamlFileContext {

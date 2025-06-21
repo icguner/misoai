@@ -10,6 +10,7 @@ const externals = [
   '@ant-design/icons',
   'react',
   'react-dom',
+  'sharp',
 ];
 
 const commonConfig = {

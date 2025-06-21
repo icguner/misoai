@@ -1,6 +1,6 @@
 <<<<<<< HEAD
 import { join, resolve } from 'node:path';
-import { assert } from 'misoai-shared/utils';
+import { assert } from 'rfi-ai-shared/utils';
 =======
 import path, { join, resolve } from 'node:path';
 import { assert } from '@midscene/shared/utils';
@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { puppeteerAgentForTarget } from '@/puppeteer/agent-launcher';
 import { ScriptPlayer, buildYaml, parseYamlScript } from '@/yaml';
 <<<<<<< HEAD
-import type { MidsceneYamlScriptWebEnv } from 'misoai-core';
+import type { MidsceneYamlScriptWebEnv } from 'rfi-ai-core';
 =======
 import type {
   GroupedActionDump,

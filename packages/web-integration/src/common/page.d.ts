@@ -1,6 +1,6 @@
-import type { ElementTreeNode } from 'misoai-core';
-import type { PageType, Point, Size } from 'misoai-core';
-import type { ElementInfo } from 'misoai-shared/extractor';
+import type { ElementTreeNode } from 'rfi-ai-core';
+import type { PageType, Point, Size } from 'rfi-ai-core';
+import type { ElementInfo } from 'rfi-ai-shared/extractor';
 import type { KeyInput } from 'puppeteer';
 import type ChromeExtensionProxyPage from '../chrome-extension/page';
 import type { AbstractPage } from '../page';

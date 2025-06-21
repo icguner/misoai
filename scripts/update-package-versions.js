@@ -77,14 +77,14 @@ for (const pkg of packages) {
 
     // First, manually check for specific packages that need to be updated
     const packagesToForceUpdate = [
-      'misoai-android',
-      'misoai-core',
-      'misoai-shared',
-      'misoai-web',
-      'misoai-cli',
-      'misoai-visualizer',
-      'misoai-evaluation',
-      'misoai-mcp'
+      '@RFI/android',
+      '@RFI/core',
+      '@RFI/shared',
+      '@RFI/web',
+      '@RFI/cli',
+      '@RFI/visualizer',
+      '@RFI/evaluation',
+      '@RFI/mcp'
     ];
 
     packagesToForceUpdate.forEach(pkg => {

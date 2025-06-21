@@ -10,8 +10,8 @@ import {
   ExportOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import type { BaseElement, LocateResultElement, Rect } from '@midscene/core';
-import { treeToList } from '@midscene/shared/extractor';
+import type { BaseElement, LocateResultElement, Rect } from 'rfi-ai-core';
+import { treeToList } from 'rfi-ai-shared/extractor';
 import { Spin, Tooltip } from 'antd';
 import { rectMarkForItem } from './blackboard';
 import { getTextureFromCache, loadTexture } from './pixi-loader';

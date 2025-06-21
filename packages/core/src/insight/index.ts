@@ -35,10 +35,10 @@ import {
   MIDSCENE_USE_QWEN_VL,
   getAIConfigInBoolean,
   vlLocateMode,
-} from 'misoai-shared/env';
-import { compositeElementInfoImg, cropByRect } from 'misoai-shared/img';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/env';
+import { compositeElementInfoImgSharp, cropByRect } from 'rfi-ai-shared/img';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 import { emitInsightDump } from './utils';
 
 export interface LocateOpts {
@@ -413,7 +413,7 @@ export default class Insight<
         }
       : target;
 
-    let imagePayload = await compositeElementInfoImg({
+    let imagePayload = await compositeElementInfoImgSharp({
       inputImgBase64: screenshotBase64,
       size,
       elementsPositionInfo: [

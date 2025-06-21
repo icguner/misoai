@@ -1,10 +1,16 @@
-export { AppiumDevice } from './page/appium-device';
 export {
   AndroidAgent,
+  AndroidDevice,
+  AppiumDevice,
+  agentFromAdbDevice,
   agentFromAppiumServer,
   agentFromLocalAppium,
   agentFromSauceLabs
 } from './agent';
+
+// Also export AndroidDevice from page for compatibility
+export { AndroidDevice as AndroidDeviceBase } from './page';
+
 export type {
   AppiumServerConfig,
   AppiumBaseCapabilities,
@@ -12,7 +18,7 @@ export type {
   SauceLabsCapabilities,
   SauceLabsSpecificOptions
 } from './types';
-export { overrideAIConfig } from 'misoai-shared/env';
+export { overrideAIConfig } from 'rfi-ai-shared/env';
 
 // Performance monitoring exports
 export {

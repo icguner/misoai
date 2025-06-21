@@ -7,19 +7,19 @@ import type {
   PlanningLocateParam,
   PlaywrightParserOpt,
   UIContext,
-} from 'misoai-core';
-import { elementByPositionWithElementInfo } from 'misoai-core/ai-model';
-import { uploadTestInfoToServer } from 'misoai-core/utils';
-import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from 'misoai-shared/env';
-import type { ElementInfo } from 'misoai-shared/extractor';
+} from 'rfi-ai-core';
+import { elementByPositionWithElementInfo } from 'rfi-ai-core/ai-model';
+import { uploadTestInfoToServer } from 'rfi-ai-core/utils';
+import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from 'rfi-ai-shared/env';
+import type { ElementInfo } from 'rfi-ai-shared/extractor';
 import {
   generateElementByPosition,
   getNodeFromCacheList,
   traverseTree,
-} from '@midscene/shared/extractor';
-import { resizeImgBase64 } from '@midscene/shared/img';
-import type { DebugFunction } from '@midscene/shared/logger';
-import { assert, logMsg, uuid } from '@midscene/shared/utils';
+} from 'rfi-ai-shared/extractor';
+import { resizeImgBase64 } from 'rfi-ai-shared/img';
+import type { DebugFunction } from 'rfi-ai-shared/logger';
+import { assert, logMsg, uuid } from 'rfi-ai-shared/utils';
 import dayjs from 'dayjs';
 import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';

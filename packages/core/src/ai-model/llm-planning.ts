@@ -1,7 +1,7 @@
 import type { PageType, PlanningAIResponse, UIContext } from '@/types';
-import { vlLocateMode } from 'misoai-shared/env';
-import { paddingToMatchBlockByBase64 } from 'misoai-shared/img';
-import { assert } from 'misoai-shared/utils';
+import { vlLocateMode } from 'rfi-ai-shared/env';
+import { paddingToMatchBlockByBase64 } from 'rfi-ai-shared/img';
+import { assert } from 'rfi-ai-shared/utils';
 import {
   AIActionType,
   type AIArgs,

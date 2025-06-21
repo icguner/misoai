@@ -3,7 +3,7 @@ import {
   type WebUIContext,
 } from '@/common/utils';
 import type { AbstractPage } from '@/page';
-import type { Point } from 'misoai-core';
+import type { Point } from 'rfi-ai-core';
 
 const ThrowNotImplemented: any = (methodName: string) => {
   throw new Error(

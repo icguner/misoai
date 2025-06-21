@@ -1,6 +1,6 @@
 import { PuppeteerAgent } from '@/puppeteer';
 <<<<<<< HEAD
-import { sleep } from 'misoai-core/utils';
+import { sleep } from 'rfi-ai-core/utils';
 import { afterEach, describe, it, vi } from 'vitest';
 =======
 import { sleep } from '@midscene/core/utils';

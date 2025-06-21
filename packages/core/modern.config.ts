@@ -11,12 +11,26 @@ export default defineConfig({
       tree: 'src/tree.ts',
       'ai-model': 'src/ai-model/index.ts',
     },
-    externals: ['langsmith'],
+    externals: [
+      'langsmith',
+      'react',
+      'react-dom',
+      '@types/react',
+      '@types/react-dom',
+      'csstype',
+      'prop-types',
+      '@types/prop-types',
+      // Sharp and its native dependencies
+      'sharp',
+      /@img\/sharp-.*/,
+      // Internal workspace packages
+      'rfi-ai-shared',
+    ],
     target: 'es2020',
     define: {
       __VERSION__: version,
     },
-    splitting: true,
+    splitting: false,
     sourceMap: true,
     dts: {
       respectExternal: true,

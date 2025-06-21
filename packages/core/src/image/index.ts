@@ -6,4 +6,4 @@ export {
   transformImgPathToBase64,
   saveBase64Image,
   zoomForGPT4o,
-} from 'misoai-shared/img';
+} from 'rfi-ai-shared/img';

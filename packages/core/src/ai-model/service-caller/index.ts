@@ -33,10 +33,10 @@ import {
   getAIConfigInJson,
   uiTarsModelVersion,
   vlLocateMode,
-} from 'misoai-shared/env';
-import { enableDebug, getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
-import { ifInBrowser } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/env';
+import { enableDebug, getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
+import { ifInBrowser } from 'rfi-ai-shared/utils';
 import dJSON from 'dirty-json';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import OpenAI, { AzureOpenAI } from 'openai';

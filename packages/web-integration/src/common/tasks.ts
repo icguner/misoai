@@ -33,19 +33,19 @@ import {
   type PlanningActionParamTap,
   type PlanningActionParamWaitFor,
   plan,
-} from 'misoai-core';
+} from 'rfi-ai-core';
 import {
   type ChatCompletionMessageParam,
   elementByPositionWithElementInfo,
   resizeImageForUiTars,
   vlmPlanning,
-} from 'misoai-core/ai-model';
-import { sleep } from 'misoai-core/utils';
-import { NodeType } from 'misoai-shared/constants';
-import type { ElementInfo } from 'misoai-shared/extractor';
-import { getElementInfosScriptContent } from 'misoai-shared/fs';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-core/ai-model';
+import { sleep } from 'rfi-ai-core/utils';
+import { NodeType } from 'rfi-ai-shared/constants';
+import type { ElementInfo } from 'rfi-ai-shared/extractor';
+import { getElementInfosScriptContent } from 'rfi-ai-shared/fs';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 import type { WebElementInfo } from '../web-element';
 import type { TaskCache } from './task-cache';
 import { getKeyCommands, taskTitleStr } from './ui-utils';

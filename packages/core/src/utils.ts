@@ -6,16 +6,16 @@ import { dirname } from 'node:path';
 import {
   defaultRunDirName,
   getMidsceneRunSubDir,
-} from 'misoai-shared/common';
+} from 'rfi-ai-shared/common';
 import {
   MIDSCENE_DEBUG_MODE,
   MIDSCENE_OPENAI_INIT_CONFIG_JSON,
   getAIConfig,
   getAIConfigInJson,
-} from '@midscene/shared/env';
-import { getRunningPkgInfo } from '@midscene/shared/fs';
-import { assert, logMsg } from '@midscene/shared/utils';
-import { escapeScriptTag, ifInBrowser, uuid } from '@midscene/shared/utils';
+} from 'rfi-ai-shared/env';
+import { getRunningPkgInfo } from 'rfi-ai-shared/fs';
+import { assert, logMsg } from 'rfi-ai-shared/utils';
+import { escapeScriptTag, ifInBrowser, uuid } from 'rfi-ai-shared/utils';
 import type { Rect, ReportDumpWithAttributes } from './types';
 
 let logEnvReady = false;

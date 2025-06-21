@@ -13,7 +13,7 @@ import {
   takeScreenshot,
   startVideoRecording,
   stopVideoRecording
-} from 'misoai-android';
+} from 'rfi-ai-android';
 import * as path from 'node:path';
 import { mkdirSync, existsSync } from 'node:fs';
 

@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { ifInBrowser } from 'misoai-shared/utils';
+import { ifInBrowser } from 'rfi-ai-shared/utils';
 
 // remember to include this file into extension's package
 // extract html element from page

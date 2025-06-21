@@ -1,8 +1,8 @@
 /**
  * Example for using misoai-android with AI-powered automation
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
-import { overrideAIConfig } from 'misoai-shared/env';
+import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'rfi-ai-android';
+import { overrideAIConfig } from 'rfi-ai-shared/env';
 
 async function main() {
   try {

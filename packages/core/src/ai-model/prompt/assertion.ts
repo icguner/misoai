@@ -1,4 +1,4 @@
-import { getPreferredLanguage } from 'misoai-shared/env';
+import { getPreferredLanguage } from 'rfi-ai-shared/env';
 import type { ResponseFormatJSONSchema } from 'openai/resources';
 
 const defaultAssertionPrompt =

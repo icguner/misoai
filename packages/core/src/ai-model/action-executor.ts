@@ -13,8 +13,8 @@ import {
   getAIConfig,
   uiTarsModelVersion,
   vlLocateMode,
-} from 'misoai-shared/env';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/env';
+import { assert } from 'rfi-ai-shared/utils';
 
 export class Executor {
   name: string;

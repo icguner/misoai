@@ -3,9 +3,9 @@ import { parseContextFromWebPage } from '@/common/utils';
 import StaticPage from '@/playground/static-page';
 import type { WebElementInfo } from '@/web-element';
 <<<<<<< HEAD
-import { sleep } from 'misoai-core/utils';
-import { traverseTree } from 'misoai-shared/extractor';
-import { getElementInfosScriptContent } from 'misoai-shared/fs';
+import { sleep } from 'rfi-ai-core/utils';
+import { traverseTree } from 'rfi-ai-shared/extractor';
+import { getElementInfosScriptContent } from 'rfi-ai-shared/fs';
 =======
 import { traverseTree, treeToList } from '@midscene/shared/extractor';
 import { getElementInfosScriptContent } from '@midscene/shared/fs';
@@ -14,7 +14,7 @@ import {
   compositeElementInfoImg,
   imageInfoOfBase64,
   saveBase64Image,
-} from 'misoai-shared/img';
+} from 'rfi-ai-shared/img';
 import { createServer } from 'http-server';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { launchPage } from '../ai/web/puppeteer/utils';

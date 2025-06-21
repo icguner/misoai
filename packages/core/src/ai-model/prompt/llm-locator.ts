@@ -1,5 +1,5 @@
 import { PromptTemplate } from '@langchain/core/prompts';
-import type { vlLocateMode } from 'misoai-shared/env';
+import type { vlLocateMode } from 'rfi-ai-shared/env';
 import type { ResponseFormatJSONSchema } from 'openai/resources';
 import { bboxDescription } from './common';
 export function systemPromptToLocateElement(

@@ -7,19 +7,24 @@ import type {
   AIUsageInfo,
   DetailedLocateParam,
   ExecutionDump,
+  ExecutionRecorderItem,
   ExecutionTask,
+  ExecutionTaskLog,
   Executor,
   GroupedActionDump,
   InsightAction,
+  InsightExtractOption,
+  InsightExtractParam,
   LocateOption,
   LocateResultElement,
   LocateValidatorResult,
   LocatorValidatorOption,
+  MidsceneYamlScript,
   OnTaskStartTip,
   PlanningActionParamScroll,
   Rect,
-} from 'misoai-core';
-import { Insight } from 'misoai-core';
+} from 'rfi-ai-core';
+import { Insight } from 'rfi-ai-core';
 
 /**
  * Metadata for AI task execution
@@ -111,14 +116,14 @@ import {
   reportHTMLContent,
   stringifyDumpData,
   writeLogFile,
-} from 'misoai-core/utils';
+} from 'rfi-ai-core/utils';
 import {
   DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT,
   DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT,
-} from 'misoai-shared/constants';
-import { getAIConfigInBoolean, vlLocateMode } from 'misoai-shared/env';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/constants';
+import { getAIConfigInBoolean, vlLocateMode } from 'rfi-ai-shared/env';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 import { PageTaskExecutor } from '../common/tasks';
 import type { PuppeteerWebPage } from '../puppeteer';
 import type { WebElementInfo } from '../web-element';
@@ -136,6 +141,11 @@ import { type WebUIContext, parseContextFromWebPage } from './utils';
 import { trimContextByViewport } from './utils';
 
 const debug = getDebug('web-integration');
+
+const defaultInsightExtractOption: InsightExtractOption = {
+  domIncluded: false,
+  screenshotIncluded: true,
+};
 
 const distanceOfTwoPoints = (p1: [number, number], p2: [number, number]) => {
   const [x1, y1] = p1;
@@ -241,7 +251,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   async getUIContext(action?: InsightAction): Promise<WebUIContext> {
-    if (action && (action === 'extract' || action === 'assert' || action === 'captcha')) {
+    if (action && (action === 'extract' || action === 'assert')) {
       return await parseContextFromWebPage(this.page, {
         ignoreMarker: true,
       });
@@ -249,21 +259,6 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     return await parseContextFromWebPage(this.page, {
       ignoreMarker: !!vlLocateMode(),
     });
-  }
-
-  // Helper method to call the insight.captcha method
-  private async _callInsightCaptcha(options?: { deepThink?: boolean }): Promise<{ content: AICaptchaResponse; usage?: AIUsageInfo; deepThink?: boolean }> {
-    // This is a workaround for TypeScript type checking
-    // We know that insight.captcha exists because we added it
-    const context = await this.getUIContext();
-
-    // Include the current page URL in the context for better CAPTCHA analysis
-    if (this.page.url) {
-      const url = await this.page.url();
-      context.url = url;
-    }
-
-    return (this.insight as any).captcha(context, options);
   }
 
   async setAIActionContext(prompt: string) {
@@ -390,8 +385,8 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       start: lastTask?.timing?.start,
       end: lastTask?.timing?.end,
       totalTime: lastTask?.timing?.cost,
-      cache: lastTask?.cache,
-      usage: lastTask?.usage,
+      cache: (lastTask as any)?.cache,
+      usage: lastTask?.usage as any,
       thought: allThoughts.length > 0 ? allThoughts.join('\n') : lastTask?.thought,
       locate: allLocates.length > 0 ? allLocates : lastTask?.locate,
       plan: allPlans.length > 0 ? allPlans : lastTask?.param?.plans,
@@ -408,8 +403,8 @@ export class PageAgent<PageType extends WebPage = WebPage> {
         thought: task.thought,
         locate: task.locate,
         timing: task.timing,
-        usage: task.usage,
-        cache: task.cache,
+        usage: task.usage as any,
+        cache: (task as any)?.cache,
         error: task.error
       }))
     };
@@ -448,6 +443,25 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const plans = buildPlans('Tap', detailedLocateParam);
     const { executor, output } = await this.taskExecutor.runPlans(
       taskTitleStr('Tap', locateParamStr(detailedLocateParam)),
+      plans,
+      { cacheable: opt?.cacheable },
+    );
+    const metadata = this.afterTaskRunning(executor);
+
+    return {
+      result: output,
+      metadata,
+    };
+  }
+
+  async aiRightClick(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
+    const detailedLocateParam = this.buildDetailedLocateParam(
+      locatePrompt,
+      opt,
+    );
+    const plans = buildPlans('RightClick', detailedLocateParam);
+    const { executor, output } = await this.taskExecutor.runPlans(
+      taskTitleStr('RightClick', locateParamStr(detailedLocateParam)),
       plans,
       { cacheable: opt?.cacheable },
     );
@@ -659,7 +673,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     prompt: string,
     opt: InsightExtractOption = defaultInsightExtractOption,
   ) {
-    return this.aiString(prompt, opt);
+    return this.aiString(prompt);
   }
 
   async describeElementAtPoint(
@@ -805,142 +819,6 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async aiCaptcha(options?: { deepThink?: boolean; autoDetectComplexity?: boolean }): Promise<AITaskResult<any>> {
-    const { deepThink = false, autoDetectComplexity = true } = options || {};
-
-    // First, do a preliminary analysis to determine if this is a complex CAPTCHA
-    // that would benefit from deep thinking
-    let shouldUseDeepThink = deepThink;
-
-    if (autoDetectComplexity && !deepThink) {
-      // Get a screenshot to analyze
-      const context = await this.getUIContext();
-      const { screenshotBase64 } = context;
-
-      // Simple analysis to determine if this is likely a complex CAPTCHA
-      try {
-        const complexityAnalysisPrompt = `
-Analyze this screenshot and determine if it contains a complex CAPTCHA that would benefit from deep thinking.
-A complex CAPTCHA typically has one or more of these characteristics:
-- Distorted or overlapping text that is hard to read
-- Multiple images that need to be selected based on a specific criteria
-- Puzzles that require spatial reasoning
-- Multiple steps or verification methods
-- Small or hard-to-distinguish elements
-
-Return only "complex" or "simple" based on your analysis.
-`;
-
-        const complexityMsgs = [
-          { role: 'system', content: 'You are an AI assistant that analyzes screenshots to determine CAPTCHA complexity.' },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: screenshotBase64,
-                  detail: 'high',
-                },
-              },
-              {
-                type: 'text',
-                text: complexityAnalysisPrompt,
-              },
-            ],
-          },
-        ];
-
-        // Use a simple call to determine complexity
-        // Using any here to avoid type issues since we're just checking the response text
-        const complexityResult = await (this.insight as any).aiVendorFn(
-          complexityMsgs,
-          { type: 'extract_data' }
-        );
-
-        // Check if the response indicates a complex CAPTCHA
-        const responseText = typeof complexityResult.content === 'string'
-          ? complexityResult.content.toLowerCase()
-          : JSON.stringify(complexityResult.content).toLowerCase();
-
-        shouldUseDeepThink = responseText.includes('complex');
-
-        debug('CAPTCHA complexity analysis:', responseText, 'Using deep think:', shouldUseDeepThink);
-      } catch (error) {
-        // If analysis fails, default to not using deep think
-        debug('Failed to analyze CAPTCHA complexity:', error);
-      }
-    }
-
-    // Call the AiCaptcha function to analyze the CAPTCHA with the determined deepThink setting
-    const captchaResponse = await this._callInsightCaptcha({
-      deepThink: shouldUseDeepThink
-    });
-
-    const captchaResult = captchaResponse.content;
-    const usage = captchaResponse.usage;
-    // Get the actual deepThink value that was used (may be different due to global settings)
-    const actualDeepThink = captchaResponse.deepThink || false;
-
-    // Process the CAPTCHA solution based on its type
-    if (captchaResult.captchaType === 'text') {
-      // For text-based CAPTCHAs, find the input field and enter the solution
-      for (const action of captchaResult.actions) {
-        if (action.type === 'click' && action.target) {
-          // Click on the input field
-          await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
-        } else if (action.type === 'input' && action.value) {
-          // Enter the text solution
-          if (action.target) {
-            await this.aiInput(action.value, action.target, { deepThink: shouldUseDeepThink });
-          }
-        } else if (action.type === 'verify' && action.target) {
-          // Click on the verify/submit button
-          await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
-        }
-      }
-    } else if (captchaResult.captchaType === 'image') {
-      // For image-based CAPTCHAs, click on the required elements
-      for (const action of captchaResult.actions) {
-        if (action.type === 'click') {
-          if (action.coordinates) {
-            // Click at specific coordinates using aiTap with coordinates
-            const x = action.coordinates[0];
-            const y = action.coordinates[1];
-            await this.aiTap(`element at coordinates (${x}, ${y})`, { deepThink: shouldUseDeepThink });
-          } else if (action.target) {
-            // Click on described element
-            await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
-          }
-        } else if (action.type === 'verify' && action.target) {
-          // Click on the verify/submit button
-          await this.aiTap(action.target, { deepThink: shouldUseDeepThink });
-        }
-      }
-    }
-
-    // Wait a few seconds after completing the CAPTCHA
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    // Return the result with metadata
-    const metadata: AITaskMetadata = {
-      status: 'finished',
-      usage,
-      thought: captchaResult.thought,
-    };
-
-    // Add additional metadata properties using type assertion
-    (metadata as any).deepThink = actualDeepThink;
-    if (autoDetectComplexity && !deepThink) {
-      (metadata as any).autoDetectedComplexity = shouldUseDeepThink;
-    }
-
-    return {
-      result: captchaResult,
-      metadata
-    };
-  }
-
   async aiWaitFor(assertion: string, opt?: AgentWaitForOpt): Promise<AITaskResult> {
     const startTime = Date.now();
     const { executor } = await this.taskExecutor.waitFor(assertion, {
@@ -996,12 +874,12 @@ Return only "complex" or "simple" based on your analysis.
       return this.aiTap(taskPrompt, options);
     }
 
-    if (type === 'captcha') {
-      return this.aiCaptcha(options);
+    if (type === 'rightClick') {
+      return this.aiRightClick(taskPrompt, options);
     }
 
     throw new Error(
-      `Unknown type: ${type}, only support 'action', 'query', 'assert', 'tap', 'captcha'`,
+      `Unknown type: ${type}, only support 'action', 'query', 'assert', 'tap', 'rightClick'`,
     );
   }
 
@@ -1057,8 +935,6 @@ Return only "complex" or "simple" based on your analysis.
   async destroy() {
     await this.page.destroy();
   }
-<<<<<<< HEAD
-=======
 
   async logScreenshot(
     title?: string,
@@ -1130,5 +1006,4 @@ Return only "complex" or "simple" based on your analysis.
       executions: newExecutions,
     };
   }
->>>>>>> upstream/main
 }

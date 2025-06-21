@@ -1,9 +1,9 @@
-import { treeToList } from '@midscene/shared/extractor';
+import { treeToList } from 'rfi-ai-shared/extractor';
 import { getContextFromFixture } from 'tests/evaluation';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the env module before importing the function that uses it
-vi.mock('@midscene/shared/env', () => ({
+vi.mock('@RFI/shared/env', () => ({
   vlLocateMode: vi.fn(() => 'qwen-vl' as const), // default to 'qwen-vl'
 }));
 
@@ -13,7 +13,7 @@ import {
   describeUserPage,
   elementByPositionWithElementInfo,
 } from '@/ai-model/prompt/util';
-import { vlLocateMode } from '@midscene/shared/env';
+import { vlLocateMode } from 'rfi-ai-shared/env';
 
 describe('prompt utils - describeUserPage', () => {
   let lengthOfDescription: number;

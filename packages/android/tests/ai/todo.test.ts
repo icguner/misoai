@@ -1,4 +1,4 @@
-import { sleep } from 'misoai-core/utils';
+import { sleep } from 'rfi-ai-core/utils';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AndroidAgent, AndroidDevice, getConnectedDevices } from '../../src';
 

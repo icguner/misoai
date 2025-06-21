@@ -1,7 +1,7 @@
-import type { GroupedActionDump, UIContext } from '@midscene/core';
-import type { ChromeExtensionProxyPageAgent } from '@midscene/web/chrome-extension';
-import type { StaticPageAgent } from '@midscene/web/playground';
-import type { WebUIContext } from '@midscene/web/utils';
+import type { GroupedActionDump, UIContext } from 'rfi-ai-core';
+import type { ChromeExtensionProxyPageAgent } from 'rfi-ai-web/chrome-extension';
+import type { StaticPageAgent } from 'rfi-ai-web/playground';
+import type { WebUIContext } from 'rfi-ai-web/utils';
 
 // result type
 export interface PlaygroundResult {

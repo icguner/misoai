@@ -1,5 +1,5 @@
 {
-  "name": "android-playground",
+  "name": "rfi-ai-android-playground-app",
   "private": true,
   "version": "0.12.4",
   "type": "module",
@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.1",
-    "misoai-android": "workspace:*",
-    "misoai-core": "workspace:*",
-    "misoai-shared": "workspace:*",
-    "misoai-visualizer": "workspace:*",
-    "misoai-web": "workspace:*",
+    "rfi-ai-android": "^0.20.1",
+    "rfi-ai-core": "^0.20.1",
+    "rfi-ai-shared": "^0.20.1",
+    "rfi-ai-visualizer": "^0.20.1",
+    "rfi-ai-web": "^0.20.1",
     "@yume-chan/scrcpy": "^1.1.0",
     "@yume-chan/scrcpy-decoder-webcodecs": "1.1.0",
     "antd": "^5.21.6",

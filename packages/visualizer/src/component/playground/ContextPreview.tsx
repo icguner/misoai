@@ -1,4 +1,4 @@
-import type { UIContext } from '@midscene/core';
+import type { UIContext } from 'rfi-ai-core';
 import { Button } from 'antd';
 import type React from 'react';
 import Blackboard from '../blackboard';

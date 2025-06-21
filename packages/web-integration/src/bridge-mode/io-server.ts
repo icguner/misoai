@@ -1,5 +1,5 @@
-import { sleep } from 'misoai-core/utils';
-import { logMsg } from 'misoai-shared/utils';
+import { sleep } from 'rfi-ai-core/utils';
+import { logMsg } from 'rfi-ai-shared/utils';
 import { Server, type Socket as ServerSocket } from 'socket.io';
 import { io as ClientIO } from 'socket.io-client';
 

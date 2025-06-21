@@ -7,8 +7,8 @@
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { getDebug } from 'misoai-shared/logger';
-import type { AppiumDevice } from '../page/appium-device';
+import { getDebug } from 'rfi-ai-shared/logger';
+import type { AppiumDevice } from '../agent';
 
 const debugMedia = getDebug('android:utils:media');
 
@@ -177,7 +177,7 @@ export async function startVideoRecording(
 
   try {
     // Get the WebdriverIO driver
-    const driver = await device['getDriver']();
+    const driver = await device.getDriver();
 
     // Start recording
     await driver.startRecordingScreen({
@@ -218,7 +218,7 @@ export async function stopVideoRecording(
 
   try {
     // Get the WebdriverIO driver
-    const driver = await device['getDriver']();
+    const driver = await device.getDriver();
 
     // Stop recording and get the base64 video data
     const base64Video = await driver.stopRecordingScreen();

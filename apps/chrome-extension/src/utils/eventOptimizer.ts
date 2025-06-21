@@ -1,7 +1,7 @@
 import Insight from '@midscene/core';
 import type { BaseElement, UIContext } from '@midscene/core';
 import type { RecordedEvent } from '@midscene/recorder';
-import { compositeElementInfoImg } from '@midscene/shared/img';
+import { compositeElementInfoImgSharp } from '@midscene/shared/img';
 
 // Caches for element descriptions and boxed screenshots to improve performance
 const MAX_CACHE_SIZE = 100;
@@ -157,7 +157,7 @@ export const generateBoxedImage = async (
       } as any);
     }
 
-    const boxedImageBase64 = await compositeElementInfoImg({
+    const boxedImageBase64 = await compositeElementInfoImgSharp({
       inputImgBase64: event.screenshotBefore,
       size: { width: event.pageInfo.width, height: event.pageInfo.height },
       elementsPositionInfo,

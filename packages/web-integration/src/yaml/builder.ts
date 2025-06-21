@@ -2,7 +2,7 @@ import type {
   MidsceneYamlScript,
   MidsceneYamlScriptWebEnv,
   MidsceneYamlTask,
-} from 'misoai-core';
+} from 'rfi-ai-core';
 import yaml from 'js-yaml';
 
 export function buildYaml(

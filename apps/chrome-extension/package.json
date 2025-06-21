@@ -1,5 +1,5 @@
 {
-  "name": "chrome-extension",
+  "name": "rfi-ai-chrome-extension",
   "private": true,
   "version": "0.12.4",
   "type": "module",
@@ -11,12 +11,10 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.1",
-    "@midscene/core": "workspace:*",
-    "@midscene/recorder": "workspace:*",
-    "@midscene/report": "workspace:*",
-    "@midscene/shared": "workspace:*",
-    "@midscene/visualizer": "workspace:*",
-    "@midscene/web": "workspace:*",
+    "rfi-ai-core": "^0.20.1",
+    "rfi-ai-shared": "^0.20.1",
+    "rfi-ai-visualizer": "^0.20.1",
+    "rfi-ai-web": "^0.20.1",
     "antd": "^5.21.6",
     "canvas-confetti": "1.9.3",
     "dayjs": "^1.11.11",

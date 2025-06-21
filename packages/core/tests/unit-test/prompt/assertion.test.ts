@@ -2,7 +2,7 @@ import { systemPromptToAssert } from '@/ai-model/prompt/assertion';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('Assertion prompt', () => {
-  vi.mock('misoai-shared/env', () => ({
+  vi.mock('@RFI/shared/env', () => ({
     getPreferredLanguage: vi.fn().mockReturnValue('English'),
   }));
 

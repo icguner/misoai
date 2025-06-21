@@ -1,4 +1,4 @@
-import { getPreferredLanguage } from 'misoai-shared/env';
+import { getPreferredLanguage } from 'rfi-ai-shared/env';
 
 export function getUiTarsPlanningPrompt(): string {
   const preferredLanguage = getPreferredLanguage();

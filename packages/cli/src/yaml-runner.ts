@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { basename, extname } from 'node:path';
-import { ScriptPlayer, parseYamlScript } from 'misoai-web/yaml';
+import { ScriptPlayer, parseYamlScript } from 'rfi-ai-web/yaml';
 import { createServer } from 'http-server';
 import {
   type MidsceneYamlFileContext,
@@ -12,10 +12,10 @@ import {
 import { TTYWindowRenderer } from './tty-renderer';
 
 import assert from 'node:assert';
-import { agentFromAdbDevice } from 'misoai-android';
-import type { FreeFn } from 'misoai-core';
-import { AgentOverChromeBridge } from 'misoai-web/bridge-mode';
-import { puppeteerAgentForTarget } from 'misoai-web/puppeteer-agent-launcher';
+import { agentFromAdbDevice } from 'rfi-ai-android';
+import type { FreeFn } from 'rfi-ai-core';
+import { AgentOverChromeBridge } from 'rfi-ai-web/bridge-mode';
+import { puppeteerAgentForTarget } from 'rfi-ai-web/puppeteer-agent-launcher';
 
 export const launchServer = async (
   dir: string,

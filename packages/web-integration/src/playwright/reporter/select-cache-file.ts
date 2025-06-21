@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getMidsceneRunSubDir } from 'misoai-shared/common';
+import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
 import inquirer from 'inquirer';
 
 interface Task {

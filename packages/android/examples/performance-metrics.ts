@@ -1,7 +1,7 @@
 /**
  * Example for retrieving performance metrics from Android devices using misoai-android
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'rfi-ai-android';
 
 async function main() {
   try {

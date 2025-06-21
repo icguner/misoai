@@ -1,5 +1,5 @@
 {
-  "name": "@midscene/evaluation",
+  "name": "rfi-ai-evaluation",
   "private": true,
   "scripts": {
     "update-page-data:headless": "playwright test ./data-generator/generator-headless.spec.ts && npm run format",
@@ -25,16 +25,16 @@
   ],
   "type": "module",
   "dependencies": {
-    "@midscene/core": "workspace:*",
-    "@midscene/shared": "workspace:*",
-    "@midscene/web": "workspace:*"
+    "rfi-ai-core": "^0.20.1",
+    "rfi-ai-shared": "^0.20.1",
+    "rfi-ai-web": "^0.20.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",
     "cli-progress": "3.12.0",
     "dotenv": "16.4.5",
     "playwright": "1.44.1",
-    "sharp": "0.34.1",
+    "sharp": "^0.34.0",
     "typescript": "^5.8.3",
     "vitest": "3.0.5"
   },
@@ -46,5 +46,5 @@
     "registry": "https://registry.npmjs.org"
   },
   "license": "MIT",
-  "version": "0.20.0"
+  "version": "0.20.1"
 }

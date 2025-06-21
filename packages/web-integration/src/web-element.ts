@@ -1,5 +1,5 @@
-import type { BaseElement, Rect } from 'misoai-core';
-import type { NodeType } from 'misoai-shared/constants';
+import type { BaseElement, Rect } from 'rfi-ai-core';
+import type { NodeType } from 'rfi-ai-shared/constants';
 export interface WebElementInfoType extends BaseElement {
   id: string;
   attributes: {

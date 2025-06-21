@@ -2,4 +2,4 @@ export {
   truncateText,
   trimAttributes,
   descriptionOfTree,
-} from '@midscene/shared/extractor';
+} from 'rfi-ai-shared/extractor';

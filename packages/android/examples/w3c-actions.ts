@@ -4,7 +4,7 @@
  * This example demonstrates how to use the W3C Actions API for touch interactions
  * after migrating from the deprecated TouchAction API.
  */
-import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'misoai-android';
+import { agentFromLocalAppium, type AppiumBaseCapabilities } from 'rfi-ai-android';
 
 async function main() {
   try {

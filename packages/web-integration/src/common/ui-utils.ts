@@ -7,7 +7,7 @@ import type {
   ExecutionTaskInsightQuery,
   ExecutionTaskPlanning,
   PlanningActionParamScroll,
-} from 'misoai-core';
+} from 'rfi-ai-core';
 
 export function typeStr(task: ExecutionTask) {
   return task.subType && task.subType !== 'Plan'

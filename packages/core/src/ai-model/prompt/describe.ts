@@ -1,4 +1,4 @@
-import { getPreferredLanguage } from 'misoai-shared/env';
+import { getPreferredLanguage } from 'rfi-ai-shared/env';
 
 export const elementDescriberInstruction = () => {
   return `Describe the element in the red rectangle for precise identification. Use ${getPreferredLanguage()}.

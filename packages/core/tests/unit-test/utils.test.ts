@@ -11,8 +11,8 @@ import {
   preprocessDoubaoBboxJson,
   safeParseJson,
 } from '@/ai-model/service-caller';
-import { getMidsceneRunSubDir } from 'misoai-shared/common';
-import { getAIConfig, overrideAIConfig } from 'misoai-shared/env';
+import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
+import { getAIConfig, overrideAIConfig } from 'rfi-ai-shared/env';
 import { describe, expect, it } from 'vitest';
 import {
   getTmpDir,

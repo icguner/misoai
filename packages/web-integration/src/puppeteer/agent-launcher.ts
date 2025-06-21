@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 
 import { PuppeteerAgent } from '@/puppeteer/index';
-import type { MidsceneYamlScriptWebEnv } from 'misoai-core';
-import { DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT } from 'misoai-shared/constants';
+import type { MidsceneYamlScriptWebEnv } from 'rfi-ai-core';
+import { DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT } from 'rfi-ai-shared/constants';
 import puppeteer from 'puppeteer';
 
 export const defaultUA =

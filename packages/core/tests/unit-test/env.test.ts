@@ -10,7 +10,7 @@ import {
   getAIConfigInJson,
   overrideAIConfig,
   vlLocateMode,
-} from 'misoai-shared/env';
+} from 'rfi-ai-shared/env';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 describe('env', () => {

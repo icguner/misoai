@@ -1,4 +1,4 @@
-import { assert } from 'misoai-shared/utils';
+import { assert } from 'rfi-ai-shared/utils';
 import { io as ClientIO, type Socket as ClientSocket } from 'socket.io-client';
 import {
   type BridgeCallRequest,

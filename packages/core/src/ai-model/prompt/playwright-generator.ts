@@ -1,4 +1,4 @@
-import { PLAYWRIGHT_EXAMPLE_CODE } from '@midscene/shared/constants';
+import { PLAYWRIGHT_EXAMPLE_CODE } from 'rfi-ai-shared/constants';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import { AIActionType, callAi } from '../index';
 

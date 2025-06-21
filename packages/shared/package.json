@@ -1,6 +1,6 @@
 {
-  "name": "@midscene/shared",
-  "version": "0.20.0",
+  "name": "rfi-ai-shared",
+  "version": "0.20.1",
   "repository": "https://github.com/web-infra-dev/midscene",
   "homepage": "https://midscenejs.com/",
   "types": "./dist/types/index.d.ts",
@@ -22,21 +22,49 @@
   },
   "typesVersions": {
     "*": {
-      ".": ["./dist/types/index.d.ts"],
-      "constants": ["./dist/types/constants.d.ts"],
-      "img": ["./dist/types/img.d.ts"],
-      "fs": ["./dist/types/fs.d.ts"],
-      "utils": ["./dist/types/utils.d.ts"],
-      "extractor": ["./dist/types/extractor.d.ts"],
-      "extractor-debug": ["./dist/types/extractor-debug.d.ts"],
-      "keyboard-layout": ["./dist/types/us-keyboard-layout.d.ts"],
-      "logger": ["./dist/types/logger.d.ts"],
-      "common": ["./dist/types/common.d.ts"],
-      "env": ["./dist/types/env.d.ts"],
-      "types": ["./dist/types/types.d.ts"]
+      ".": [
+        "./dist/types/index.d.ts"
+      ],
+      "constants": [
+        "./dist/types/constants.d.ts"
+      ],
+      "img": [
+        "./dist/types/img.d.ts"
+      ],
+      "fs": [
+        "./dist/types/fs.d.ts"
+      ],
+      "utils": [
+        "./dist/types/utils.d.ts"
+      ],
+      "extractor": [
+        "./dist/types/extractor.d.ts"
+      ],
+      "extractor-debug": [
+        "./dist/types/extractor-debug.d.ts"
+      ],
+      "keyboard-layout": [
+        "./dist/types/us-keyboard-layout.d.ts"
+      ],
+      "logger": [
+        "./dist/types/logger.d.ts"
+      ],
+      "common": [
+        "./dist/types/common.d.ts"
+      ],
+      "env": [
+        "./dist/types/env.d.ts"
+      ],
+      "types": [
+        "./dist/types/types.d.ts"
+      ]
     }
   },
-  "files": ["dist", "src", "README.md"],
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "dev": "modern dev",
     "build": "npm run build:pkg && npm run build:script",
@@ -59,6 +87,7 @@
     "debug": "4.4.0",
     "jimp": "0.22.12",
     "js-sha256": "0.11.0",
+    "sharp": "^0.34.0",
     "xss": "^1.0.15"
   },
   "devDependencies": {

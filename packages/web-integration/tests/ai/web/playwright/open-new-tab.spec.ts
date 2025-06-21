@@ -1,4 +1,4 @@
-import { sleep } from 'misoai-core/utils';
+import { sleep } from 'rfi-ai-core/utils';
 import { test } from './fixture';
 
 test.beforeEach(async ({ page }) => {

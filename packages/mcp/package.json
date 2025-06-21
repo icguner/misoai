@@ -1,6 +1,6 @@
 {
-  "name": "@midscene/mcp",
-  "version": "0.20.0",
+  "name": "rfi-ai-mcp",
+  "version": "0.20.1",
   "type": "module",
   "exports": {
     ".": {
@@ -30,10 +30,9 @@
     "typescript": "^5.8.3",
     "vitest": "3.0.5",
     "dotenv": "16.4.5",
-    "@midscene/web": "workspace:*",
-    "@midscene/report": "workspace:*",
-    "@midscene/core": "workspace:*",
-    "@midscene/shared": "workspace:*",
+    "rfi-ai-web": "^0.20.1",
+    "rfi-ai-core": "^0.20.1",
+    "rfi-ai-shared": "^0.20.1",
     "@modelcontextprotocol/sdk": "1.10.2",
     "zod": "3.24.3"
   },

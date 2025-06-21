@@ -1,15 +1,15 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
-import { type Point, type Size, getAIConfig } from 'misoai-core';
-import type { PageType } from 'misoai-core';
-import { getTmpFile, sleep } from 'misoai-core/utils';
-import { MIDSCENE_ANDROID_IME_STRATEGY } from 'misoai-shared/env';
-import type { ElementInfo } from 'misoai-shared/extractor';
-import { isValidPNGImageBuffer, resizeImg } from 'misoai-shared/img';
-import { getDebug } from 'misoai-shared/logger';
-import { repeat } from 'misoai-shared/utils';
-import type { AndroidDeviceInputOpt, AndroidDevicePage } from 'misoai-web';
+import { type Point, type Size, getAIConfig } from 'rfi-ai-core';
+import type { PageType } from 'rfi-ai-core';
+import { getTmpFile, sleep } from 'rfi-ai-core/utils';
+import { MIDSCENE_ANDROID_IME_STRATEGY } from 'rfi-ai-shared/env';
+import type { ElementInfo } from 'rfi-ai-shared/extractor';
+import { isValidPNGImageBuffer, resizeImg } from 'rfi-ai-shared/img';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { repeat } from 'rfi-ai-shared/utils';
+import type { AndroidDeviceInputOpt, AndroidDevicePage } from 'rfi-ai-web';
 import { remote } from 'webdriverio';
 
 const androidScreenshotPath = '/data/local/tmp/midscene_screenshot.png';

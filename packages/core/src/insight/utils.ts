@@ -5,8 +5,8 @@ import type {
   PartialInsightDumpFromSDK,
 } from '@/types';
 import { getVersion } from '@/utils';
-import { MIDSCENE_MODEL_NAME, getAIConfig } from '@midscene/shared/env';
-import { uuid } from '@midscene/shared/utils';
+import { MIDSCENE_MODEL_NAME, getAIConfig } from 'rfi-ai-shared/env';
+import { uuid } from 'rfi-ai-shared/utils';
 
 export function emitInsightDump(
   data: PartialInsightDumpFromSDK,

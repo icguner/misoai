@@ -6,8 +6,8 @@ import {
   TaskCache,
 } from '@/common/task-cache';
 import { cacheFileExt } from '@/common/task-cache';
-import { getMidsceneRunSubDir } from 'misoai-shared/common';
-import { uuid } from 'misoai-shared/utils';
+import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
+import { uuid } from 'rfi-ai-shared/utils';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../package.json', () => {

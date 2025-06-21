@@ -3,11 +3,11 @@ import {
   UITarsModelVersion,
   uiTarsModelVersion,
   vlLocateMode,
-} from 'misoai-shared/env';
-import { resizeImgBase64 } from 'misoai-shared/img';
-import { transformHotkeyInput } from 'misoai-shared/keyboard-layout';
-import { getDebug } from 'misoai-shared/logger';
-import { assert } from 'misoai-shared/utils';
+} from 'rfi-ai-shared/env';
+import { resizeImgBase64 } from 'rfi-ai-shared/img';
+import { transformHotkeyInput } from 'rfi-ai-shared/keyboard-layout';
+import { getDebug } from 'rfi-ai-shared/logger';
+import { assert } from 'rfi-ai-shared/utils';
 import { actionParser } from '@ui-tars/action-parser';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import { AIActionType } from './common';

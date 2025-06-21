@@ -10,7 +10,7 @@ export {
   AiCaptcha,
 } from './ai-model/index';
 
-export { getAIConfig, MIDSCENE_MODEL_NAME } from 'misoai-shared/env';
+export { getAIConfig, MIDSCENE_MODEL_NAME } from 'rfi-ai-shared/env';
 export { AIActionType } from './ai-model/common';
 
 export type * from './types';

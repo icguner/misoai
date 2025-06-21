@@ -1,6 +1,6 @@
 {
-  "name": "@midscene/android-playground",
-  "version": "0.20.0",
+  "name": "rfi-ai-android-playground",
+  "version": "0.20.1",
   "description": "Android playground for Midscene",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
@@ -21,9 +21,9 @@
     "build:watch": "modern build -w -c ./modern.config.ts"
   },
   "dependencies": {
-    "@midscene/android": "workspace:*",
-    "@midscene/shared": "workspace:*",
-    "@midscene/web": "workspace:*",
+    "rfi-ai-android": "^0.20.1",
+    "rfi-ai-shared": "^0.20.1",
+    "rfi-ai-web": "^0.20.1",
     "@yume-chan/adb": "^1.1.0",
     "@yume-chan/adb-scrcpy": "^1.1.0",
     "@yume-chan/adb-server-node-tcp": "^1.1.0",
