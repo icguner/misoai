@@ -35,22 +35,39 @@ import { AppiumServerConfig, AppiumBaseCapabilities, SauceLabsConfig, SauceLabsC
 // AppiumDevice class for Appium integration
 export class AppiumDevice extends AndroidDevice {
   constructor(private config: AppiumServerConfig, private capabilities: AppiumBaseCapabilities) {
-    super('appium-device');
+    super('appium-device', {
+      hostname: config.hostname,
+      port: config.port,
+      protocol: config.protocol,
+      path: config.path,
+      capabilities: capabilities
+    });
   }
 
   async connect(): Promise<void> {
     debugDevice('Connecting to Appium server at %s://%s:%s', 
       this.config.protocol, this.config.hostname, this.config.port);
+    
+    // Use the parent class connect method which properly initializes WebDriverIO
+    await super.connect();
   }
 
   async getCurrentPackage(): Promise<string> {
-    // TODO: Implement getting current package from Appium
-    return 'com.example.app';
+    const driver = await this.getDriver();
+    try {
+      // Get current activity/package using WebDriverIO
+      const currentActivity = await driver.getCurrentActivity();
+      const currentPackage = await driver.getCurrentPackage();
+      return currentPackage || 'unknown';
+    } catch (error) {
+      debugDevice('Error getting current package: %s', (error as Error).message);
+      return 'unknown';
+    }
   }
 
   async getDriver(): Promise<any> {
-    // TODO: Implement getting WebDriver instance
-    return {};
+    // Use the parent class getDriver method which properly manages WebDriverIO connection
+    return super.getDriver();
   }
 }
 

@@ -12,8 +12,7 @@
   "dependencies": {
     "@ant-design/icons": "^5.3.1",
     "rfi-ai-core": "^0.20.1",
-    "rfi-ai-shared": "^0.20.1",
-    "rfi-ai-visualizer": "^0.20.1",
+        "rfi-ai-shared": "^0.20.1",
     "rfi-ai-web": "^0.20.1",
     "antd": "^5.21.6",
     "canvas-confetti": "1.9.3",

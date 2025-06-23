@@ -121,7 +121,7 @@ import {
   DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT,
   DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT,
 } from 'rfi-ai-shared/constants';
-import { getAIConfigInBoolean, vlLocateMode } from 'rfi-ai-shared/env';
+import { getAIConfigInBoolean, overrideAIConfig, vlLocateMode } from 'rfi-ai-shared/env';
 import { getDebug } from 'rfi-ai-shared/logger';
 import { assert } from 'rfi-ai-shared/utils';
 import { PageTaskExecutor } from '../common/tasks';
@@ -173,6 +173,10 @@ export interface PageAgentOpt {
   aiActionContext?: string;
   waitForNavigationTimeout?: number;
   waitForNetworkIdleTimeout?: number;
+  /* AI model temperature (0.0 - 1.0) */
+  aiTemperature?: number;
+  /* AI model seed for consistency */
+  aiSeed?: number;
 }
 
 export class PageAgent<PageType extends WebPage = WebPage> {
@@ -210,6 +214,18 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       },
       opts || {},
     );
+
+    // Override global AI config if agent-specific values are provided
+    if (opts?.aiTemperature !== undefined || opts?.aiSeed !== undefined) {
+      const aiConfigOverride: Record<string, string> = {};
+      if (opts.aiTemperature !== undefined) {
+        aiConfigOverride['AI_TEMPERATURE'] = opts.aiTemperature.toString();
+      }
+      if (opts.aiSeed !== undefined) {
+        aiConfigOverride['AI_SEED'] = opts.aiSeed.toString();
+      }
+      overrideAIConfig(aiConfigOverride, true); // extend mode
+    }
 
     if (
       this.page.pageType === 'puppeteer' ||

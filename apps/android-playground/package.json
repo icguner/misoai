@@ -13,7 +13,6 @@
     "rfi-ai-android": "^0.20.1",
     "rfi-ai-core": "^0.20.1",
     "rfi-ai-shared": "^0.20.1",
-    "rfi-ai-visualizer": "^0.20.1",
     "rfi-ai-web": "^0.20.1",
     "@yume-chan/scrcpy": "^1.1.0",
     "@yume-chan/scrcpy-decoder-webcodecs": "1.1.0",

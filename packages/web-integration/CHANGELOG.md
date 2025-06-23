@@ -5,6 +5,17 @@ All notable changes to the `misoai-web` package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2024-12-27
+
+### Added
+- Support for `aiTemperature` and `aiSeed` parameters in agent configuration
+- Direct control over AI model temperature and seed values when creating PuppeteerAgent and PlaywrightAgent
+- Enhanced PageAgentOpt interface with new AI configuration options
+
+### Changed
+- Improved AI model consistency through configurable seed values
+- Better control over AI response creativity through temperature settings
+
 ## [1.0.2] - 2024-07-11
 
 ### Changed
