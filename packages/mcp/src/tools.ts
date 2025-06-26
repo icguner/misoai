@@ -46,7 +46,7 @@ export const tools = {
   midscene_aiScroll: {
     name: 'midscene_aiScroll',
     description:
-      'Scrolls the page or a specified element. Can scroll by a fixed amount or until an edge is reached.',
+      'AI-powered scroll action using natural language. Describe what you want to scroll and how. Examples: "scroll down in the product list until bottom", "scroll up 200 pixels", "swipe left on the carousel".',
   },
   midscene_aiInput: {
     name: 'midscene_aiInput',

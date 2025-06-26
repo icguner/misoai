@@ -222,11 +222,15 @@ await agent.aiKeyboardPress('Enter', 'The search input box');
 
 ### `agent.aiScroll()`
 
-Scroll a page or an element.
+AI-powered scroll action using natural language descriptions.
 
 - Type
 
 ```typescript
+// New simplified approach (recommended)
+function aiScroll(prompt: string, options?: Object): Promise<void>;
+
+// Legacy approach (deprecated)
 function aiScroll(
   scrollParam: PlanningActionParamScroll,
   locate?: string,
@@ -236,15 +240,16 @@ function aiScroll(
 
 - Parameters:
 
-  - `scrollParam: PlanningActionParamScroll` - The scroll parameter
-    - `direction: 'up' | 'down' | 'left' | 'right'` - The direction to scroll.
-    - `scrollType: 'once' | 'untilBottom' | 'untilTop' | 'untilRight' | 'untilLeft'` - Optional, the type of scroll to perform.
-    - `distance: number` - Optional, the distance to scroll in px.
-  - `locate?: string` - Optional, a natural language description of the element to scroll on. If not provided, Midscene will perform scroll on the current mouse position.
-  - `options?: Object` - Optional, a configuration object containing:
-    - `deepThink?: boolean` - If true, Midscene will call AI model twice to precisely locate the element. False by default.
-    - `xpath?: string` - The xpath of the element to operate. If provided, Midscene will first use this xpath to locate the element before using the cache and the AI model. Empty by default.
-    - `cacheable?: boolean` - Whether cacheable when enabling [caching feature](./caching.mdx). True by default.
+  - **New Approach:**
+    - `prompt: string` - Natural language description of the scroll action
+    - `options?: Object` - Optional configuration:
+      - `deepThink?: boolean` - Enhanced AI precision. False by default.
+      - `cacheable?: boolean` - Whether cacheable when enabling [caching feature](./caching.mdx). True by default.
+
+  - **Legacy Approach (Deprecated):**
+    - `scrollParam: PlanningActionParamScroll` - Explicit scroll parameters
+    - `locate?: string` - Element description
+    - `options?: Object` - Configuration options
 
 - Return Value:
 
@@ -253,11 +258,37 @@ function aiScroll(
 - Examples:
 
 ```typescript
+// ✅ New recommended approach - Natural language
+
+// Page scrolling
+await agent.aiScroll('scroll down in the product list until bottom');
+await agent.aiScroll('scroll up 200 pixels in the sidebar');
+await agent.aiScroll('swipe left on the image carousel');
+
+// Dropdown/Menu scrolling
+await agent.aiScroll('scroll down in the country dropdown');
+await agent.aiScroll('scroll in the options menu to find Turkey');
+await agent.aiScroll('scroll the select dropdown until bottom');
+await agent.aiScroll('scroll up in the language selection menu');
+
+// Smart search scrolling
+await agent.aiScroll('scroll to find the submit button');
+await agent.aiScroll('scroll until visible the download link');
+
+// ❌ Legacy approach (deprecated)
 await agent.aiScroll(
   { direction: 'up', distance: 100, scrollType: 'once' },
   'The form panel',
 );
 ```
+
+**Smart Parsing Examples:**
+
+The AI automatically understands:
+- **Directions**: "up", "down", "left", "right", "swipe"
+- **Targets**: "in the list", "on carousel", "sidebar"
+- **Distances**: "200 pixels", "100px", "little bit", "page"
+- **Stop conditions**: "until bottom", "until visible", "to find..."
 
 ### `agent.aiRightClick()`
 

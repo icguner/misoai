@@ -332,46 +332,30 @@ export class MidsceneManager {
       tools.midscene_aiScroll.name,
       tools.midscene_aiScroll.description,
       {
-        direction: z
-          .enum(['up', 'down', 'left', 'right'])
-          .describe('The direction to scroll.'),
-        scrollType: z
-          .enum(['once', 'untilBottom', 'untilTop', 'untilLeft', 'untilRight'])
-          .optional()
-          .default('once')
-          .describe(
-            "Type of scroll: 'once' for a fixed distance, or until reaching an edge.",
-          ),
-        distance: z
-          .number()
-          .optional()
-          .describe(
-            "The distance to scroll in pixels (used with scrollType 'once').",
-          ),
-        locate: z
+        prompt: z
           .string()
-          .optional()
           .describe(
-            'Optional natural language description of the element to scroll. If not provided, scrolls based on current mouse position.',
+            'Natural language description of the scroll action. Examples:\n' +
+            '- "scroll down in the product list until bottom"\n' +
+            '- "scroll up 200 pixels in the sidebar"\n' +
+            '- "swipe left on the image carousel"\n' +
+            '- "scroll to find the submit button"'
           ),
         deepThink: z
           .boolean()
           .optional()
           .default(false)
           .describe(
-            "If true and 'locate' is provided, uses a two-step AI call to precisely locate the element.",
+            'If true, uses a two-step AI call to precisely locate the element.',
           ),
       },
-      async ({ direction, scrollType, distance, locate, deepThink }) => {
+      async ({ prompt, deepThink }) => {
         const agent = await this.initAgent();
-        const scrollParam = { direction, scrollType, distance };
-        await agent.aiScroll(scrollParam, locate, { deepThink });
-        const targetDesc = locate
-          ? ` element described by: "${locate}"`
-          : ' the page';
+        const options = deepThink ? { deepThink } : undefined;
+        await agent.aiScroll(prompt, options);
         return {
           content: [
-            { type: 'text', text: `Scrolled${targetDesc} ${direction}.` },
+            { type: 'text', text: `Executed scroll action: "${prompt}"` },
             { type: 'text', text: `report file: ${agent.reportFile}` },
           ],
         };

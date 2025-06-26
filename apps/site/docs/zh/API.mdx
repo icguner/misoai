@@ -214,11 +214,15 @@ await agent.aiKeyboardPress('Enter', '搜索框');
 
 ### `agent.aiScroll()`
 
-滚动页面或某个元素。
+使用自然语言描述的 AI 驱动滚动操作。
 
 - 类型
 
 ```typescript
+// 新的简化方法（推荐）
+function aiScroll(prompt: string, options?: Object): Promise<void>;
+
+// 传统方法（已弃用）
 function aiScroll(
   scrollParam: PlanningActionParamScroll,
   locate?: string,
@@ -228,15 +232,16 @@ function aiScroll(
 
 - 参数：
 
-  - `scrollParam: PlanningActionParamScroll` - 滚动参数
-    - `direction: 'up' | 'down' | 'left' | 'right'` - 滚动方向
-    - `scrollType: 'once' | 'untilBottom' | 'untilTop' | 'untilRight' | 'untilLeft'` - 滚动类型
-    - `distance: number` - 滚动距离，单位为像素。
-  - `locate?: string` - 用自然语言描述的元素定位。如果未传入，Midscene 会在当前鼠标位置滚动。
-  - `options?: Object` - 可选，一个配置对象，包含：
-    - `deepThink?: boolean` - 是否开启深度思考。如果为 true，Midscene 会调用 AI 模型两次以精确定位元素。默认值为 False
-    - `xpath?: string` - 目标元素的 xpath 路径，用于执行当前操作。如果提供了这个 xpath，Midscene 会优先使用该 xpath 来找到元素，然后依次使用缓存和 AI 模型。默认值为空
-    - `cacheable?: boolean` - 当启用 [缓存功能](./caching.mdx) 时，是否允许缓存当前 API 调用结果。默认值为 True
+  - **新方法：**
+    - `prompt: string` - 滚动操作的自然语言描述
+    - `options?: Object` - 可选配置：
+      - `deepThink?: boolean` - 增强 AI 精度。默认值为 False
+      - `cacheable?: boolean` - 当启用 [缓存功能](./caching.mdx) 时，是否允许缓存。默认值为 True
+
+  - **传统方法（已弃用）：**
+    - `scrollParam: PlanningActionParamScroll` - 明确的滚动参数
+    - `locate?: string` - 元素描述
+    - `options?: Object` - 配置选项
 
 - 返回值：
 
@@ -245,11 +250,37 @@ function aiScroll(
 - 示例：
 
 ```typescript
+// ✅ 新推荐方法 - 自然语言
+
+// 页面滚动
+await agent.aiScroll('在产品列表中向下滚动到底部');
+await agent.aiScroll('在侧边栏向上滚动200像素');
+await agent.aiScroll('在图片轮播图上向左滑动');
+
+// 下拉菜单/选项滚动
+await agent.aiScroll('在国家下拉菜单中向下滚动');
+await agent.aiScroll('在选项菜单中滚动查找土耳其');
+await agent.aiScroll('滚动选择下拉菜单到底部');
+await agent.aiScroll('在语言选择菜单中向上滚动');
+
+// 智能搜索滚动
+await agent.aiScroll('滚动查找提交按钮');
+await agent.aiScroll('滚动直到看到下载链接');
+
+// ❌ 传统方法（已弃用）
 await agent.aiScroll(
   { direction: 'up', distance: 100, scrollType: 'once' },
   '表单区域',
 );
 ```
+
+**智能解析示例：**
+
+AI 自动理解：
+- **方向**："上"、"下"、"左"、"右"、"滑动"
+- **目标**："在列表中"、"在轮播图上"、"侧边栏"
+- **距离**："200像素"、"100px"、"一点点"、"一页"
+- **停止条件**："直到底部"、"直到可见"、"查找..."
 
 ### `agent.aiRightClick()`
 

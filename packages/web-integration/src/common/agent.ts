@@ -559,11 +559,43 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
+  /**
+   * AI-powered scroll with natural language input
+   * @param prompt Natural language description of scroll action (e.g., "scroll down in the list until bottom")
+   * @param opt Optional configuration
+   */
+  async aiScroll(prompt: string, opt?: LocateOption): Promise<AITaskResult>;
+  /**
+   * @deprecated Use string prompt instead. This method will be removed in future versions.
+   * Legacy scroll with explicit parameters
+   */
   async aiScroll(
     scrollParam: PlanningActionParamScroll,
     locatePrompt?: string,
     opt?: LocateOption,
+  ): Promise<AITaskResult>;
+  async aiScroll(
+    promptOrParam: string | PlanningActionParamScroll,
+    locatePromptOrOpt?: string | LocateOption,
+    opt?: LocateOption,
   ): Promise<AITaskResult> {
+    // New AI-powered approach with string prompt
+    if (typeof promptOrParam === 'string') {
+      const options = locatePromptOrOpt as LocateOption | undefined;
+      return this.aiScrollWithPrompt(promptOrParam, options);
+    }
+
+    // Legacy approach - show deprecation warning
+    console.warn(
+      '⚠️  aiScroll with object parameters is deprecated. Use string prompt instead:\n' +
+      '   Old: await agent.aiScroll({direction: "down", scrollType: "once"}, "list")\n' +
+      '   New: await agent.aiScroll("scroll down in the list")'
+    );
+
+    // Legacy implementation
+    const scrollParam = promptOrParam;
+    const locatePrompt = locatePromptOrOpt as string | undefined;
+    
     const detailedLocateParam = locatePrompt
       ? this.buildDetailedLocateParam(locatePrompt, opt)
       : undefined;
@@ -581,6 +613,145 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     return {
       result: output,
       metadata,
+    };
+  }
+
+  /**
+   * Parse natural language scroll prompt and execute scroll action
+   */
+  private async aiScrollWithPrompt(
+    prompt: string,
+    opt?: LocateOption,
+  ): Promise<AITaskResult> {
+    try {
+      // Parse the natural language prompt to extract scroll parameters
+      const parsedParams = await this.parseScrollPrompt(prompt);
+      
+      // Build detailed locate param if target is specified
+      const detailedLocateParam = parsedParams.target
+        ? this.buildDetailedLocateParam(parsedParams.target, opt)
+        : undefined;
+
+      // Build scroll plans with parsed parameters
+      const scrollParam: PlanningActionParamScroll = {
+        direction: parsedParams.direction,
+        scrollType: parsedParams.scrollType,
+        distance: parsedParams.distance,
+      };
+
+      const plans = buildPlans('Scroll', detailedLocateParam, scrollParam);
+      const paramInTitle = parsedParams.target
+        ? `${locateParamStr(detailedLocateParam)} - ${scrollParamStr(scrollParam)}`
+        : scrollParamStr(scrollParam);
+        
+      const { executor, output } = await this.taskExecutor.runPlans(
+        taskTitleStr('Scroll', paramInTitle),
+        plans,
+        { cacheable: opt?.cacheable },
+      );
+      const metadata = this.afterTaskRunning(executor);
+
+      return {
+        result: output,
+        metadata,
+      };
+    } catch (error) {
+      // Fallback to aiAction for complex cases
+      console.log('🤖 aiScroll parsing failed, falling back to aiAction for:', prompt);
+      return this.aiAction(prompt, { cacheable: opt?.cacheable });
+    }
+  }
+
+  /**
+   * Parse natural language scroll prompt using AI
+   */
+  private async parseScrollPrompt(prompt: string): Promise<{
+    direction: 'up' | 'down' | 'left' | 'right';
+    scrollType: 'once' | 'untilBottom' | 'untilTop' | 'untilRight' | 'untilLeft';
+    distance?: number;
+    target?: string;
+  }> {
+    // Simple pattern matching for common scroll commands
+    const normalizedPrompt = prompt.toLowerCase().trim();
+
+    // Extract target element (text after "in", "on", "of", etc.)
+    let target: string | undefined;
+    
+    // Enhanced target extraction with dropdown/list specific patterns
+    const targetPatterns = [
+      // Dropdown specific patterns
+      /(?:in|within|inside)\s+(?:the\s+)?(.+?(?:dropdown|select|menu|options|list))(?:\s+(?:until|by|to|for)|$)/,
+      // General target patterns
+      /(?:in|on|of|within|inside)\s+(?:the\s+)?(.+?)(?:\s+(?:until|by|to|for)|$)/,
+      // "scroll the dropdown" pattern
+      /scroll\s+(?:the\s+)?(.+?(?:dropdown|select|menu|options|list))(?:\s+(?:until|by|to|for|up|down|left|right)|$)/,
+    ];
+
+    for (const pattern of targetPatterns) {
+      const match = normalizedPrompt.match(pattern);
+      if (match) {
+        target = match[1].trim();
+        break;
+      }
+    }
+
+    // Extract direction
+    let direction: 'up' | 'down' | 'left' | 'right' = 'down'; // default
+    if (normalizedPrompt.includes('up') || normalizedPrompt.includes('top')) {
+      direction = 'up';
+    } else if (normalizedPrompt.includes('down') || normalizedPrompt.includes('bottom')) {
+      direction = 'down';
+    } else if (normalizedPrompt.includes('left')) {
+      direction = 'left';
+    } else if (normalizedPrompt.includes('right')) {
+      direction = 'right';
+    }
+
+    // Extract scroll type and distance
+    let scrollType: 'once' | 'untilBottom' | 'untilTop' | 'untilRight' | 'untilLeft' = 'once';
+    let distance: number | undefined;
+
+    // Check for dropdown/list specific behavior first
+    const isDropdownTarget = target && /(?:dropdown|select|menu|options|list)/i.test(target);
+    
+    // Check for "until" patterns
+    if (normalizedPrompt.includes('until bottom') || normalizedPrompt.includes('to bottom')) {
+      scrollType = 'untilBottom';
+    } else if (normalizedPrompt.includes('until top') || normalizedPrompt.includes('to top')) {
+      scrollType = 'untilTop';
+    } else if (normalizedPrompt.includes('until left') || normalizedPrompt.includes('to left')) {
+      scrollType = 'untilLeft';
+    } else if (normalizedPrompt.includes('until right') || normalizedPrompt.includes('to right')) {
+      scrollType = 'untilRight';
+    } else if (normalizedPrompt.includes('to find') || normalizedPrompt.includes('until visible') || normalizedPrompt.includes('until see')) {
+      // For dropdown searches, scroll until bottom is usually desired
+      scrollType = isDropdownTarget ? 'untilBottom' : 'once';
+      distance = isDropdownTarget ? undefined : 200;
+    } else {
+      // Check for specific distances
+      const distanceMatch = normalizedPrompt.match(/(\d+)\s*(?:px|pixel|pixels)?/);
+      if (distanceMatch) {
+        distance = parseInt(distanceMatch[1], 10);
+        scrollType = 'once';
+      } else if (normalizedPrompt.includes('little') || normalizedPrompt.includes('small')) {
+        distance = isDropdownTarget ? 50 : 100; // Smaller scroll for dropdowns
+        scrollType = 'once';
+      } else if (normalizedPrompt.includes('page') || normalizedPrompt.includes('screen')) {
+        // Default page scroll distance
+        scrollType = 'once';
+        distance = isDropdownTarget ? 150 : undefined; // Smaller for dropdowns
+      } else if (isDropdownTarget && !distance) {
+        // Default dropdown scroll behavior
+        distance = 100;
+        scrollType = 'once';
+      }
+    }
+
+    return {
+      direction,
+      scrollType,
+      distance,
+      target,
     };
   }
 
