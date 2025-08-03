@@ -270,31 +270,39 @@ export async function call(
   // Default seed for consistency (42 is a common choice)
   const seed = configuredSeed ? Number.parseInt(configuredSeed, 10) : 42;
   
-  const commonConfig = {
+  const isGemini = model.includes('gemini');
+
+  const commonConfig: any = {
     temperature,
-    seed,
     stream: false,
-    max_tokens:
-      typeof maxTokens === 'number'
-        ? maxTokens
-        : Number.parseInt(maxTokens || '2048', 10),
     ...(vlLocateMode() === 'qwen-vl' // qwen specific config
       ? {
           vl_high_resolution_images: true,
         }
       : {}),
   };
+
+  if (!isGemini) {
+    commonConfig.seed = seed;
+    commonConfig.max_tokens = 
+      typeof maxTokens === 'number'
+        ? maxTokens
+        : Number.parseInt(maxTokens || '2048', 10);
+  }
+
   if (style === 'openai') {
     debugCall(`sending request to ${model}`);
     let result: Awaited<ReturnType<typeof completion.create>>;
     try {
       const startTime = Date.now();
-      result = await completion.create({
+      const requestPayload = {
         model,
         messages,
         response_format: responseFormat,
         ...commonConfig,
-      } as any);
+      };
+
+      result = await completion.create(requestPayload as any);
       timeCost = Date.now() - startTime;
     } catch (e: any) {
       const newError = new Error(
