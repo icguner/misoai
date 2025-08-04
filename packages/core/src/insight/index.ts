@@ -206,20 +206,31 @@ export default class Insight<
       throw new Error(errorLog);
     }
 
-    assert(
-      elements.length <= 1,
-      `locate: multiple elements found, length = ${elements.length}`,
-    );
+    // Handle multiple elements based on mode
+    if (elements.length > 1) {
+      if (vlLocateMode()) {
+        // In VL mode, log warning but use first element (AI should have selected best one)
+        debug(`VL mode: Multiple elements found (${elements.length}), using first as AI should have selected the best match`);
+      } else {
+        // In non-VL mode, throw error as before
+        assert(
+          elements.length <= 1,
+          `locate: multiple elements found, length = ${elements.length}`,
+        );
+      }
+    }
 
-    if (elements.length === 1) {
+    if (elements.length >= 1) {
+      // Use first element (should be the best match in VL mode, or only match in non-VL mode)
+      const selectedElement = elements[0]!;
       return {
         element: {
-          id: elements[0]!.id,
-          indexId: elements[0]!.indexId,
-          center: elements[0]!.center,
-          rect: elements[0]!.rect,
-          xpaths: elements[0]!.xpaths || [],
-          attributes: elements[0]!.attributes,
+          id: selectedElement.id,
+          indexId: selectedElement.indexId,
+          center: selectedElement.center,
+          rect: selectedElement.rect,
+          xpaths: selectedElement.xpaths || [],
+          attributes: selectedElement.attributes,
         },
         rect,
       };

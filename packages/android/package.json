@@ -1,6 +1,6 @@
 {
   "name": "rfi-ai-android",
-  "version": "0.20.4",
+  "version": "0.20.7",
   "description": "Android automation library for Midscene",
   "keywords": [
     "android",
@@ -44,9 +44,9 @@
     "example:media": "ts-node examples/media-utils.ts"
   },
   "dependencies": {
-    "rfi-ai-core": "^0.20.1",
-    "rfi-ai-shared": "^0.20.1",
-    "rfi-ai-web": "^0.21.2",
+    "rfi-ai-core": "^0.20.5",
+    "rfi-ai-shared": "^0.20.3",
+    "rfi-ai-web": "^0.21.5",
     "webdriverio": "^8.32.3"
   },
   "devDependencies": {

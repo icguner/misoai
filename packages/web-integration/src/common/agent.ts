@@ -585,175 +585,285 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       return this.aiScrollWithPrompt(promptOrParam, options);
     }
 
-    // Legacy approach - show deprecation warning
+    // Legacy approach - show deprecation warning and convert to intelligent prompt
     console.warn(
       '⚠️  aiScroll with object parameters is deprecated. Use string prompt instead:\n' +
       '   Old: await agent.aiScroll({direction: "down", scrollType: "once"}, "list")\n' +
       '   New: await agent.aiScroll("scroll down in the list")'
     );
 
-    // Legacy implementation
+    // Convert legacy format to intelligent prompt with context
     const scrollParam = promptOrParam;
     const locatePrompt = locatePromptOrOpt as string | undefined;
+    const pageContext = await this.getPageScrollContext();
+    const scrollPrompt = this.buildLegacyScrollPrompt(scrollParam, locatePrompt, pageContext);
     
-    const detailedLocateParam = locatePrompt
-      ? this.buildDetailedLocateParam(locatePrompt, opt)
-      : undefined;
-    const plans = buildPlans('Scroll', detailedLocateParam, scrollParam);
-    const paramInTitle = locatePrompt
-      ? `${locateParamStr(detailedLocateParam)} - ${scrollParamStr(scrollParam)}`
-      : scrollParamStr(scrollParam);
-    const { executor, output } = await this.taskExecutor.runPlans(
-      taskTitleStr('Scroll', paramInTitle),
-      plans,
-      { cacheable: opt?.cacheable },
-    );
-    const metadata = this.afterTaskRunning(executor);
-
-    return {
-      result: output,
-      metadata,
-    };
+    // Use direct aiAction for legacy format to maintain compatibility
+    return this.aiAction(scrollPrompt, { cacheable: opt?.cacheable });
   }
 
   /**
-   * Parse natural language scroll prompt and execute scroll action
+   * Intelligent AI-powered scroll using LLM understanding
    */
   private async aiScrollWithPrompt(
     prompt: string,
     opt?: LocateOption,
   ): Promise<AITaskResult> {
-    try {
-      // Parse the natural language prompt to extract scroll parameters
-      const parsedParams = await this.parseScrollPrompt(prompt);
-      
-      // Build detailed locate param if target is specified
-      const detailedLocateParam = parsedParams.target
-        ? this.buildDetailedLocateParam(parsedParams.target, opt)
-        : undefined;
+    // Get page context for intelligent scroll decisions
+    const pageContext = await this.getPageScrollContext();
+    
+    // Enhanced prompt with scroll-specific context and intelligence
+    const scrollEnhancedPrompt = await this.buildScrollIntelligentPrompt(prompt, pageContext);
+    
+    // Use aiAction with scroll-optimized context
+    return this.aiAction(scrollEnhancedPrompt, { cacheable: opt?.cacheable });
+  }
 
-      // Build scroll plans with parsed parameters
-      const scrollParam: PlanningActionParamScroll = {
-        direction: parsedParams.direction,
-        scrollType: parsedParams.scrollType,
-        distance: parsedParams.distance,
-      };
-
-      const plans = buildPlans('Scroll', detailedLocateParam, scrollParam);
-      const paramInTitle = parsedParams.target
-        ? `${locateParamStr(detailedLocateParam)} - ${scrollParamStr(scrollParam)}`
-        : scrollParamStr(scrollParam);
-        
-      const { executor, output } = await this.taskExecutor.runPlans(
-        taskTitleStr('Scroll', paramInTitle),
-        plans,
-        { cacheable: opt?.cacheable },
-      );
-      const metadata = this.afterTaskRunning(executor);
-
+  /**
+   * Get page context for intelligent scroll decisions
+   */
+  private async getPageScrollContext() {
+    const pageSize = await this.page.size();
+    const url = await this.page.url();
+    
+    // Check if this is Android platform
+    const isAndroid = this.page.pageType === 'android';
+    
+    if (isAndroid) {
       return {
-        result: output,
-        metadata,
+        platform: 'android' as const,
+        screen: {
+          width: pageSize.width,
+          height: pageSize.height,
+          dpr: pageSize.dpr || 1,
+        },
+        device: {
+          type: this.detectAndroidDeviceType(pageSize.width, pageSize.height),
+          orientation: pageSize.width > pageSize.height ? 'landscape' : 'portrait',
+        },
       };
-    } catch (error) {
-      // Fallback to aiAction for complex cases
-      console.log('🤖 aiScroll parsing failed, falling back to aiAction for:', prompt);
-      return this.aiAction(prompt, { cacheable: opt?.cacheable });
+    }
+    
+    return {
+      platform: 'web' as const,
+      viewport: {
+        width: pageSize.width,
+        height: pageSize.height,
+        dpr: pageSize.dpr || 1,
+      },
+      page: {
+        url: url,
+        domain: url ? new URL(url).hostname : 'localhost',
+      },
+    };
+  }
+
+  /**
+   * Detect Android device type based on screen dimensions
+   */
+  private detectAndroidDeviceType(width: number, height: number): 'phone' | 'tablet' | 'tv' {
+    const maxDimension = Math.max(width, height);
+    const minDimension = Math.min(width, height);
+    
+    // TV/Large displays
+    if (maxDimension >= 1920 || minDimension >= 1080) {
+      return 'tv';
+    }
+    
+    // Tablets (typically 7+ inches, around 1024+ pixels in landscape)
+    if (maxDimension >= 1024 && minDimension >= 600) {
+      return 'tablet';
+    }
+    
+    // Phones
+    return 'phone';
+  }
+
+  /**
+   * Build intelligent scroll prompt with contextual awareness
+   */
+  private async buildScrollIntelligentPrompt(
+    userPrompt: string, 
+    context: Awaited<ReturnType<typeof this.getPageScrollContext>>
+  ): Promise<string> {
+    if (context.platform === 'android') {
+      return this.buildAndroidScrollPrompt(userPrompt, context);
+    } else {
+      return this.buildWebScrollPrompt(userPrompt, context);
     }
   }
 
   /**
-   * Parse natural language scroll prompt using AI
+   * Build Android-specific intelligent scroll prompt
    */
-  private async parseScrollPrompt(prompt: string): Promise<{
-    direction: 'up' | 'down' | 'left' | 'right';
-    scrollType: 'once' | 'untilBottom' | 'untilTop' | 'untilRight' | 'untilLeft';
-    distance?: number;
-    target?: string;
-  }> {
-    // Simple pattern matching for common scroll commands
-    const normalizedPrompt = prompt.toLowerCase().trim();
+  private buildAndroidScrollPrompt(
+    userPrompt: string,
+    context: Extract<Awaited<ReturnType<typeof this.getPageScrollContext>>, { platform: 'android' }>
+  ): string {
+    return `ANDROID SCROLL ACTION REQUEST: ${userPrompt}
 
-    // Extract target element (text after "in", "on", "of", etc.)
-    let target: string | undefined;
-    
-    // Enhanced target extraction with dropdown/list specific patterns
-    const targetPatterns = [
-      // Dropdown specific patterns
-      /(?:in|within|inside)\s+(?:the\s+)?(.+?(?:dropdown|select|menu|options|list))(?:\s+(?:until|by|to|for)|$)/,
-      // General target patterns
-      /(?:in|on|of|within|inside)\s+(?:the\s+)?(.+?)(?:\s+(?:until|by|to|for)|$)/,
-      // "scroll the dropdown" pattern
-      /scroll\s+(?:the\s+)?(.+?(?:dropdown|select|menu|options|list))(?:\s+(?:until|by|to|for|up|down|left|right)|$)/,
-    ];
+ANDROID DEVICE CONTEXT:
+- Screen Size: ${context.screen.width}x${context.screen.height} pixels
+- Device Type: ${context.device.type} (${context.device.orientation})
+- Platform: Android Native App
 
-    for (const pattern of targetPatterns) {
-      const match = normalizedPrompt.match(pattern);
-      if (match) {
-        target = match[1].trim();
-        break;
-      }
-    }
+You are an intelligent Android UI automation system with native app understanding. Analyze the user's scroll request with Android-specific intelligence:
 
-    // Extract direction
-    let direction: 'up' | 'down' | 'left' | 'right' = 'down'; // default
-    if (normalizedPrompt.includes('up') || normalizedPrompt.includes('top')) {
-      direction = 'up';
-    } else if (normalizedPrompt.includes('down') || normalizedPrompt.includes('bottom')) {
-      direction = 'down';
-    } else if (normalizedPrompt.includes('left')) {
-      direction = 'left';
-    } else if (normalizedPrompt.includes('right')) {
-      direction = 'right';
-    }
+🤖 ANDROID SCROLL INTELLIGENCE:
+- Understand touch gestures and swipe mechanics for Android devices
+- Adapt scroll behavior for different Android device types (phone/tablet/tv)
+- Consider Android-specific UI patterns (lists, recycler views, scrolling containers)
+- Calculate optimal swipe distances for Android touch interactions
 
-    // Extract scroll type and distance
-    let scrollType: 'once' | 'untilBottom' | 'untilTop' | 'untilRight' | 'untilLeft' = 'once';
-    let distance: number | undefined;
+📱 DEVICE-AWARE SCROLL DECISIONS:
+Make intelligent Android scroll choices:
+- PHONE (${context.device.type === 'phone' ? 'CURRENT' : 'OTHER'}): Smaller, precise finger swipes (~200-400px)
+- TABLET (${context.device.type === 'tablet' ? 'CURRENT' : 'OTHER'}): Medium swipe distances (~400-600px)  
+- TV (${context.device.type === 'tv' ? 'CURRENT' : 'OTHER'}): Larger navigation movements (~600-800px)
 
-    // Check for dropdown/list specific behavior first
-    const isDropdownTarget = target && /(?:dropdown|select|menu|options|list)/i.test(target);
-    
-    // Check for "until" patterns
-    if (normalizedPrompt.includes('until bottom') || normalizedPrompt.includes('to bottom')) {
-      scrollType = 'untilBottom';
-    } else if (normalizedPrompt.includes('until top') || normalizedPrompt.includes('to top')) {
-      scrollType = 'untilTop';
-    } else if (normalizedPrompt.includes('until left') || normalizedPrompt.includes('to left')) {
-      scrollType = 'untilLeft';
-    } else if (normalizedPrompt.includes('until right') || normalizedPrompt.includes('to right')) {
-      scrollType = 'untilRight';
-    } else if (normalizedPrompt.includes('to find') || normalizedPrompt.includes('until visible') || normalizedPrompt.includes('until see')) {
-      // For dropdown searches, scroll until bottom is usually desired
-      scrollType = isDropdownTarget ? 'untilBottom' : 'once';
-      distance = isDropdownTarget ? undefined : 200;
-    } else {
-      // Check for specific distances
-      const distanceMatch = normalizedPrompt.match(/(\d+)\s*(?:px|pixel|pixels)?/);
-      if (distanceMatch) {
-        distance = parseInt(distanceMatch[1], 10);
-        scrollType = 'once';
-      } else if (normalizedPrompt.includes('little') || normalizedPrompt.includes('small')) {
-        distance = isDropdownTarget ? 50 : 100; // Smaller scroll for dropdowns
-        scrollType = 'once';
-      } else if (normalizedPrompt.includes('page') || normalizedPrompt.includes('screen')) {
-        // Default page scroll distance
-        scrollType = 'once';
-        distance = isDropdownTarget ? 150 : undefined; // Smaller for dropdowns
-      } else if (isDropdownTarget && !distance) {
-        // Default dropdown scroll behavior
-        distance = 100;
-        scrollType = 'once';
-      }
-    }
+🔄 ANDROID GESTURE INTELLIGENCE:
+- SHORT SWIPE: "a bit", "little" → ~20-30% of screen dimension
+- MEDIUM SWIPE: default scroll → ~70% of screen dimension (Android standard)
+- LONG SWIPE: "a lot", "far" → ~90% of screen dimension
+- UNTIL CONDITIONS: "until end/bottom" → Multiple repeated swipes with momentum
 
-    return {
-      direction,
-      scrollType,
-      distance,
-      target,
-    };
+🎯 ANDROID UI CONTEXT AWARENESS:
+Understand Android app patterns:
+- RecyclerView/ListView scrolling: Smooth, content-aligned swipes
+- ViewPager/Fragment scrolling: Full-screen horizontal swipes
+- NestedScrollView: Nested scroll behavior awareness
+- Pull-to-refresh: Consider gesture direction conflicts
+
+Execute the most natural Android touch gesture that accomplishes the user's scroll intent effectively.`;
   }
+
+  /**
+   * Build Web-specific intelligent scroll prompt
+   */
+  private buildWebScrollPrompt(
+    userPrompt: string,
+    context: Extract<Awaited<ReturnType<typeof this.getPageScrollContext>>, { platform: 'web' }>
+  ): string {
+    return `WEB SCROLL ACTION REQUEST: ${userPrompt}
+
+CURRENT WEB CONTEXT:
+- Viewport Size: ${context.viewport.width}x${context.viewport.height} pixels
+- Device Pixel Ratio: ${context.viewport.dpr}x
+- Page Domain: ${context.page.domain}
+- Current URL: ${context.page.url}
+
+You are an intelligent web UI automation system with full contextual awareness. Analyze the user's scroll request and make intelligent decisions based on:
+
+🧠 INTELLIGENT ANALYSIS:
+You must understand and infer from context:
+- User's intent and goal from their natural language (any language)
+- Appropriate scroll behavior for the current viewport size and page type
+- Whether this is a mobile-sized view, tablet, desktop, or large screen
+- Page content type (e-commerce, social media, documentation, etc.) based on domain/URL
+- Optimal scroll distances relative to viewport dimensions
+
+🎯 CONTEXTUAL SCROLL INTELLIGENCE:
+Make smart decisions about:
+- SMALL SCROLL: When user says "a bit", "little", "slightly" → Calculate ~10-20% of viewport height
+- MEDIUM SCROLL: When user says "scroll down" without qualifier → Calculate ~60-80% of viewport height  
+- LARGE SCROLL: When user says "a lot", "much", "far" → Calculate ~100-120% of viewport height
+- UNTIL CONDITIONS: When user says "until end/bottom/top" → Use appropriate 'until*' scrollType
+- ELEMENT-SPECIFIC: When mentioning dropdowns, lists, carousels → Adapt distance to element type
+
+🌐 VIEWPORT-AWARE DECISIONS:
+- On small screens (width < 768px): Use smaller, more precise scroll distances
+- On medium screens (768px-1024px): Use moderate scroll distances
+- On large screens (width > 1024px): Use larger scroll distances appropriately
+- Consider pixel density (DPR) in distance calculations
+
+📱 CONTENT-TYPE AWARENESS:
+Infer from domain and adapt behavior:
+- Social media sites: Smooth, content-preserving scrolls
+- E-commerce sites: Product-focused, methodical scrolling
+- Documentation sites: Section-based, reading-friendly scrolls
+- Search results: Result-group aware scrolling
+
+🎨 EXECUTION INTELLIGENCE:
+- Analyze user's language for scroll intensity cues
+- Calculate optimal distances based on viewport size
+- Choose appropriate scroll types based on user goals
+- Determine target elements intelligently from context
+- Use your reasoning to provide the most effective scroll action
+
+Make intelligent inferences rather than following rigid patterns. Use contextual reasoning to determine the best scroll behavior that accomplishes the user's intent effectively.`;
+  }
+
+  /**
+   * Convert legacy scroll parameters to intelligent context-aware prompt
+   */
+  private buildLegacyScrollPrompt(
+    scrollParam: PlanningActionParamScroll,
+    locatePrompt?: string,
+    context?: Awaited<ReturnType<typeof this.getPageScrollContext>>,
+  ): string {
+    let prompt = 'scroll';
+    
+    // Add direction
+    if (scrollParam.direction) {
+      prompt += ` ${scrollParam.direction}`;
+    }
+    
+    // Add target location
+    if (locatePrompt) {
+      prompt += ` in ${locatePrompt}`;
+    }
+    
+    // Add scroll behavior
+    if (scrollParam.scrollType) {
+      switch (scrollParam.scrollType) {
+        case 'untilBottom':
+          prompt += ' until bottom';
+          break;
+        case 'untilTop':
+          prompt += ' until top';
+          break;
+        case 'untilLeft':
+          prompt += ' until left edge';
+          break;
+        case 'untilRight':
+          prompt += ' until right edge';
+          break;
+        case 'once':
+        default:
+          // Add distance if specified
+          if (scrollParam.distance) {
+            prompt += ` ${scrollParam.distance} pixels`;
+          }
+          break;
+      }
+    } else if (scrollParam.distance) {
+      prompt += ` ${scrollParam.distance} pixels`;
+    }
+
+    // Add context awareness for legacy calls
+    if (context) {
+      prompt += `
+
+SCROLL CONTEXT (Legacy API Call):`;
+      
+      if (context.viewport) {
+        prompt += `
+- Current viewport: ${context.viewport.width}x${context.viewport.height}px`;
+      }
+      
+      if (context.page?.domain) {
+        prompt += `
+- Page: ${context.page.domain}`;
+      }
+      
+      prompt += `
+- Use intelligent scroll behavior based on viewport size and page context
+- Apply contextual reasoning for optimal scroll execution`;
+    }
+    
+    return prompt;
+  }
+
 
   async aiAction(
     taskPrompt: string,

@@ -292,7 +292,16 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
       } else if ('aiScroll' in (flowItem as MidsceneYamlFlowItemAIScroll)) {
         const scrollTask = flowItem as MidsceneYamlFlowItemAIScroll;
-        await agent.aiScroll(scrollTask, scrollTask.locate, scrollTask);
+        
+        // Check if it's the new format (string) or legacy format (null)
+        if (typeof scrollTask.aiScroll === 'string') {
+          // New intelligent format - use the prompt directly
+          await agent.aiScroll(scrollTask.aiScroll, scrollTask);
+        } else {
+          // Legacy format - convert to intelligent prompt
+          const scrollPrompt = this.buildScrollPromptFromLegacyFormat(scrollTask);
+          await agent.aiScroll(scrollPrompt, scrollTask);
+        }
       } else if (
         'javascript' in (flowItem as MidsceneYamlFlowItemEvaluateJavaScript)
       ) {
@@ -400,5 +409,57 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         // console.error('error freeing', fn.name, e);
       }
     }
+  }
+
+  /**
+   * Convert legacy scroll format to intelligent natural language prompt
+   */
+  private buildScrollPromptFromLegacyFormat(
+    scrollTask: MidsceneYamlFlowItemAIScroll,
+  ): string {
+    // Type assertion for legacy format
+    const legacyTask = scrollTask as any;
+    const { direction, scrollType, distance, locate } = legacyTask;
+    
+    let prompt = 'scroll';
+    
+    // Add direction
+    if (direction) {
+      prompt += ` ${direction}`;
+    }
+    
+    // Add target location
+    if (locate) {
+      prompt += ` in ${locate}`;
+    }
+    
+    // Add scroll behavior
+    if (scrollType) {
+      switch (scrollType) {
+        case 'untilBottom':
+          prompt += ' until bottom';
+          break;
+        case 'untilTop':
+          prompt += ' until top';
+          break;
+        case 'untilLeft':
+          prompt += ' until left edge';
+          break;
+        case 'untilRight':
+          prompt += ' until right edge';
+          break;
+        case 'once':
+        default:
+          // Add distance if specified
+          if (distance) {
+            prompt += ` ${distance} pixels`;
+          }
+          break;
+      }
+    } else if (distance) {
+      prompt += ` ${distance} pixels`;
+    }
+    
+    return prompt;
   }
 }

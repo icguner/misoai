@@ -305,8 +305,8 @@ export const compositeElementInfoImg = async (options: {
       return compositeImage;
     })
     .then(async (compositeImage: Jimp) => {
-      compositeImage.quality(90);
-      const base64 = await compositeImage.getBase64Async(Jimp.MIME_JPEG);
+      // PNG doesn't use quality setting, remove it
+      const base64 = await compositeImage.getBase64Async(Jimp.MIME_PNG);
       return base64;
     })
     .catch((error: unknown) => {

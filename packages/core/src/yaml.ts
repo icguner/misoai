@@ -153,12 +153,24 @@ export interface MidsceneYamlFlowItemAIKeyboardPress extends LocateOption {
   locate?: string; // where to press, optional
 }
 
-export interface MidsceneYamlFlowItemAIScroll
+// New intelligent scroll format
+export interface MidsceneYamlFlowItemAIScrollNew extends LocateOption {
+  aiScroll: string; // Natural language scroll prompt
+  locate?: string; // which area to scroll, optional
+}
+
+// Legacy scroll format (for backward compatibility)
+export interface MidsceneYamlFlowItemAIScrollLegacy
   extends LocateOption,
     PlanningActionParamScroll {
   aiScroll: null;
   locate?: string; // which area to scroll, optional
 }
+
+// Union type to support both formats
+export type MidsceneYamlFlowItemAIScroll = 
+  | MidsceneYamlFlowItemAIScrollNew
+  | MidsceneYamlFlowItemAIScrollLegacy;
 
 export interface MidsceneYamlFlowItemEvaluateJavaScript {
   javascript: string;

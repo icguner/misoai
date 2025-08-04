@@ -42,9 +42,6 @@ function detectEngineFromEnvironment(): ImageProcessingEngine {
       return 'jimp';
     }
   }
-  
-  // SHARP IS THE DEFAULT FOR MAXIMUM PERFORMANCE
-  console.log('🚀 Sharp image processing ENABLED (default) - 27x performance boost active!');
   return 'sharp';
 }
 

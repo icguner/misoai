@@ -109,20 +109,17 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       rfi-ai-android:
-        specifier: workspace:*
-        version: link:../../packages/android
+        specifier: ^0.20.1
+        version: 0.20.6(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(webdriverio@8.45.0)(ws@8.18.1)(zod@3.24.3)
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../../packages/core
+        specifier: ^0.20.1
+        version: 0.20.4(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../../packages/shared
-      rfi-ai-visualizer:
-        specifier: workspace:*
-        version: link:../../packages/visualizer
+        specifier: ^0.20.1
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../../packages/web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
       socket.io-client:
         specifier: 4.8.1
         version: 4.8.1
@@ -179,23 +176,14 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../../packages/core
-      rfi-ai-recorder:
-        specifier: workspace:*
-        version: link:../../packages/recorder
-      rfi-ai-report:
-        specifier: workspace:*
-        version: link:../report
+        specifier: ^0.20.1
+        version: 0.20.4(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../../packages/shared
-      rfi-ai-visualizer:
-        specifier: workspace:*
-        version: link:../../packages/visualizer
+        specifier: ^0.20.1
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../../packages/web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
       zustand:
         specifier: 4.5.2
         version: 4.5.2(@types/react@18.3.23)(immer@10.1.1)(react@18.3.1)
@@ -372,14 +360,14 @@ importers:
   packages/android:
     dependencies:
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^0.20.5
+        version: 0.20.5(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.3
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../web-integration
+        specifier: ^0.21.5
+        version: 0.21.5(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
       webdriverio:
         specifier: ^8.32.3
         version: 8.45.0
@@ -427,14 +415,14 @@ importers:
         specifier: 10.1.0
         version: 10.1.0
       rfi-ai-android:
-        specifier: workspace:*
-        version: link:../android
+        specifier: ^0.20.1
+        version: 0.20.6(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(webdriverio@8.45.0)(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.1
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
       socket.io:
         specifier: ^4.8.1
         version: 4.8.1
@@ -464,14 +452,14 @@ importers:
         specifier: 24.2.0
         version: 24.2.0(typescript@5.8.3)
       rfi-ai-android:
-        specifier: workspace:*
-        version: link:../android
+        specifier: ^0.20.1
+        version: 0.20.6(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(webdriverio@8.45.0)(ws@8.18.1)(zod@3.24.3)
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^0.20.1
+        version: 0.20.4(ws@8.18.1)(zod@3.24.3)
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
     devDependencies:
       '@modern-js/module-tools':
         specifier: 2.60.6
@@ -548,12 +536,9 @@ importers:
       openai:
         specifier: 4.81.0
         version: 4.81.0(ws@8.18.1)(zod@3.24.3)
-      rfi-ai-recorder:
-        specifier: workspace:*
-        version: link:../recorder
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.3
+        version: 0.20.3
       socks-proxy-agent:
         specifier: 8.0.4
         version: 8.0.4
@@ -577,14 +562,14 @@ importers:
   packages/evaluation:
     dependencies:
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^0.20.1
+        version: 0.20.4(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.1
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
     devDependencies:
       '@playwright/test':
         specifier: ^1.44.1
@@ -599,7 +584,7 @@ importers:
         specifier: 1.44.1
         version: 1.44.1
       sharp:
-        specifier: 0.34.1
+        specifier: ^0.34.0
         version: 0.34.1
       typescript:
         specifier: ^5.8.3
@@ -630,17 +615,14 @@ importers:
         specifier: 16.4.5
         version: 16.4.5
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../core
-      rfi-ai-report:
-        specifier: workspace:*
-        version: link:../../apps/report
+        specifier: ^0.20.1
+        version: 0.20.4(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.1
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -743,14 +725,14 @@ importers:
         specifier: ^1.11.11
         version: 1.11.13
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^0.20.1
+        version: 0.20.4(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.1
+        version: 0.20.3
       rfi-ai-web:
-        specifier: workspace:*
-        version: link:../web-integration
+        specifier: ^0.20.1
+        version: 0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
       sharp:
         specifier: ^0.34.0
         version: 0.34.1
@@ -861,11 +843,11 @@ importers:
         specifier: 4.81.0
         version: 4.81.0(ws@8.18.1)(zod@3.24.3)
       rfi-ai-core:
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^0.20.5
+        version: 0.20.5(ws@8.18.1)(zod@3.24.3)
       rfi-ai-shared:
-        specifier: workspace:*
-        version: link:../shared
+        specifier: ^0.20.3
+        version: 0.20.3
       semver:
         specifier: 7.5.2
         version: 7.5.2
@@ -11225,6 +11207,50 @@ packages:
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
+
+  rfi-ai-android@0.20.6:
+    resolution: {integrity: sha512-3R+4FOX0DGUYmJGgK4M1JCacJOMuzFHzf+694UA8MSuZaKIOI/Nn88cymqvbL84cCkNb7xW1aOsRJIIQDQQdFQ==}
+    peerDependencies:
+      webdriverio: ^8.32.3
+
+  rfi-ai-core@0.20.4:
+    resolution: {integrity: sha512-IzlW+OImsXmdRwnDxdLSioHqtjpN17aaFRRvfuz/anqLw/1v0pd/2mHDoec6vhetT1+KpOuRg9s3fxPoZ2FVVw==}
+    engines: {node: '>=18.0.0'}
+
+  rfi-ai-core@0.20.5:
+    resolution: {integrity: sha512-TrPrLF4p4wUcb0Yu1VCBLlJMvj4tVctxrq2u7HsyPZ0hPfDqdTVy5sZN592O54AeWn90j0x5DQwCor2JxjHsnw==}
+    engines: {node: '>=18.0.0'}
+
+  rfi-ai-shared@0.20.3:
+    resolution: {integrity: sha512-z88eydrjyr9QL+9SNo+gbcmwa/zbaR1ONqoLJRCWXbqQJfUzI2t53oq+hjj2oJMEfqQmUsI/tA2DQrWLcsuyOw==}
+
+  rfi-ai-web@0.20.1:
+    resolution: {integrity: sha512-TmYDPPc9U+ARgfh31LkP1QBfJ1op5YNv+GGdDf4BLuN9ZqiDO+PbFmSLKlbfu30c5xPcV5fRg4V9JTH+sEvxBQ==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@playwright/test': ^1.44.1
+      playwright: 1.44.1
+      puppeteer: 24.2.0
+    peerDependenciesMeta:
+      '@playwright/test':
+        optional: true
+      puppeteer:
+        optional: true
+
+  rfi-ai-web@0.21.5:
+    resolution: {integrity: sha512-FuB0+12XBC1QC9uia8IsG1y1aVu/l9MUhBrSS3yhXG/suNubqDdtgT5lv8F1GHzWkX5O2VGl3fDmJO+ZHTFitw==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@playwright/test': ^1.44.1
+      playwright: 1.44.1
+      puppeteer: 24.2.0
+    peerDependenciesMeta:
+      '@playwright/test':
+        optional: true
+      puppeteer:
+        optional: true
 
   rgb2hex@0.2.5:
     resolution: {integrity: sha512-22MOP1Rh7sAo1BZpDG6R5RFYzR2lYEgwq7HEmyW2qcsOqR2lQKmn+O//xV3YG/0rrhMC6KVX2hU+ZXuaw9a5bw==}
@@ -27122,6 +27148,137 @@ snapshots:
   retry@0.13.1: {}
 
   reusify@1.1.0: {}
+
+  rfi-ai-android@0.20.6(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(webdriverio@8.45.0)(ws@8.18.1)(zod@3.24.3):
+    dependencies:
+      rfi-ai-core: 0.20.5(ws@8.18.1)(zod@3.24.3)
+      rfi-ai-shared: 0.20.3
+      rfi-ai-web: 0.21.5(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3)
+      webdriverio: 8.45.0
+    transitivePeerDependencies:
+      - '@playwright/test'
+      - bufferutil
+      - debug
+      - encoding
+      - playwright
+      - puppeteer
+      - supports-color
+      - utf-8-validate
+      - ws
+      - zod
+
+  rfi-ai-core@0.20.4(ws@8.18.1)(zod@3.24.3):
+    dependencies:
+      '@anthropic-ai/sdk': 0.33.1
+      '@azure/identity': 4.5.0
+      '@langchain/core': 0.3.26(openai@4.81.0(ws@8.18.1)(zod@3.24.3))
+      '@ui-tars/action-parser': 1.2.0
+      dirty-json: 0.9.2
+      dotenv: 16.4.5
+      https-proxy-agent: 7.0.2
+      langsmith: 0.3.7(openai@4.81.0(ws@8.18.1)(zod@3.24.3))
+      openai: 4.81.0(ws@8.18.1)(zod@3.24.3)
+      rfi-ai-shared: 0.20.3
+      socks-proxy-agent: 8.0.4
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+      - ws
+      - zod
+
+  rfi-ai-core@0.20.5(ws@8.18.1)(zod@3.24.3):
+    dependencies:
+      '@anthropic-ai/sdk': 0.33.1
+      '@azure/identity': 4.5.0
+      '@langchain/core': 0.3.26(openai@4.81.0(ws@8.18.1)(zod@3.24.3))
+      '@ui-tars/action-parser': 1.2.0
+      dirty-json: 0.9.2
+      dotenv: 16.4.5
+      https-proxy-agent: 7.0.2
+      langsmith: 0.3.7(openai@4.81.0(ws@8.18.1)(zod@3.24.3))
+      openai: 4.81.0(ws@8.18.1)(zod@3.24.3)
+      rfi-ai-shared: 0.20.3
+      socks-proxy-agent: 8.0.4
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+      - ws
+      - zod
+
+  rfi-ai-shared@0.20.3:
+    dependencies:
+      debug: 4.4.0(supports-color@5.5.0)
+      jimp: 0.22.12(debug@4.4.0)
+      js-sha256: 0.11.0
+      sharp: 0.34.1
+      xss: 1.0.15
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  rfi-ai-web@0.20.1(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3):
+    dependencies:
+      '@xmldom/xmldom': 0.8.10
+      cors: 2.8.5
+      dayjs: 1.11.13
+      devtools-protocol: 0.0.1380148
+      dotenv: 16.4.5
+      express: 4.21.2
+      fs-extra: 11.2.0
+      http-server: 14.1.1
+      inquirer: 10.1.5
+      js-sha256: 0.11.0
+      js-yaml: 4.1.0
+      openai: 4.81.0(ws@8.18.1)(zod@3.24.3)
+      playwright: 1.44.1
+      rfi-ai-core: 0.20.5(ws@8.18.1)(zod@3.24.3)
+      rfi-ai-shared: 0.20.3
+      semver: 7.5.2
+      socket.io: 4.8.1
+      socket.io-client: 4.8.1
+    optionalDependencies:
+      '@playwright/test': 1.44.1
+      puppeteer: 24.2.0(typescript@5.8.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+      - zod
+
+  rfi-ai-web@0.21.5(@playwright/test@1.44.1)(playwright@1.44.1)(puppeteer@24.2.0(typescript@5.8.3))(ws@8.18.1)(zod@3.24.3):
+    dependencies:
+      '@xmldom/xmldom': 0.8.10
+      cors: 2.8.5
+      dayjs: 1.11.13
+      devtools-protocol: 0.0.1380148
+      dotenv: 16.4.5
+      express: 4.21.2
+      fs-extra: 11.2.0
+      http-server: 14.1.1
+      inquirer: 10.1.5
+      js-sha256: 0.11.0
+      js-yaml: 4.1.0
+      openai: 4.81.0(ws@8.18.1)(zod@3.24.3)
+      playwright: 1.44.1
+      rfi-ai-core: 0.20.5(ws@8.18.1)(zod@3.24.3)
+      rfi-ai-shared: 0.20.3
+      semver: 7.5.2
+      socket.io: 4.8.1
+      socket.io-client: 4.8.1
+    optionalDependencies:
+      '@playwright/test': 1.44.1
+      puppeteer: 24.2.0(typescript@5.8.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+      - ws
+      - zod
 
   rgb2hex@0.2.5: {}
 

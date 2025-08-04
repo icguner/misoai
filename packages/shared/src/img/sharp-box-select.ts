@@ -272,14 +272,18 @@ export const compositeElementInfoImgSharp = async (options: {
       left: 0,
       blend: 'over' // Equivalent to Jimp.BLEND_SOURCE_OVER
     }])
-    .jpeg({ 
-      quality: 90, // EXACT SAME QUALITY AS JIMP
-      mozjpeg: false // Use standard JPEG encoder for consistency
+    .png({ 
+      quality: 95, // High quality PNG
+      compressionLevel: 6, // Balanced compression (0-9, 6 is good balance)
+      palette: true, // Enable palette optimization for smaller file size
+      effort: 7, // Higher effort for better optimization (1-10)
+      progressive: false, // Disable progressive for AI model compatibility
+      adaptiveFiltering: true // Enable adaptive filtering for better compression
     })
     .toBuffer();
 
-  // RETURN SAME BASE64 FORMAT AS JIMP
-  return `data:image/jpeg;base64,${result.toString('base64')}`;
+  // RETURN PNG BASE64 FORMAT
+  return `data:image/png;base64,${result.toString('base64')}`;
 };
 
 /**

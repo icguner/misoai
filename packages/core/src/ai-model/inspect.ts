@@ -127,23 +127,34 @@ export async function AiLocateElement<
     );
   }
 
+  // Prepare user content array
+  const userContent: ChatCompletionUserMessageParam['content'] = [
+    {
+      type: 'image_url',
+      image_url: {
+        url: imagePayload,
+        detail: 'high',
+      },
+    },
+    {
+      type: 'text',
+      text: userInstructionPrompt,
+    },
+  ];
+
+  // For VL models, also include DOM structure information for better bbox accuracy
+  if (vlLocateMode()) {
+    userContent.push({
+      type: 'text',
+      text: `\n\nDOM Structure Information:\n${description}`,
+    });
+  }
+
   const msgs: AIArgs = [
     { role: 'system', content: systemPrompt },
     {
       role: 'user',
-      content: [
-        {
-          type: 'image_url',
-          image_url: {
-            url: imagePayload,
-            detail: 'high',
-          },
-        },
-        {
-          type: 'text',
-          text: userInstructionPrompt,
-        },
-      ],
+      content: userContent,
     },
   ];
 
@@ -159,6 +170,15 @@ export async function AiLocateElement<
     'elements' in res.content ? res.content.elements : [];
   let errors: AIElementLocatorResponse['errors'] | undefined =
     'errors' in res.content ? res.content.errors : [];
+    
+  // Log chain of thought reasoning if available (VL mode)
+  if (vlLocateMode() && 'chain_of_thought' in res.content) {
+    debugInspect('VL Chain of Thought Analysis:', res.content.chain_of_thought);
+    if ('confidence' in res.content) {
+      debugInspect('VL Detection Confidence:', res.content.confidence);
+    }
+  }
+    
   try {
     if ('bbox' in res.content && Array.isArray(res.content.bbox)) {
       resRect = adaptBboxToRect(

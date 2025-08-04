@@ -60,7 +60,7 @@ English | [简体中文](./README.zh.md)
 
 ## ✨ Model Choices
 
-Midscene.js supports both multimodal LLMs like `gpt-4o`, and visual-language models like `Qwen2.5-VL`, `Doubao-1.5-thinking-vision-pro`, `gemini-2.5-pro` and `UI-TARS`. 
+Midscene.js supports both multimodal LLMs like `gpt-4o`, and visual-language models like `Qwen2.5-VL`, `Doubao-1.5-thinking-vision-pro`, `gemini-2.5-pro`, `Kimi-VL-A3B-Thinking-2506` and `UI-TARS`. 
 
 Visual-language models are recommended for UI automation.
 

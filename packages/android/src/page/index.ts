@@ -378,11 +378,27 @@ ${Object.keys(size)
   get mouse() {
     return {
       click: (x: number, y: number) => this.mouseClick(x, y),
-      wheel: (deltaX: number, deltaY: number) =>
-        this.mouseWheel(deltaX, deltaY),
+      wheel: async (deltaX: number, deltaY: number) => {
+        // Use modern scroll methods instead of deprecated mouseWheel
+        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+          // Vertical scroll
+          if (deltaY > 0) {
+            await this.scrollDown();
+          } else {
+            await this.scrollUp();
+          }
+        } else {
+          // Horizontal scroll
+          if (deltaX > 0) {
+            await this.scrollRight();
+          } else {
+            await this.scrollLeft();
+          }
+        }
+      },
       move: (x: number, y: number) => this.mouseMove(x, y),
       drag: (from: { x: number; y: number }, to: { x: number; y: number }) =>
-        this.mouseDrag(from, to),
+        this.swipe(from.x, from.y, to.x, to.y),
     };
   }
 
@@ -433,121 +449,180 @@ ${Object.keys(size)
 
   async scrollUntilTop(startPoint?: Point): Promise<void> {
     if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: start.x, y: 0 };
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = startX;
+      const endY = 0;
 
-      await this.mouseDrag(start, end);
+      await this.swipe(startX, startY, endX, endY, 1200);
       return;
     }
 
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(0, 9999999, defaultFastScrollDuration),
-    );
+    // Perform multiple fast scrolls to reach top
+    await repeat(defaultScrollUntilTimes, async () => {
+      const { width, height } = await this.size();
+      await this.swipe(width / 2, height * 0.8, width / 2, height * 0.1, defaultFastScrollDuration);
+    });
     await sleep(1000);
   }
 
   async scrollUntilBottom(startPoint?: Point): Promise<void> {
     if (startPoint) {
       const { height } = await this.size();
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: start.x, y: height };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = startX;
+      const endY = height;
+      
+      await this.swipe(startX, startY, endX, endY, 1200);
       return;
     }
 
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(0, -9999999, defaultFastScrollDuration),
-    );
+    // Perform multiple fast scrolls to reach bottom
+    await repeat(defaultScrollUntilTimes, async () => {
+      const { width, height } = await this.size();
+      await this.swipe(width / 2, height * 0.2, width / 2, height * 0.9, defaultFastScrollDuration);
+    });
     await sleep(1000);
   }
 
   async scrollUntilLeft(startPoint?: Point): Promise<void> {
     if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: 0, y: start.y };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = 0;
+      const endY = startY;
+      
+      await this.swipe(startX, startY, endX, endY, 1200);
       return;
     }
 
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(9999999, 0, defaultFastScrollDuration),
-    );
+    // Perform multiple fast scrolls to reach left
+    await repeat(defaultScrollUntilTimes, async () => {
+      const { width, height } = await this.size();
+      await this.swipe(width * 0.8, height / 2, width * 0.1, height / 2, defaultFastScrollDuration);
+    });
     await sleep(1000);
   }
 
   async scrollUntilRight(startPoint?: Point): Promise<void> {
     if (startPoint) {
       const { width } = await this.size();
-      const start = { x: startPoint.left, y: startPoint.top };
-      const end = { x: width, y: start.y };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = width;
+      const endY = startY;
+      
+      await this.swipe(startX, startY, endX, endY, 1200);
       return;
     }
 
-    await repeat(defaultScrollUntilTimes, () =>
-      this.mouseWheel(-9999999, 0, defaultFastScrollDuration),
-    );
+    // Perform multiple fast scrolls to reach right
+    await repeat(defaultScrollUntilTimes, async () => {
+      const { width, height } = await this.size();
+      await this.swipe(width * 0.2, height / 2, width * 0.9, height / 2, defaultFastScrollDuration);
+    });
     await sleep(1000);
   }
 
   async scrollUp(distance?: number, startPoint?: Point): Promise<void> {
-    const { height } = await this.size();
-    const scrollDistance = distance || height;
+    const { width, height } = await this.size();
+    
+    // Default scroll distance is 70% of screen height for Android
+    const scrollDistance = distance || Math.floor(height * 0.7);
 
     if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endY = Math.max(0, start.y - scrollDistance);
-      const end = { x: start.x, y: endY };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = startX;
+      const endY = Math.min(height, startY + scrollDistance);
+      
+      await this.swipe(startX, startY, endX, endY);
       return;
     }
 
-    await this.mouseWheel(0, scrollDistance);
+    // Default scroll from center-top to center-bottom (swipe down to scroll up)
+    const startX = width / 2;
+    const startY = height * 0.2;
+    const endX = startX;
+    const endY = Math.min(height * 0.8, startY + scrollDistance);
+    
+    await this.swipe(startX, startY, endX, endY);
   }
 
   async scrollDown(distance?: number, startPoint?: Point): Promise<void> {
-    const { height } = await this.size();
-    const scrollDistance = distance || height;
+    const { width, height } = await this.size();
+    
+    // Default scroll distance is 70% of screen height for Android
+    const scrollDistance = distance || Math.floor(height * 0.7);
 
     if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endY = Math.min(height, start.y + scrollDistance);
-      const end = { x: start.x, y: endY };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = startX;
+      const endY = Math.max(0, startY - scrollDistance);
+      
+      await this.swipe(startX, startY, endX, endY);
       return;
     }
 
-    await this.mouseWheel(0, -scrollDistance);
+    // Default scroll from center-bottom to center-top (swipe up to scroll down)
+    const startX = width / 2;
+    const startY = height * 0.8;
+    const endX = startX;
+    const endY = Math.max(height * 0.2, startY - scrollDistance);
+    
+    await this.swipe(startX, startY, endX, endY);
   }
 
   async scrollLeft(distance?: number, startPoint?: Point): Promise<void> {
-    const { width } = await this.size();
-    const scrollDistance = distance || width;
+    const { width, height } = await this.size();
+    
+    // Default scroll distance is 70% of screen width for Android
+    const scrollDistance = distance || Math.floor(width * 0.7);
 
     if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endX = Math.max(0, start.x - scrollDistance);
-      const end = { x: endX, y: start.y };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = Math.max(0, startX - scrollDistance);
+      const endY = startY;
+      
+      await this.swipe(startX, startY, endX, endY);
       return;
     }
 
-    await this.mouseWheel(scrollDistance, 0);
+    // Default scroll from center-right to center-left
+    const startX = width * 0.8;
+    const startY = height / 2;
+    const endX = Math.max(width * 0.2, startX - scrollDistance);
+    const endY = startY;
+    
+    await this.swipe(startX, startY, endX, endY);
   }
 
   async scrollRight(distance?: number, startPoint?: Point): Promise<void> {
-    const { width } = await this.size();
-    const scrollDistance = distance || width;
+    const { width, height } = await this.size();
+    
+    // Default scroll distance is 70% of screen width for Android
+    const scrollDistance = distance || Math.floor(width * 0.7);
 
     if (startPoint) {
-      const start = { x: startPoint.left, y: startPoint.top };
-      const endX = Math.min(width, start.x + scrollDistance);
-      const end = { x: endX, y: start.y };
-      await this.mouseDrag(start, end);
+      const startX = startPoint.left;
+      const startY = startPoint.top;
+      const endX = Math.min(width, startX + scrollDistance);
+      const endY = startY;
+      
+      await this.swipe(startX, startY, endX, endY);
       return;
     }
 
-    await this.mouseWheel(-scrollDistance, 0);
+    // Default scroll from center-left to center-right
+    const startX = width * 0.2;
+    const startY = height / 2;
+    const endX = Math.min(width * 0.8, startX + scrollDistance);
+    const endY = startY;
+    
+    await this.swipe(startX, startY, endX, endY);
   }
 
   private async keyboardType(
@@ -620,13 +695,25 @@ ${Object.keys(size)
   private async mouseClick(x: number, y: number): Promise<void> {
     const driver = await this.getDriver();
 
-    // Use adjusted coordinates
+    // Use adjusted coordinates and W3C Actions API
     const { x: adjustedX, y: adjustedY } = this.adjustCoordinates(x, y);
-    await driver.touchAction({
-      action: 'tap',
-      x: adjustedX,
-      y: adjustedY
-    });
+    
+    await driver.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          { type: 'pointerMove', x: adjustedX, y: adjustedY, duration: 0 },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 50 },
+          { type: 'pointerUp', button: 0 }
+        ]
+      }
+    ]);
+
+    // Release all actions
+    await driver.releaseActions();
   }
 
   private async mouseMove(x: number, y: number): Promise<void> {
@@ -635,71 +722,15 @@ ${Object.keys(size)
     return Promise.resolve();
   }
 
+  /**
+   * @deprecated Use swipe() method instead for W3C Actions API compliance
+   */
   private async mouseDrag(
     from: { x: number; y: number },
     to: { x: number; y: number },
   ): Promise<void> {
-    const driver = await this.getDriver();
-
-    // Use adjusted coordinates
-    const { x: fromX, y: fromY } = this.adjustCoordinates(from.x, from.y);
-    const { x: toX, y: toY } = this.adjustCoordinates(to.x, to.y);
-
-    await driver.touchAction([
-      { action: 'press', x: fromX, y: fromY },
-      { action: 'wait', ms: 100 },
-      { action: 'moveTo', x: toX, y: toY },
-      { action: 'release' }
-    ]);
-  }
-
-  private async mouseWheel(
-    deltaX: number,
-    deltaY: number,
-    duration = defaultNormalScrollDuration,
-  ): Promise<void> {
-    const { width, height } = await this.size();
-
-    // Calculate the starting and ending points of the swipe
-    const n = 4; // Divide the screen into n equal parts
-
-    // Set the starting point based on the swipe direction
-    const startX = deltaX < 0 ? (n - 1) * (width / n) : width / n;
-    const startY = deltaY < 0 ? (n - 1) * (height / n) : height / n;
-
-    // Calculate the maximum swipeable range
-    const maxNegativeDeltaX = startX;
-    const maxPositiveDeltaX = (n - 1) * (width / n);
-    const maxNegativeDeltaY = startY;
-    const maxPositiveDeltaY = (n - 1) * (height / n);
-
-    // Limit the swipe distance
-    deltaX = Math.max(-maxNegativeDeltaX, Math.min(deltaX, maxPositiveDeltaX));
-    deltaY = Math.max(-maxNegativeDeltaY, Math.min(deltaY, maxPositiveDeltaY));
-
-    // Calculate the end coordinates
-    const endX = startX + deltaX;
-    const endY = startY + deltaY;
-
-    // Adjust coordinates to fit device ratio
-    const { x: adjustedStartX, y: adjustedStartY } = this.adjustCoordinates(
-      startX,
-      startY,
-    );
-    const { x: adjustedEndX, y: adjustedEndY } = this.adjustCoordinates(
-      endX,
-      endY,
-    );
-
-    const driver = await this.getDriver();
-
-    // Execute the swipe operation using WebDriverIO touchAction
-    await driver.touchAction([
-      { action: 'press', x: adjustedStartX, y: adjustedStartY },
-      { action: 'wait', ms: duration },
-      { action: 'moveTo', x: adjustedEndX, y: adjustedEndY },
-      { action: 'release' }
-    ]);
+    // Redirect to W3C-compliant swipe method
+    await this.swipe(from.x, from.y, to.x, to.y);
   }
 
   async destroy(): Promise<void> {
@@ -749,5 +780,48 @@ ${Object.keys(size)
 
   async getElementInfoByXpath(xpath: string): Promise<ElementInfo> {
     throw new Error('Not implemented');
+  }
+
+  /**
+   * W3C Actions API - Tap at specific coordinates
+   */
+  async tap(x: number, y: number): Promise<void> {
+    return this.mouseClick(x, y);
+  }
+
+  /**
+   * W3C Actions API - Swipe from one point to another
+   */
+  async swipe(
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    duration: number = 800
+  ): Promise<void> {
+    const driver = await this.getDriver();
+
+    // Use adjusted coordinates
+    const { x: adjustedStartX, y: adjustedStartY } = this.adjustCoordinates(startX, startY);
+    const { x: adjustedEndX, y: adjustedEndY } = this.adjustCoordinates(endX, endY);
+
+    // Use W3C Actions API instead of deprecated touchAction
+    await driver.performActions([
+      {
+        type: 'pointer',
+        id: 'finger1',
+        parameters: { pointerType: 'touch' },
+        actions: [
+          { type: 'pointerMove', x: adjustedStartX, y: adjustedStartY, duration: 0 },
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: 50 },
+          { type: 'pointerMove', x: adjustedEndX, y: adjustedEndY, duration },
+          { type: 'pointerUp', button: 0 }
+        ]
+      }
+    ]);
+
+    // Release all actions
+    await driver.releaseActions();
   }
 }

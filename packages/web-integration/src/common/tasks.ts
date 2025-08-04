@@ -40,6 +40,7 @@ import {
   resizeImageForUiTars,
   vlmPlanning,
 } from 'rfi-ai-core/ai-model';
+import { describeUserPage } from 'rfi-ai-core/ai-model';
 import { sleep } from 'rfi-ai-core/utils';
 import { NodeType } from 'rfi-ai-shared/constants';
 import type { ElementInfo } from 'rfi-ai-shared/extractor';

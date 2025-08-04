@@ -68,12 +68,25 @@ MIDSCENE_MODEL_NAME="ep-2025..."
 MIDSCENE_USE_VLM_UI_TARS=DOUBAO
 ```
 
+### Kimi VL A3B-Thinking on Moonshot
+
+You can use `Kimi-VL-A3B-Thinking-2506` on [Moonshot AI](https://www.moonshot.cn):
+
+```bash
+OPENAI_BASE_URL="https://api.moonshot.cn/v1"
+OPENAI_API_KEY="......"
+MIDSCENE_MODEL_NAME="moonshot-v1-128k"
+MIDSCENE_USE_KIMI_VL=1
+OPENAI_MAX_TOKENS="32768"  # Kimi VL supports up to 32K tokens
+AI_TEMPERATURE="0.2"       # Lower temperature for more consistent results
+```
+
 ## Models in Depth
 
 Midscene supports two types of models, which are:
 
 1. **general-purpose multimodal LLMs**: Models that can understand text and image input. *GPT-4o* is this kind of model.
-2. **models with visual grounding capabilities (VL models)**: Besides the ability to understand text and image input, these models can also return the coordinates of target elements on the page. We have adapted *Qwen-2.5-VL-72B*, *Gemini-2.5-Pro* and *UI-TARS* as VL models.
+2. **models with visual grounding capabilities (VL models)**: Besides the ability to understand text and image input, these models can also return the coordinates of target elements on the page. We have adapted *Qwen-2.5-VL-72B*, *Gemini-2.5-Pro*, *Kimi-VL-A3B-Thinking-2506* and *UI-TARS* as VL models.
 
 And we are primarily concerned with two features of the model:
 

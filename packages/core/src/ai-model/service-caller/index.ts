@@ -23,6 +23,7 @@ import {
   MIDSCENE_USE_ANTHROPIC_SDK,
   MIDSCENE_USE_AZURE_OPENAI,
   MIDSCENE_USE_QWEN_VL,
+  MIDSCENE_USE_KIMI_VL,
   MIDSCENE_USE_VLM_UI_TARS,
   OPENAI_API_KEY,
   OPENAI_BASE_URL,
@@ -44,7 +45,7 @@ import type { ChatCompletionMessageParam } from 'openai/resources';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { AIActionType } from '../common';
 import { assertSchema } from '../prompt/assertion';
-import { locatorSchema } from '../prompt/llm-locator';
+import { locatorSchema, vlLocatorSchema } from '../prompt/llm-locator';
 import { planSchema } from '../prompt/llm-planning';
 
 // Constants for temperature and seed configuration
@@ -271,6 +272,7 @@ export async function call(
   const seed = configuredSeed ? Number.parseInt(configuredSeed, 10) : 42;
   
   const isGemini = model.includes('gemini');
+  const isKimiVL = model.toLowerCase().includes('kimi');
 
   const commonConfig: any = {
     temperature,
@@ -284,10 +286,18 @@ export async function call(
 
   if (!isGemini) {
     commonConfig.seed = seed;
+    
+    // Set max_tokens based on model capabilities
+    let defaultMaxTokens = '2048';
+    if (isKimiVL) {
+      // Kimi VL supports up to 32K tokens
+      defaultMaxTokens = '32768';
+    }
+    
     commonConfig.max_tokens = 
       typeof maxTokens === 'number'
         ? maxTokens
-        : Number.parseInt(maxTokens || '2048', 10);
+        : Number.parseInt(maxTokens || defaultMaxTokens, 10);
   }
 
   if (style === 'openai') {
@@ -396,7 +406,8 @@ export async function callToGetJSONObject<T>(
         responseFormat = assertSchema;
         break;
       case AIActionType.INSPECT_ELEMENT:
-        responseFormat = locatorSchema;
+        // Use VL schema if in VL mode, otherwise use standard locator schema
+        responseFormat = vlLocateMode() ? vlLocatorSchema : locatorSchema;
         break;
       case AIActionType.PLAN:
         responseFormat = planSchema;

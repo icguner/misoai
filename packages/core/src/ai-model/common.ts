@@ -49,7 +49,7 @@ export async function callAiFn<T>(
 ): Promise<{ content: T; usage?: AIUsageInfo }> {
   assert(
     checkAIConfig(),
-    'Cannot find config for AI model service. If you are using a self-hosted model without validating the API key, please set `OPENAI_API_KEY` to any non-null value. https://midscenejs.com/model-provider.html',
+    'Cannot find config for AI model service. If you are using a self-hosted model without validating the API key, please set `OPENAI_API_KEY` to any non-null value.',
   );
 
   const { content, usage } = await callToGetJSONObject<T>(
@@ -220,6 +220,10 @@ export function adaptBbox(
     return adaptGeminiBbox(bbox, width, height);
   }
 
+  if (vlLocateMode() === 'kimi-vl') {
+    return adaptKimiVLBbox(bbox, width, height);
+  }
+
   return adaptQwenBbox(bbox);
 }
 
@@ -232,6 +236,32 @@ export function adaptGeminiBbox(
   const top = Math.round((bbox[0] * height) / 1000);
   const right = Math.round((bbox[3] * width) / 1000);
   const bottom = Math.round((bbox[2] * height) / 1000);
+  return [left, top, right, bottom];
+}
+
+export function adaptKimiVLBbox(
+  bbox: number[],
+  width: number,
+  height: number,
+): [number, number, number, number] {
+  // Handle the case when AI model cannot find the element (returns empty bbox)
+  if (bbox.length === 0) {
+    // Return a zero-sized bbox to indicate element not found
+    return [0, 0, 0, 0];
+  }
+  
+  if (bbox.length < 4) {
+    const msg = `invalid bbox data for kimi-vl mode: ${JSON.stringify(bbox)} `;
+    throw new Error(msg);
+  }
+
+  // Kimi VL uses normalized coordinates (0-1000) similar to other VL models
+  // Format: [left, top, right, bottom] in normalized coordinates
+  const left = Math.round((bbox[0] * width) / 1000);
+  const top = Math.round((bbox[1] * height) / 1000);
+  const right = Math.round((bbox[2] * width) / 1000);
+  const bottom = Math.round((bbox[3] * height) / 1000);
+  
   return [left, top, right, bottom];
 }
 
@@ -381,12 +411,46 @@ export function buildYamlFlowFromPlans(
       });
     } else if (type === 'Scroll') {
       const param = plan.param as PlanningActionParamScroll;
+      
+      // Generate intelligent scroll prompt from planning parameters
+      let scrollPrompt = 'scroll';
+      
+      if (param.direction) {
+        scrollPrompt += ` ${param.direction}`;
+      }
+      
+      if (locate) {
+        scrollPrompt += ` in ${locate}`;
+      }
+      
+      if (param.scrollType) {
+        switch (param.scrollType) {
+          case 'untilBottom':
+            scrollPrompt += ' until bottom';
+            break;
+          case 'untilTop':
+            scrollPrompt += ' until top';
+            break;
+          case 'untilLeft':
+            scrollPrompt += ' until left edge';
+            break;
+          case 'untilRight':
+            scrollPrompt += ' until right edge';
+            break;
+          case 'once':
+          default:
+            if (param.distance) {
+              scrollPrompt += ` ${param.distance} pixels`;
+            }
+            break;
+        }
+      } else if (param.distance) {
+        scrollPrompt += ` ${param.distance} pixels`;
+      }
+      
       flow.push({
-        aiScroll: null,
+        aiScroll: scrollPrompt,
         locate,
-        direction: param.direction,
-        scrollType: param.scrollType,
-        distance: param.distance,
       });
     } else if (type === 'Sleep') {
       const param = plan.param as PlanningActionParamSleep;
