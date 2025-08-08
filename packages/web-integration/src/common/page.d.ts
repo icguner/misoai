@@ -2,10 +2,7 @@ import type { ElementTreeNode } from 'rfi-ai-core';
 import type { PageType, Point, Size } from 'rfi-ai-core';
 import type { ElementInfo } from 'rfi-ai-shared/extractor';
 import type { KeyInput } from 'puppeteer';
-import type ChromeExtensionProxyPage from '../chrome-extension/page';
 import type { AbstractPage } from '../page';
-import type { StaticPage } from '../playground';
-import type { PlaywrightWebPage } from '../playwright';
 import type { PuppeteerWebPage } from '../puppeteer';
 
 export interface AndroidDevicePage extends AbstractPage {
@@ -40,10 +37,7 @@ export type AndroidDeviceInputOpt = {
 };
 
 export type WebPage =
-  | PlaywrightWebPage
   | PuppeteerWebPage
-  | StaticPage
-  | ChromeExtensionProxyPage
   | AndroidDevicePage;
 
 export type WebKeyInput = KeyInput;

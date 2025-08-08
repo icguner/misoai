@@ -24,10 +24,10 @@ jobs:
     env:
       OPENAI_API_KEY: ${{ secrets.DOUBAO_TOKEN }}
       OPENAI_BASE_URL: ${{ secrets.DOUBAO_BASE_URL }}
-      MIDSCENE_MODEL_NAME: 'doubao-1-5-thinking-vision-pro-250428'
-      MIDSCENE_USE_DOUBAO_VISION: 1
+      RAFI_MODEL_NAME: 'doubao-1-5-thinking-vision-pro-250428'
+      RAFI_USE_DOUBAO_VISION: 1
       CI: 1
-      # MIDSCENE_DEBUG_AI_PROFILE: 1
+      # RAFI_DEBUG_AI_PROFILE: 1
 
     steps:
     - uses: actions/checkout@v4

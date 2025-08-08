@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { MIDSCENE_RUN_DIR, getAIConfig } from './env';
+import { RAFI_RUN_DIR, getAIConfig } from './env';
 
 export const defaultRunDirName = 'hirafi_run';
 // Define locally for now to avoid import issues
@@ -10,20 +10,20 @@ export const isNodeEnv =
   process.versions != null &&
   process.versions.node != null;
 
-export const getMidsceneRunDir = () => {
+export const getRafiRunDir = () => {
   if (!isNodeEnv) {
     return '';
   }
 
-  return getAIConfig(MIDSCENE_RUN_DIR) || defaultRunDirName;
+  return getAIConfig(RAFI_RUN_DIR) || defaultRunDirName;
 };
 
-export const getMidsceneRunBaseDir = () => {
+export const getRafiRunBaseDir = () => {
   if (!isNodeEnv) {
     return '';
   }
 
-  let basePath = path.resolve(process.cwd(), getMidsceneRunDir());
+  let basePath = path.resolve(process.cwd(), getRafiRunDir());
 
   // Create a base directory
   if (!existsSync(basePath)) {
@@ -40,13 +40,13 @@ export const getMidsceneRunBaseDir = () => {
 };
 
 /**
- * Get the path to the midscene_run directory or a subdirectory within it.
+ * Get the path to the rafi_run directory or a subdirectory within it.
  * Creates the directory if it doesn't exist.
  *
  * @param subdir - Optional subdirectory name (e.g., 'log', 'report')
  * @returns The absolute path to the requested directory
  */
-export const getMidsceneRunSubDir = (
+export const getRafiRunSubDir = (
   subdir: 'dump' | 'cache' | 'report' | 'tmp' | 'log' | 'output',
 ): string => {
   if (!isNodeEnv) {
@@ -54,7 +54,7 @@ export const getMidsceneRunSubDir = (
   }
 
   // Create a log directory
-  const basePath = getMidsceneRunBaseDir();
+  const basePath = getRafiRunBaseDir();
   const logPath = path.join(basePath, subdir);
   if (!existsSync(logPath)) {
     mkdirSync(logPath, { recursive: true });

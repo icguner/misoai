@@ -9,7 +9,7 @@ import {
 } from 'rfi-ai-shared/fs';
 import { getDebug } from 'rfi-ai-shared/logger';
 import { assert } from 'rfi-ai-shared/utils';
-import type { Page as PlaywrightPage } from 'playwright';
+// Playwright support removed
 import type { Page as PuppeteerPage } from 'puppeteer';
 import type { WebKeyInput } from '../common/page';
 import type { AbstractPage } from '../page';
@@ -18,8 +18,8 @@ import type { MouseButton } from '../page';
 const debugPage = getDebug('web:page');
 
 export class Page<
-  AgentType extends 'puppeteer' | 'playwright',
-  PageType extends PuppeteerPage | PlaywrightPage,
+  AgentType extends 'puppeteer',
+  PageType extends PuppeteerPage,
 > implements AbstractPage
 {
   underlyingPage: PageType;
@@ -40,10 +40,8 @@ export class Page<
         arg,
       );
     } else {
-      result = await (this.underlyingPage as PlaywrightPage).evaluate(
-        pageFunction,
-        arg,
-      );
+      // Playwright support removed
+      throw new Error('Playwright support removed');
     }
     debugPage('evaluate function end');
     return result;
@@ -68,7 +66,7 @@ export class Page<
 
   async waitForNavigation() {
     // issue: https://github.com/puppeteer/puppeteer/issues/3323
-    if (this.pageType === 'puppeteer' || this.pageType === 'playwright') {
+    if (this.pageType === 'puppeteer') {
       debugPage('waitForNavigation begin');
       debugPage(`waitForNavigation timeout: ${this.waitForNavigationTimeout}`);
       try {
@@ -181,9 +179,8 @@ export class Page<
         console.error(`[PUPPETEER-CLICK] Failed to click ${selector}: ${(error as Error).message}`);
         throw error;
       }
-    } else if (this.pageType === 'playwright') {
-      // Playwright has built-in visibility handling
-      await (this.underlyingPage as PlaywrightPage).click(selector, { force: false });
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
       return;
     }
     throw new Error(`Element not found for selector: ${selector}`);
@@ -241,8 +238,8 @@ export class Page<
         console.error(`[PUPPETEER-TYPE] Failed: ${(error as Error).message}`);
         throw error;
       }
-    } else if (this.pageType === 'playwright') {
-      await (this.underlyingPage as PlaywrightPage).fill(selector, text);
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
       return;
     }
     throw new Error(`Element not found for selector: ${selector}`);
@@ -301,8 +298,8 @@ export class Page<
         console.error(`[PUPPETEER-CLEAR] Failed: ${(error as Error).message}`);
         throw error;
       }
-    } else if (this.pageType === 'playwright') {
-      await (this.underlyingPage as PlaywrightPage).fill(selector, '');
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
       return;
     }
     throw new Error(`Element not found for selector: ${selector}`);
@@ -360,8 +357,8 @@ export class Page<
         console.error(`[PUPPETEER-HOVER] Failed: ${(error as Error).message}`);
         throw error;
       }
-    } else if (this.pageType === 'playwright') {
-      await (this.underlyingPage as PlaywrightPage).hover(selector);
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
       return;
     }
     throw new Error(`Element not found for selector: ${selector}`);
@@ -399,9 +396,8 @@ export class Page<
         console.error(`[PUPPETEER-SCROLL] Failed: ${(error as Error).message}`);
         throw error;
       }
-    } else if (this.pageType === 'playwright') {
-      // Playwright has built-in scrollIntoViewIfNeeded
-      await (this.underlyingPage as PlaywrightPage).locator(selector).scrollIntoViewIfNeeded();
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
       return;
     }
     
@@ -446,13 +442,9 @@ export class Page<
         encoding: 'base64',
       });
       base64 = `data:image/jpeg;base64,${result}`;
-    } else if (this.pageType === 'playwright') {
-      const buffer = await (this.underlyingPage as PlaywrightPage).screenshot({
-        type: imgType,
-        quality,
-        timeout: 10 * 1000,
-      });
-      base64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
+      throw new Error('Playwright support removed');
     } else {
       throw new Error('Unsupported page type for screenshot');
     }
@@ -483,11 +475,8 @@ export class Page<
             deltaX,
             deltaY,
           });
-        } else if (this.pageType === 'playwright') {
-          await (this.underlyingPage as PlaywrightPage).mouse.wheel(
-            deltaX,
-            deltaY,
-          );
+        } else if (false /* playwright removed */) {
+          // Playwright support removed
         }
       },
       move: async (x: number, y: number) => {
@@ -509,15 +498,8 @@ export class Page<
               y: to.y,
             },
           );
-        } else if (this.pageType === 'playwright') {
-          // Playwright doesn't have a drag method, so we need to simulate it
-          await (this.underlyingPage as PlaywrightPage).mouse.move(
-            from.x,
-            from.y,
-          );
-          await (this.underlyingPage as PlaywrightPage).mouse.down();
-          await (this.underlyingPage as PlaywrightPage).mouse.move(to.x, to.y);
-          await (this.underlyingPage as PlaywrightPage).mouse.up();
+        } else if (false /* playwright removed */) {
+          // Playwright support removed
         }
       },
     };
@@ -644,8 +626,8 @@ export class Page<
   async navigate(url: string): Promise<void> {
     if (this.pageType === 'puppeteer') {
       await (this.underlyingPage as PuppeteerPage).goto(url);
-    } else if (this.pageType === 'playwright') {
-      await (this.underlyingPage as PlaywrightPage).goto(url);
+    } else if (false /* playwright removed */) {
+      // Playwright support removed
     } else {
       throw new Error('Unsupported page type for navigate');
     }

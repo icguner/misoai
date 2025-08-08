@@ -1,5 +1,6 @@
 import type { AndroidDevicePage, WebPage } from '@/common/page';
 import type { PuppeteerWebPage } from '@/puppeteer';
+import type { KeyInput } from 'puppeteer';
 import {
   type AIUsageInfo,
   type DumpSubscriber,
@@ -585,9 +586,7 @@ export class PageTaskExecutor {
               if (element) {
                 await this.page.clearInput(element as unknown as ElementInfo);
               }
-              await this.page.keyboard.type(taskParam.value, {
-                autoDismissKeyboard: taskParam.autoDismissKeyboard,
-              });
+              await this.page.keyboard.type(taskParam.value);
             },
           };
         tasks.push(taskActionInput);
@@ -601,8 +600,12 @@ export class PageTaskExecutor {
             locate: plan.locate,
             executor: async (taskParam) => {
               const keys = getKeyCommands(taskParam.value);
-
-              await this.page.keyboard.press(keys);
+              // Cast keys to correct type for puppeteer
+              const typedKeys = keys.map(k => ({ 
+                key: k.key as KeyInput, 
+                command: k.command 
+              }));
+              await this.page.keyboard.press(typedKeys);
             },
           };
         tasks.push(taskActionKeyboardPress);
@@ -635,7 +638,9 @@ export class PageTaskExecutor {
               
               // Fallback to coordinate-based click
               console.error(`[COORDINATE] Using coordinate-based click: [${element.center[0]}, ${element.center[1]}]`);
-              await this.page.mouse.click(element.center[0], element.center[1]);
+              if ('mouse' in this.page) {
+                await this.page.mouse.click(element.center[0], element.center[1], { button: 'left' });
+              }
             },
           };
         tasks.push(taskActionTap);
@@ -943,41 +948,7 @@ export class PageTaskExecutor {
     };
   }
 
-  async loadYamlFlowAsPlanning(userInstruction: string, yamlString: string) {
-    const taskExecutor = new Executor(taskTitleStr('Action', userInstruction), {
-      onTaskStart: this.onTaskStartCallback,
-    });
-
-    const task: ExecutionTaskPlanningApply = {
-      type: 'Planning',
-      subType: 'LoadYaml',
-      locate: null,
-      param: {
-        userInstruction,
-      },
-      executor: async (param, executorContext) => {
-        await this.setupPlanningContext(executorContext);
-        return {
-          output: {
-            actions: [],
-            more_actions_needed_by_instruction: false,
-            log: '',
-            yamlString,
-          },
-          cache: {
-            hit: true,
-          },
-        };
-      },
-    };
-
-    await taskExecutor.append(task);
-    await taskExecutor.flush();
-
-    return {
-      executor: taskExecutor,
-    };
-  }
+  // loadYamlFlowAsPlanning method removed - YAML support has been removed
 
   private planningTaskFromPrompt(
     userInstruction: string,

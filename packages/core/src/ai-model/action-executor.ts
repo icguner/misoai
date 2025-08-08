@@ -9,7 +9,7 @@ import type {
 } from '@/types';
 import { getVersion } from '@/utils';
 import {
-  MIDSCENE_MODEL_NAME,
+  RAFI_MODEL_NAME,
   getAIConfig,
   uiTarsModelVersion,
   vlLocateMode,
@@ -211,7 +211,7 @@ export class Executor {
     }
     const dumpData: ExecutionDump = {
       sdkVersion: getVersion(),
-      model_name: getAIConfig(MIDSCENE_MODEL_NAME) || '',
+      model_name: getAIConfig(RAFI_MODEL_NAME) || '',
       model_description: modelDescription,
       logTime: Date.now(),
       name: this.name,

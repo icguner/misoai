@@ -32,15 +32,15 @@ describe('llm planning - doubao', () => {
   let originalMidsceneUseDoubaoVl: string | undefined;
   let originalMidsceneUseQwenVl: string | undefined;
   beforeEach(() => {
-    originalMidsceneUseDoubaoVl = process.env.MIDSCENE_USE_DOUBAO_VISION;
-    originalMidsceneUseQwenVl = process.env.MIDSCENE_USE_QWEN_VL;
-    process.env.MIDSCENE_USE_DOUBAO_VISION = 'true';
-    process.env.MIDSCENE_USE_QWEN_VL = 'false';
+    originalMidsceneUseDoubaoVl = process.env.RAFI_USE_DOUBAO_VISION;
+    originalMidsceneUseQwenVl = process.env.RAFI_USE_QWEN_VL;
+    process.env.RAFI_USE_DOUBAO_VISION = 'true';
+    process.env.RAFI_USE_QWEN_VL = 'false';
   });
 
   afterEach(() => {
-    process.env.MIDSCENE_USE_DOUBAO_VISION = originalMidsceneUseDoubaoVl;
-    process.env.MIDSCENE_USE_QWEN_VL = originalMidsceneUseQwenVl;
+    process.env.RAFI_USE_DOUBAO_VISION = originalMidsceneUseDoubaoVl;
+    process.env.RAFI_USE_QWEN_VL = originalMidsceneUseQwenVl;
   });
 
   it('fill locate param', () => {

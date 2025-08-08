@@ -1,4 +1,3 @@
-import type { StaticPage } from '@/playground';
 import type {
   BaseElement,
   ElementTreeNode,
@@ -10,7 +9,7 @@ import type {
 } from 'rfi-ai-core';
 import { elementByPositionWithElementInfo } from 'rfi-ai-core/ai-model';
 import { uploadTestInfoToServer } from 'rfi-ai-core/utils';
-import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from 'rfi-ai-shared/env';
+import { RAFI_REPORT_TAG_NAME, getAIConfig } from 'rfi-ai-shared/env';
 import type { ElementInfo } from 'rfi-ai-shared/extractor';
 import {
   generateElementByPosition,
@@ -21,7 +20,6 @@ import { resizeImgBase64 } from 'rfi-ai-shared/img';
 import type { DebugFunction } from 'rfi-ai-shared/logger';
 import { assert, logMsg, uuid } from 'rfi-ai-shared/utils';
 import dayjs from 'dayjs';
-import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';
 import { WebElementInfo } from '../web-element';
 import type { WebPage } from './page';
@@ -37,9 +35,6 @@ export async function parseContextFromWebPage(
   _opt?: PlaywrightParserOpt,
 ): Promise<WebUIContext> {
   assert(page, 'page is required');
-  if ((page as StaticPage)._forceUsePageContext) {
-    return await (page as any)._forceUsePageContext();
-  }
   const url = await page.url();
   uploadTestInfoToServer({ testUrl: url });
 
@@ -47,10 +42,10 @@ export async function parseContextFromWebPage(
   let tree: ElementTreeNode<ElementInfo>;
 
   await Promise.all([
-    page.screenshotBase64().then((base64) => {
+    page.screenshotBase64().then((base64: string) => {
       screenshotBase64 = base64;
     }),
-    page.getElementsNodeTree().then(async (treeRoot) => {
+    page.getElementsNodeTree().then(async (treeRoot: ElementTreeNode<ElementInfo>) => {
       tree = treeRoot;
     }),
   ]);
@@ -89,7 +84,7 @@ export async function parseContextFromWebPage(
 }
 
 export function reportFileName(tag = 'web') {
-  const reportTagName = getAIConfig(MIDSCENE_REPORT_TAG_NAME);
+  const reportTagName = getAIConfig(RAFI_REPORT_TAG_NAME);
   const dateTimeInFileName = dayjs().format('YYYY-MM-DD_HH-mm-ss');
   // ensure uniqueness at the same time
   const uniqueId = uuid().substring(0, 8);
@@ -162,7 +157,7 @@ export function replaceIllegalPathCharsAndSpace(str: string) {
 }
 
 export function forceClosePopup(
-  page: PuppeteerPage | PlaywrightPage,
+  page: PuppeteerPage,
   debug: DebugFunction,
 ) {
   page.on('popup', async (popup) => {

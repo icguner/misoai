@@ -11,7 +11,7 @@ import {
   preprocessDoubaoBboxJson,
   safeParseJson,
 } from '@/ai-model/service-caller';
-import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
+import { getRafiRunSubDir } from 'rfi-ai-shared/common';
 import { getAIConfig, overrideAIConfig } from 'rfi-ai-shared/env';
 import { describe, expect, it } from 'vitest';
 import {
@@ -32,7 +32,7 @@ describe('utils', () => {
   });
 
   it('log dir', () => {
-    const dumpDir = getMidsceneRunSubDir('log');
+    const dumpDir = getRafiRunSubDir('log');
     expect(dumpDir).toBeTruthy();
   });
 
@@ -621,7 +621,7 @@ describe('env', () => {
   it('overrideAIConfig', () => {
     expect(() =>
       overrideAIConfig({
-        MIDSCENE_CACHE: {
+        RAFI_CACHE: {
           foo: 123,
         } as any,
       }),

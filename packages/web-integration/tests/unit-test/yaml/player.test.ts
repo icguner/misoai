@@ -17,7 +17,7 @@ import type {
   GroupedActionDump,
   MidsceneYamlScriptWebEnv,
 } from '@midscene/core';
-import { getMidsceneRunSubDir } from '@midscene/shared/common';
+import { getRafiRunSubDir } from 'rfi-ai-shared/common';
 >>>>>>> upstream/main
 import { describe, expect, test, vi } from 'vitest';
 
@@ -480,7 +480,7 @@ tasks:
 
     // Verify the unstableLogContent file was created
     const filePath = resolve(
-      getMidsceneRunSubDir('output'),
+      getRafiRunSubDir('output'),
       'unstableLogContent.json',
     );
     expect(existsSync(filePath)).toBe(true);
@@ -510,7 +510,7 @@ tasks:
 
     // Verify the unstableLogContent file was created
     const filePath = resolve(
-      getMidsceneRunSubDir('output'),
+      getRafiRunSubDir('output'),
       'unstableLogContent-custom.json',
     );
     expect(existsSync(filePath)).toBe(true);

@@ -5,11 +5,11 @@ import * as path from 'node:path';
 import { dirname } from 'node:path';
 import {
   defaultRunDirName,
-  getMidsceneRunSubDir,
+  getRafiRunSubDir,
 } from 'rfi-ai-shared/common';
 import {
-  MIDSCENE_DEBUG_MODE,
-  MIDSCENE_OPENAI_INIT_CONFIG_JSON,
+  RAFI_DEBUG_MODE,
+  RAFI_OPENAI_INIT_CONFIG_JSON,
   getAIConfig,
   getAIConfigInJson,
 } from 'rfi-ai-shared/env';
@@ -152,13 +152,13 @@ export function writeDumpReport(
   }
 
   const reportPath = path.join(
-    getMidsceneRunSubDir('report'),
+    getRafiRunSubDir('report'),
     `${fileName}.html`,
   );
 
   reportHTMLContent(dumpData, reportPath);
 
-  if (process.env.MIDSCENE_DEBUG_LOG_JSON) {
+  if (process.env.RAFI_DEBUG_LOG_JSON) {
     const jsonPath = `${reportPath}.json`;
     let data = dumpData as ReportDumpWithAttributes[];
 
@@ -195,7 +195,7 @@ export function writeLogFile(opts: {
     return '/mock/report.html';
   }
   const { fileName, fileExt, fileContent, type = 'dump' } = opts;
-  const targetDir = getMidsceneRunSubDir(type);
+  const targetDir = getRafiRunSubDir(type);
   // Ensure directory exists
   if (!logEnvReady) {
     assert(targetDir, 'logDir should be set before writing dump file');
@@ -297,7 +297,7 @@ export function getVersion() {
 }
 
 function debugLog(...message: any[]) {
-  const debugMode = getAIConfig(MIDSCENE_DEBUG_MODE);
+  const debugMode = getAIConfig(RAFI_DEBUG_MODE);
   if (debugMode) {
     console.log('[Midscene]', ...message);
   }
@@ -308,7 +308,7 @@ export function uploadTestInfoToServer({ testUrl }: { testUrl: string }) {
   let repoUrl = '';
   let userEmail = '';
 
-  const extraConfig = getAIConfigInJson(MIDSCENE_OPENAI_INIT_CONFIG_JSON);
+  const extraConfig = getAIConfigInJson(RAFI_OPENAI_INIT_CONFIG_JSON);
   const serverUrl = extraConfig?.REPORT_SERVER_URL;
 
   try {

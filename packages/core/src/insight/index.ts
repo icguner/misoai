@@ -31,8 +31,8 @@ import type {
   UIContext,
 } from '@/types';
 import {
-  MIDSCENE_FORCE_DEEP_THINK,
-  MIDSCENE_USE_QWEN_VL,
+  RAFI_FORCE_DEEP_THINK,
+  RAFI_USE_QWEN_VL,
   getAIConfigInBoolean,
   vlLocateMode,
 } from 'rfi-ai-shared/env';
@@ -120,7 +120,7 @@ export default class Insight<
     assert(typeof query === 'object', 'query should be an object for locate');
 
     const globalDeepThinkSwitch = getAIConfigInBoolean(
-      MIDSCENE_FORCE_DEEP_THINK,
+      RAFI_FORCE_DEEP_THINK,
     );
     if (globalDeepThinkSwitch) {
       debug('globalDeepThinkSwitch', globalDeepThinkSwitch);
@@ -462,7 +462,7 @@ export default class Insight<
       imagePayload = await cropByRect(
         imagePayload,
         searchArea,
-        getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL),
+        getAIConfigInBoolean(RAFI_USE_QWEN_VL),
       );
     }
 

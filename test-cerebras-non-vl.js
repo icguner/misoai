@@ -6,16 +6,16 @@ async function testCerebrasNonVL() {
   console.log('Testing Cerebras Qwen-3-235b with new format on Flypgs\n');
   
   // Set Cerebras configuration
-  process.env.OPENAI_API_KEY = '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';
+  process.env.OPENAI_API_KEY = '';
   process.env.OPENAI_BASE_URL = 'https://openrouter.ai/api/v1';
-  process.env.MIDSCENE_MODEL_NAME = 'moonshotai/kimi-vl-a3b-thinking:free';
+  process.env.RAFI_MODEL_NAME = 'moonshotai/kimi-vl-a3b-thinking:free';
   
   // Ensure we're NOT using VL models
-  delete process.env.MIDSCENE_USE_GEMINI;
-  delete process.env.MIDSCENE_USE_QWEN_VL;
+  delete process.env.RAFI_USE_GEMINI;
+  delete process.env.RAFI_USE_QWEN_VL;
   
   console.log('Configuration:');
-  console.log('- Model:', process.env.MIDSCENE_MODEL_NAME);
+  console.log('- Model:', process.env.RAFI_MODEL_NAME);
   console.log('- Base URL:', process.env.OPENAI_BASE_URL);
   console.log('- API Key:', process.env.OPENAI_API_KEY.substring(0, 10) + '...');
   console.log('- VL Models disabled');

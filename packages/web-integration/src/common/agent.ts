@@ -109,9 +109,7 @@ export interface AITaskResult<T = any> {
   metadata: AITaskMetadata;
 }
 
-import yaml from 'js-yaml';
-
-import { ScriptPlayer, parseYamlScript } from '@/yaml/index';
+// YAML support removed - use direct AI automation instead
 import {
   groupedActionDumpFileExt,
   reportHTMLContent,
@@ -282,7 +280,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     if (opts?.cacheId && this.page.pageType !== 'android') {
       this.taskCache = new TaskCache(
         opts.cacheId,
-        getAIConfigInBoolean('MIDSCENE_CACHE'), // if we should use cache to match the element
+        getAIConfigInBoolean('RAFI_CACHE'), // if we should use cache to match the element
       );
     }
 
@@ -1135,21 +1133,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
         ? undefined
         : this.taskCache?.matchPlanCache(taskPrompt);
     if (matchedCache && this.taskCache?.isCacheResultUsed) {
-      // log into report file
-      const { executor } = await this.taskExecutor.loadYamlFlowAsPlanning(
-        taskPrompt,
-        matchedCache.cacheContent?.yamlWorkflow,
-      );
-
-      const metadata = this.afterTaskRunning(executor);
-
-      debug('matched cache, will call .runYaml to run the action');
-      const yaml = matchedCache.cacheContent?.yamlWorkflow;
-      const result = await this.runYaml(yaml);
-      return {
-        result: result.result,
-        metadata
-      };
+      // YAML workflow execution removed - cache hit but no YAML support
+      debug('matched cache, but YAML workflow not supported');
+      // Fall through to regular execution
     }
 
     const { output, executor } = await (isVlmUiTars
@@ -1158,25 +1144,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
           cacheable,
         }));
 
-    // update cache
+    // update cache - YAML workflow caching disabled
     if (this.taskCache && output?.yamlFlow && cacheable !== false) {
-      const yamlContent = {
-        tasks: [
-          {
-            name: taskPrompt,
-            flow: output.yamlFlow,
-          },
-        ],
-      };
-      const yamlFlowStr = yaml.dump(yamlContent);
-      this.taskCache.updateOrAppendCacheRecord(
-        {
-          type: 'plan',
-          prompt: taskPrompt,
-          yamlWorkflow: yamlFlowStr,
-        },
-        matchedCache,
-      );
+      // YAML workflow caching disabled - skipping cache update
+      debug('YAML workflow caching disabled, skipping cache update');
     }
 
     const metadata = this.afterTaskRunning(executor);
@@ -1465,43 +1436,10 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     );
   }
 
-  async runYaml(yamlScriptContent: string): Promise<AITaskResult<Record<string, any>>> {
-    const startTime = Date.now();
-    const script = parseYamlScript(yamlScriptContent, 'yaml', true);
-    const player = new ScriptPlayer(script, async () => {
-      return { agent: this, freeFn: [] };
-    });
-    await player.run();
-
-    const endTime = Date.now();
-    const metadata: AITaskMetadata = {
-      status: player.status,
-      start: startTime,
-      end: endTime,
-      totalTime: endTime - startTime,
-      tasks: player.taskStatusList.map(task => ({
-        type: 'yaml-task',
-        subType: task.name,
-        status: task.status,
-        error: task.error?.message,
-      })),
-    };
-
-    if (player.status === 'error') {
-      const errors = player.taskStatusList
-        .filter((task) => task.status === 'error')
-        .map((task) => {
-          return `task - ${task.name}: ${task.error?.message}`;
-        })
-        .join('\n');
-      throw new Error(`Error(s) occurred in running yaml script:\n${errors}`);
-    }
-
-    return {
-      result: player.result,
-      metadata
-    };
-  }
+  // YAML support has been removed - use direct AI automation instead
+  // async runYaml(yamlScriptContent: string): Promise<AITaskResult<Record<string, any>>> {
+  //   throw new Error('YAML support has been removed. Please use direct AI automation methods instead.');
+  // }
 
   async evaluateJavaScript(script: string): Promise<any> {
     assert(

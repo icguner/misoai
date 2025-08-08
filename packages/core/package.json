@@ -1,9 +1,9 @@
 {
   "name": "rfi-ai-core",
-  "description": "Automate browser actions, extract data, and perform assertions using AI. It offers JavaScript SDK, Chrome extension, and support for scripting in YAML. See https://midscenejs.com/ for details.",
+  "description": "Automate browser actions, extract data, and perform assertions using AI. It offers JavaScript SDK, Chrome extension, and support for scripting in YAML.",
   "version": "0.20.5",
-  "repository": "https://github.com/web-infra-dev/midscene",
-  "homepage": "https://midscenejs.com/",
+  "repository": "https://github.com/web-infra-dev/rafi",
+  "homepage": "https://github.com/web-infra-dev/rafi",
   "jsnext:source": "./src/index.ts",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
@@ -55,7 +55,7 @@
     "dotenv": "16.4.5",
     "https-proxy-agent": "7.0.2",
     "langsmith": "0.3.7",
-    "openai": "4.81.0",
+    "openai": "5.12.2",
     "socks-proxy-agent": "8.0.4"
   },
   "devDependencies": {

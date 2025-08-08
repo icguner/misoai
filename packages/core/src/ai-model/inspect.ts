@@ -14,9 +14,9 @@ import type {
   UIContext,
 } from '@/types';
 import {
-  MIDSCENE_USE_QWEN_VL,
-  MIDSCENE_USE_VLM_UI_TARS,
-  MIDSCENE_FORCE_DEEP_THINK,
+  RAFI_USE_QWEN_VL,
+  RAFI_USE_VLM_UI_TARS,
+  RAFI_FORCE_DEEP_THINK,
   getAIConfigInBoolean,
   vlLocateMode,
 } from 'rfi-ai-shared/env';
@@ -139,7 +139,7 @@ export async function AiLocateElement<
     referenceImagePayload = await cropByRect(
       options.referenceImage.base64,
       options.referenceImage.rect,
-      getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL),
+      getAIConfigInBoolean(RAFI_USE_QWEN_VL),
     );
   }
 
@@ -196,7 +196,7 @@ export async function AiLocateElement<
     console.error(`[UNIFIED-HYBRID] DOM preview: ${description.substring(0, 200)}...`);
     
     // Full DOM logging controlled by environment variable
-    const debugDom = process.env.MIDSCENE_DEBUG_DOM === 'true' || process.env.DEBUG_EMMETIFY === 'true';
+    const debugDom = process.env.RAFI_DEBUG_DOM === 'true' || process.env.DEBUG_EMMETIFY === 'true';
     
     if (debugDom) {
       console.error(`\n[EMMETIFY-DOM-START] ========== FULL DOM SENT TO LLM ==========`);
@@ -221,7 +221,7 @@ export async function AiLocateElement<
       console.error(`[EMMETIFY-DOM-STATS] Approximate elements: ${elementCount}`);
       console.error(`[EMMETIFY-DOM-END] ========== END OF DOM (${description.length} chars) ==========\n`);
     } else {
-      console.error(`[UNIFIED-HYBRID] Use MIDSCENE_DEBUG_DOM=true to see full DOM content`);
+      console.error(`[UNIFIED-HYBRID] Use RAFI_DEBUG_DOM=true to see full DOM content`);
     }
   } else {
     console.error(`[UNIFIED-HYBRID-ERROR] ERROR: No DOM structure available for analysis!`);
@@ -426,7 +426,7 @@ export async function AiLocateSection(options: {
     imageBase64 = await cropByRect(
       screenshotBase64,
       sectionRect,
-      getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL),
+      getAIConfigInBoolean(RAFI_USE_QWEN_VL),
     );
   }
 
@@ -512,7 +512,7 @@ export async function AiAssert<
   const url = (context as any).url || '';
 
   const systemPrompt = systemPromptToAssert({
-    isUITars: getAIConfigInBoolean(MIDSCENE_USE_VLM_UI_TARS),
+    isUITars: getAIConfigInBoolean(RAFI_USE_VLM_UI_TARS),
   });
 
   const msgs: AIArgs = [
@@ -561,7 +561,7 @@ export async function AiCaptcha<
   const url = (context as any).url || '';
 
   // Check for global deep think setting
-  const globalDeepThinkSwitch = getAIConfigInBoolean(MIDSCENE_FORCE_DEEP_THINK);
+  const globalDeepThinkSwitch = getAIConfigInBoolean(RAFI_FORCE_DEEP_THINK);
   const shouldUseDeepThink = deepThink || globalDeepThinkSwitch;
 
   const systemPrompt = `
@@ -654,7 +654,7 @@ Provide the coordinates of the CAPTCHA area as [x1, y1, x2, y2] where:
         imagePayload = await cropByRect(
           screenshotBase64,
           searchArea,
-          getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL),
+          getAIConfigInBoolean(RAFI_USE_QWEN_VL),
         );
       }
     } catch (error) {

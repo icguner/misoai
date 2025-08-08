@@ -1,115 +1,115 @@
 // config keys
-export const MIDSCENE_OPENAI_INIT_CONFIG_JSON =
-  'MIDSCENE_OPENAI_INIT_CONFIG_JSON';
-export const MIDSCENE_MODEL_NAME = 'MIDSCENE_MODEL_NAME';
+export const RAFI_OPENAI_INIT_CONFIG_JSON =
+  'RAFI_OPENAI_INIT_CONFIG_JSON';
+export const RAFI_MODEL_NAME = 'RAFI_MODEL_NAME';
 export const AI_TEMPERATURE = 'AI_TEMPERATURE';
 export const AI_SEED = 'AI_SEED';
-export const MIDSCENE_LANGSMITH_DEBUG = 'MIDSCENE_LANGSMITH_DEBUG';
-export const MIDSCENE_DEBUG_AI_PROFILE = 'MIDSCENE_DEBUG_AI_PROFILE';
-export const MIDSCENE_DEBUG_AI_RESPONSE = 'MIDSCENE_DEBUG_AI_RESPONSE';
-export const MIDSCENE_DANGEROUSLY_PRINT_ALL_CONFIG =
-  'MIDSCENE_DANGEROUSLY_PRINT_ALL_CONFIG';
-export const MIDSCENE_DEBUG_MODE = 'MIDSCENE_DEBUG_MODE';
-export const MIDSCENE_MCP_USE_PUPPETEER_MODE =
-  'MIDSCENE_MCP_USE_PUPPETEER_MODE';
+export const RAFI_LANGSMITH_DEBUG = 'RAFI_LANGSMITH_DEBUG';
+export const RAFI_DEBUG_AI_PROFILE = 'RAFI_DEBUG_AI_PROFILE';
+export const RAFI_DEBUG_AI_RESPONSE = 'RAFI_DEBUG_AI_RESPONSE';
+export const RAFI_DANGEROUSLY_PRINT_ALL_CONFIG =
+  'RAFI_DANGEROUSLY_PRINT_ALL_CONFIG';
+export const RAFI_DEBUG_MODE = 'RAFI_DEBUG_MODE';
+export const RAFI_MCP_USE_PUPPETEER_MODE =
+  'RAFI_MCP_USE_PUPPETEER_MODE';
 
-export const MIDSCENE_FORCE_DEEP_THINK = 'MIDSCENE_FORCE_DEEP_THINK';
+export const RAFI_FORCE_DEEP_THINK = 'RAFI_FORCE_DEEP_THINK';
 
-export const MIDSCENE_OPENAI_SOCKS_PROXY = 'MIDSCENE_OPENAI_SOCKS_PROXY';
-export const MIDSCENE_OPENAI_HTTP_PROXY = 'MIDSCENE_OPENAI_HTTP_PROXY';
+export const RAFI_OPENAI_SOCKS_PROXY = 'RAFI_OPENAI_SOCKS_PROXY';
+export const RAFI_OPENAI_HTTP_PROXY = 'RAFI_OPENAI_HTTP_PROXY';
 export const OPENAI_API_KEY = 'OPENAI_API_KEY';
 export const OPENAI_BASE_URL = 'OPENAI_BASE_URL';
 export const OPENAI_MAX_TOKENS = 'OPENAI_MAX_TOKENS';
 
-export const MIDSCENE_ADB_PATH = 'MIDSCENE_ADB_PATH';
-export const MIDSCENE_ADB_REMOTE_HOST = 'MIDSCENE_ADB_REMOTE_HOST';
-export const MIDSCENE_ADB_REMOTE_PORT = 'MIDSCENE_ADB_REMOTE_PORT';
-export const MIDSCENE_ANDROID_IME_STRATEGY = 'MIDSCENE_ANDROID_IME_STRATEGY';
+export const RAFI_ADB_PATH = 'RAFI_ADB_PATH';
+export const RAFI_ADB_REMOTE_HOST = 'RAFI_ADB_REMOTE_HOST';
+export const RAFI_ADB_REMOTE_PORT = 'RAFI_ADB_REMOTE_PORT';
+export const RAFI_ANDROID_IME_STRATEGY = 'RAFI_ANDROID_IME_STRATEGY';
 
-export const MIDSCENE_CACHE = 'MIDSCENE_CACHE';
-export const MIDSCENE_USE_VLM_UI_TARS = 'MIDSCENE_USE_VLM_UI_TARS';
-export const MIDSCENE_USE_QWEN_VL = 'MIDSCENE_USE_QWEN_VL';
-export const MIDSCENE_USE_DOUBAO_VISION = 'MIDSCENE_USE_DOUBAO_VISION';
-export const MIDSCENE_USE_GEMINI = 'MIDSCENE_USE_GEMINI';
-export const MIDSCENE_USE_KIMI_VL = 'MIDSCENE_USE_KIMI_VL';
-export const MIDSCENE_USE_VL_MODEL = 'MIDSCENE_USE_VL_MODEL';
+export const RAFI_CACHE = 'RAFI_CACHE';
+export const RAFI_USE_VLM_UI_TARS = 'RAFI_USE_VLM_UI_TARS';
+export const RAFI_USE_QWEN_VL = 'RAFI_USE_QWEN_VL';
+export const RAFI_USE_DOUBAO_VISION = 'RAFI_USE_DOUBAO_VISION';
+export const RAFI_USE_GEMINI = 'RAFI_USE_GEMINI';
+export const RAFI_USE_KIMI_VL = 'RAFI_USE_KIMI_VL';
+export const RAFI_USE_VL_MODEL = 'RAFI_USE_VL_MODEL';
 export const MATCH_BY_POSITION = 'MATCH_BY_POSITION';
-export const MIDSCENE_API_TYPE = 'MIDSCENE-API-TYPE';
-export const MIDSCENE_REPORT_TAG_NAME = 'MIDSCENE_REPORT_TAG_NAME';
+export const RAFI_API_TYPE = 'RAFI-API-TYPE';
+export const RAFI_REPORT_TAG_NAME = 'RAFI_REPORT_TAG_NAME';
 
-export const MIDSCENE_PREFERRED_LANGUAGE = 'MIDSCENE_PREFERRED_LANGUAGE';
+export const RAFI_PREFERRED_LANGUAGE = 'RAFI_PREFERRED_LANGUAGE';
 
-export const MIDSCENE_USE_AZURE_OPENAI = 'MIDSCENE_USE_AZURE_OPENAI';
-export const MIDSCENE_AZURE_OPENAI_SCOPE = 'MIDSCENE_AZURE_OPENAI_SCOPE';
-export const MIDSCENE_AZURE_OPENAI_INIT_CONFIG_JSON =
-  'MIDSCENE_AZURE_OPENAI_INIT_CONFIG_JSON';
+export const RAFI_USE_AZURE_OPENAI = 'RAFI_USE_AZURE_OPENAI';
+export const RAFI_AZURE_OPENAI_SCOPE = 'RAFI_AZURE_OPENAI_SCOPE';
+export const RAFI_AZURE_OPENAI_INIT_CONFIG_JSON =
+  'RAFI_AZURE_OPENAI_INIT_CONFIG_JSON';
 
 export const AZURE_OPENAI_ENDPOINT = 'AZURE_OPENAI_ENDPOINT';
 export const AZURE_OPENAI_KEY = 'AZURE_OPENAI_KEY';
 export const AZURE_OPENAI_API_VERSION = 'AZURE_OPENAI_API_VERSION';
 export const AZURE_OPENAI_DEPLOYMENT = 'AZURE_OPENAI_DEPLOYMENT';
 
-export const MIDSCENE_USE_ANTHROPIC_SDK = 'MIDSCENE_USE_ANTHROPIC_SDK';
+export const RAFI_USE_ANTHROPIC_SDK = 'RAFI_USE_ANTHROPIC_SDK';
 export const ANTHROPIC_API_KEY = 'ANTHROPIC_API_KEY';
 
-export const MIDSCENE_RUN_DIR = 'MIDSCENE_RUN_DIR';
+export const RAFI_RUN_DIR = 'RAFI_RUN_DIR';
 
 // @deprecated
 export const OPENAI_USE_AZURE = 'OPENAI_USE_AZURE';
 
 export const allConfigFromEnv = () => {
   return {
-    [MIDSCENE_OPENAI_INIT_CONFIG_JSON]:
-      process.env[MIDSCENE_OPENAI_INIT_CONFIG_JSON] || undefined,
-    [MIDSCENE_MODEL_NAME]: process.env[MIDSCENE_MODEL_NAME] || undefined,
+    [RAFI_OPENAI_INIT_CONFIG_JSON]:
+      process.env[RAFI_OPENAI_INIT_CONFIG_JSON] || undefined,
+    [RAFI_MODEL_NAME]: process.env[RAFI_MODEL_NAME] || undefined,
     [AI_TEMPERATURE]: process.env[AI_TEMPERATURE] || undefined,
     [AI_SEED]: process.env[AI_SEED] || undefined,
-    [MIDSCENE_DEBUG_MODE]: process.env[MIDSCENE_DEBUG_MODE] || undefined,
-    [MIDSCENE_FORCE_DEEP_THINK]:
-      process.env[MIDSCENE_FORCE_DEEP_THINK] || undefined,
-    [MIDSCENE_LANGSMITH_DEBUG]:
-      process.env[MIDSCENE_LANGSMITH_DEBUG] || undefined,
-    [MIDSCENE_DEBUG_AI_PROFILE]:
-      process.env[MIDSCENE_DEBUG_AI_PROFILE] || undefined,
-    [MIDSCENE_DEBUG_AI_RESPONSE]:
-      process.env[MIDSCENE_DEBUG_AI_RESPONSE] || undefined,
-    [MIDSCENE_DANGEROUSLY_PRINT_ALL_CONFIG]:
-      process.env[MIDSCENE_DANGEROUSLY_PRINT_ALL_CONFIG] || undefined,
+    [RAFI_DEBUG_MODE]: process.env[RAFI_DEBUG_MODE] || undefined,
+    [RAFI_FORCE_DEEP_THINK]:
+      process.env[RAFI_FORCE_DEEP_THINK] || undefined,
+    [RAFI_LANGSMITH_DEBUG]:
+      process.env[RAFI_LANGSMITH_DEBUG] || undefined,
+    [RAFI_DEBUG_AI_PROFILE]:
+      process.env[RAFI_DEBUG_AI_PROFILE] || undefined,
+    [RAFI_DEBUG_AI_RESPONSE]:
+      process.env[RAFI_DEBUG_AI_RESPONSE] || undefined,
+    [RAFI_DANGEROUSLY_PRINT_ALL_CONFIG]:
+      process.env[RAFI_DANGEROUSLY_PRINT_ALL_CONFIG] || undefined,
     [OPENAI_API_KEY]: process.env[OPENAI_API_KEY] || undefined,
     [OPENAI_BASE_URL]: process.env[OPENAI_BASE_URL] || undefined,
     [OPENAI_MAX_TOKENS]: process.env[OPENAI_MAX_TOKENS] || undefined,
     [OPENAI_USE_AZURE]: process.env[OPENAI_USE_AZURE] || undefined,
-    [MIDSCENE_ADB_PATH]: process.env[MIDSCENE_ADB_PATH] || undefined,
-    [MIDSCENE_ADB_REMOTE_HOST]:
-      process.env[MIDSCENE_ADB_REMOTE_HOST] || undefined,
-    [MIDSCENE_ADB_REMOTE_PORT]:
-      process.env[MIDSCENE_ADB_REMOTE_PORT] || undefined,
-    [MIDSCENE_ANDROID_IME_STRATEGY]:
-      process.env[MIDSCENE_ANDROID_IME_STRATEGY] || undefined,
-    [MIDSCENE_CACHE]: process.env[MIDSCENE_CACHE] || undefined,
+    [RAFI_ADB_PATH]: process.env[RAFI_ADB_PATH] || undefined,
+    [RAFI_ADB_REMOTE_HOST]:
+      process.env[RAFI_ADB_REMOTE_HOST] || undefined,
+    [RAFI_ADB_REMOTE_PORT]:
+      process.env[RAFI_ADB_REMOTE_PORT] || undefined,
+    [RAFI_ANDROID_IME_STRATEGY]:
+      process.env[RAFI_ANDROID_IME_STRATEGY] || undefined,
+    [RAFI_CACHE]: process.env[RAFI_CACHE] || undefined,
     [MATCH_BY_POSITION]: process.env[MATCH_BY_POSITION] || undefined,
-    [MIDSCENE_REPORT_TAG_NAME]:
-      process.env[MIDSCENE_REPORT_TAG_NAME] || undefined,
-    [MIDSCENE_OPENAI_SOCKS_PROXY]:
-      process.env[MIDSCENE_OPENAI_SOCKS_PROXY] || undefined,
-    [MIDSCENE_OPENAI_HTTP_PROXY]:
-      process.env[MIDSCENE_OPENAI_HTTP_PROXY] || undefined,
-    [MIDSCENE_USE_AZURE_OPENAI]:
-      process.env[MIDSCENE_USE_AZURE_OPENAI] || undefined,
-    [MIDSCENE_AZURE_OPENAI_SCOPE]:
-      process.env[MIDSCENE_AZURE_OPENAI_SCOPE] || undefined,
-    [MIDSCENE_AZURE_OPENAI_INIT_CONFIG_JSON]:
-      process.env[MIDSCENE_AZURE_OPENAI_INIT_CONFIG_JSON] || undefined,
-    [MIDSCENE_USE_ANTHROPIC_SDK]:
-      process.env[MIDSCENE_USE_ANTHROPIC_SDK] || undefined,
-    [MIDSCENE_USE_VLM_UI_TARS]:
-      process.env[MIDSCENE_USE_VLM_UI_TARS] || undefined,
-    [MIDSCENE_USE_QWEN_VL]: process.env[MIDSCENE_USE_QWEN_VL] || undefined,
-    [MIDSCENE_USE_DOUBAO_VISION]:
-      process.env[MIDSCENE_USE_DOUBAO_VISION] || undefined,
-    [MIDSCENE_USE_GEMINI]: process.env[MIDSCENE_USE_GEMINI] || undefined,
-    [MIDSCENE_USE_KIMI_VL]: process.env[MIDSCENE_USE_KIMI_VL] || undefined,
-    [MIDSCENE_USE_VL_MODEL]: process.env[MIDSCENE_USE_VL_MODEL] || undefined,
+    [RAFI_REPORT_TAG_NAME]:
+      process.env[RAFI_REPORT_TAG_NAME] || undefined,
+    [RAFI_OPENAI_SOCKS_PROXY]:
+      process.env[RAFI_OPENAI_SOCKS_PROXY] || undefined,
+    [RAFI_OPENAI_HTTP_PROXY]:
+      process.env[RAFI_OPENAI_HTTP_PROXY] || undefined,
+    [RAFI_USE_AZURE_OPENAI]:
+      process.env[RAFI_USE_AZURE_OPENAI] || undefined,
+    [RAFI_AZURE_OPENAI_SCOPE]:
+      process.env[RAFI_AZURE_OPENAI_SCOPE] || undefined,
+    [RAFI_AZURE_OPENAI_INIT_CONFIG_JSON]:
+      process.env[RAFI_AZURE_OPENAI_INIT_CONFIG_JSON] || undefined,
+    [RAFI_USE_ANTHROPIC_SDK]:
+      process.env[RAFI_USE_ANTHROPIC_SDK] || undefined,
+    [RAFI_USE_VLM_UI_TARS]:
+      process.env[RAFI_USE_VLM_UI_TARS] || undefined,
+    [RAFI_USE_QWEN_VL]: process.env[RAFI_USE_QWEN_VL] || undefined,
+    [RAFI_USE_DOUBAO_VISION]:
+      process.env[RAFI_USE_DOUBAO_VISION] || undefined,
+    [RAFI_USE_GEMINI]: process.env[RAFI_USE_GEMINI] || undefined,
+    [RAFI_USE_KIMI_VL]: process.env[RAFI_USE_KIMI_VL] || undefined,
+    [RAFI_USE_VL_MODEL]: process.env[RAFI_USE_VL_MODEL] || undefined,
     [ANTHROPIC_API_KEY]: process.env[ANTHROPIC_API_KEY] || undefined,
     [AZURE_OPENAI_ENDPOINT]: process.env[AZURE_OPENAI_ENDPOINT] || undefined,
     [AZURE_OPENAI_KEY]: process.env[AZURE_OPENAI_KEY] || undefined,
@@ -117,11 +117,11 @@ export const allConfigFromEnv = () => {
       process.env[AZURE_OPENAI_API_VERSION] || undefined,
     [AZURE_OPENAI_DEPLOYMENT]:
       process.env[AZURE_OPENAI_DEPLOYMENT] || undefined,
-    [MIDSCENE_MCP_USE_PUPPETEER_MODE]:
-      process.env[MIDSCENE_MCP_USE_PUPPETEER_MODE] || undefined,
-    [MIDSCENE_RUN_DIR]: process.env[MIDSCENE_RUN_DIR] || undefined,
-    [MIDSCENE_PREFERRED_LANGUAGE]:
-      process.env[MIDSCENE_PREFERRED_LANGUAGE] || undefined,
+    [RAFI_MCP_USE_PUPPETEER_MODE]:
+      process.env[RAFI_MCP_USE_PUPPETEER_MODE] || undefined,
+    [RAFI_RUN_DIR]: process.env[RAFI_RUN_DIR] || undefined,
+    [RAFI_PREFERRED_LANGUAGE]:
+      process.env[RAFI_PREFERRED_LANGUAGE] || undefined,
   };
 };
 
@@ -147,7 +147,7 @@ export const uiTarsModelVersion = (): UITarsModelVersion | false => {
     return false;
   }
 
-  const versionConfig: any = getAIConfig(MIDSCENE_USE_VLM_UI_TARS);
+  const versionConfig: any = getAIConfig(RAFI_USE_VLM_UI_TARS);
   if (versionConfig === '1' || versionConfig === 1) {
     return UITarsModelVersion.V1_0;
   }
@@ -166,13 +166,13 @@ export const vlLocateMode = ():
   | 'vlm-ui-tars'
   | false => {
   const enabledModes = [
-    getAIConfigInBoolean(MIDSCENE_USE_DOUBAO_VISION) &&
-      'MIDSCENE_USE_DOUBAO_VISION',
-    getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL) && 'MIDSCENE_USE_QWEN_VL',
-    getAIConfigInBoolean(MIDSCENE_USE_VLM_UI_TARS) &&
-      'MIDSCENE_USE_VLM_UI_TARS',
-    getAIConfigInBoolean(MIDSCENE_USE_GEMINI) && 'MIDSCENE_USE_GEMINI',
-    getAIConfigInBoolean(MIDSCENE_USE_KIMI_VL) && 'MIDSCENE_USE_KIMI_VL',
+    getAIConfigInBoolean(RAFI_USE_DOUBAO_VISION) &&
+      'RAFI_USE_DOUBAO_VISION',
+    getAIConfigInBoolean(RAFI_USE_QWEN_VL) && 'RAFI_USE_QWEN_VL',
+    getAIConfigInBoolean(RAFI_USE_VLM_UI_TARS) &&
+      'RAFI_USE_VLM_UI_TARS',
+    getAIConfigInBoolean(RAFI_USE_GEMINI) && 'RAFI_USE_GEMINI',
+    getAIConfigInBoolean(RAFI_USE_KIMI_VL) && 'RAFI_USE_KIMI_VL',
   ].filter(Boolean);
 
   if (enabledModes.length > 1) {
@@ -181,27 +181,27 @@ export const vlLocateMode = ():
     );
   }
 
-  if (getAIConfigInBoolean(MIDSCENE_USE_QWEN_VL)) {
+  if (getAIConfigInBoolean(RAFI_USE_QWEN_VL)) {
     return 'qwen-vl';
   }
 
-  if (getAIConfigInBoolean(MIDSCENE_USE_DOUBAO_VISION)) {
+  if (getAIConfigInBoolean(RAFI_USE_DOUBAO_VISION)) {
     return 'doubao-vision';
   }
 
-  if (getAIConfigInBoolean(MIDSCENE_USE_GEMINI)) {
+  if (getAIConfigInBoolean(RAFI_USE_GEMINI)) {
     return 'gemini';
   }
 
-  if (getAIConfigInBoolean(MIDSCENE_USE_KIMI_VL)) {
+  if (getAIConfigInBoolean(RAFI_USE_KIMI_VL)) {
     return 'kimi-vl';
   }
 
-  if (getAIConfigInBoolean(MIDSCENE_USE_VL_MODEL)) {
+  if (getAIConfigInBoolean(RAFI_USE_VL_MODEL)) {
     return 'vl-model';
   }
 
-  if (getAIConfigInBoolean(MIDSCENE_USE_VLM_UI_TARS)) {
+  if (getAIConfigInBoolean(RAFI_USE_VLM_UI_TARS)) {
     return 'vlm-ui-tars';
   }
 
@@ -213,7 +213,7 @@ export const getAIConfig = (
 ): string | undefined => {
   if (configKey === MATCH_BY_POSITION) {
     throw new Error(
-      'MATCH_BY_POSITION is deprecated, use MIDSCENE_USE_VL_MODEL instead',
+      'MATCH_BY_POSITION is deprecated, use RAFI_USE_VL_MODEL instead',
     );
   }
 
@@ -271,8 +271,8 @@ export const overrideAIConfig = (
 };
 
 export const getPreferredLanguage = () => {
-  if (getAIConfig(MIDSCENE_PREFERRED_LANGUAGE)) {
-    return getAIConfig(MIDSCENE_PREFERRED_LANGUAGE);
+  if (getAIConfig(RAFI_PREFERRED_LANGUAGE)) {
+    return getAIConfig(RAFI_PREFERRED_LANGUAGE);
   }
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;

@@ -5,7 +5,7 @@ import type {
   PartialInsightDumpFromSDK,
 } from '@/types';
 import { getVersion } from '@/utils';
-import { MIDSCENE_MODEL_NAME, getAIConfig } from 'rfi-ai-shared/env';
+import { RAFI_MODEL_NAME, getAIConfig } from 'rfi-ai-shared/env';
 import { uuid } from 'rfi-ai-shared/utils';
 
 export function emitInsightDump(
@@ -15,7 +15,7 @@ export function emitInsightDump(
   const baseData: DumpMeta = {
     sdkVersion: getVersion(),
     logTime: Date.now(),
-    model_name: getAIConfig(MIDSCENE_MODEL_NAME) || '',
+    model_name: getAIConfig(RAFI_MODEL_NAME) || '',
   };
   const finalData: InsightDump = {
     logId: uuid(),

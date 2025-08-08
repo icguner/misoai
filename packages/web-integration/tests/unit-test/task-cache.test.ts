@@ -6,7 +6,7 @@ import {
   TaskCache,
 } from '@/common/task-cache';
 import { cacheFileExt } from '@/common/task-cache';
-import { getMidsceneRunSubDir } from 'rfi-ai-shared/common';
+import { getRafiRunSubDir } from 'rfi-ai-shared/common';
 import { uuid } from 'rfi-ai-shared/utils';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -296,7 +296,7 @@ describe(
       const cache = new TaskCache(customPath, true);
 
       expect(cache.cacheFilePath).toBe(
-        join(getMidsceneRunSubDir('cache'), `${customPath}${cacheFileExt}`),
+        join(getRafiRunSubDir('cache'), `${customPath}${cacheFileExt}`),
       );
 
       cache.appendCache({

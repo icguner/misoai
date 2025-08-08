@@ -128,8 +128,8 @@ export function paramStr(task: ExecutionTask) {
 }
 
 export const limitOpenNewTabScript = `
-if (!window.__MIDSCENE_NEW_TAB_INTERCEPTOR_INITIALIZED__) {
-  window.__MIDSCENE_NEW_TAB_INTERCEPTOR_INITIALIZED__ = true;
+if (!window.__RAFI_NEW_TAB_INTERCEPTOR_INITIALIZED__) {
+  window.__RAFI_NEW_TAB_INTERCEPTOR_INITIALIZED__ = true;
 
   // Intercept the window.open method (only once)
   window.open = function(url) {

@@ -1,7 +1,7 @@
 {
   "name": "rfi-ai-android",
   "version": "0.20.7",
-  "description": "Android automation library for Midscene",
+  "description": "Android automation library for Rafi",
   "keywords": [
     "android",
     "automation",
@@ -34,7 +34,7 @@
     "build:watch": "modern build -w -c ./modern.config.ts",
     "test": "vitest --run",
     "test:u": "vitest --run -u",
-    "test:ai": "MIDSCENE_CACHE=true npm run test",
+    "test:ai": "RAFI_CACHE=true npm run test",
     "example:basic": "ts-node examples/basic-usage.ts",
     "example:sauce": "ts-node examples/sauce-labs.ts",
     "example:ai": "ts-node examples/ai-automation.ts",

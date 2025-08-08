@@ -4,7 +4,7 @@ import path from 'node:path';
 import { type Point, type Size, getAIConfig } from 'rfi-ai-core';
 import type { PageType } from 'rfi-ai-core';
 import { getTmpFile, sleep } from 'rfi-ai-core/utils';
-import { MIDSCENE_ANDROID_IME_STRATEGY } from 'rfi-ai-shared/env';
+import { RAFI_ANDROID_IME_STRATEGY } from 'rfi-ai-shared/env';
 import type { ElementInfo } from 'rfi-ai-shared/extractor';
 import { isValidPNGImageBuffer, resizeImg } from 'rfi-ai-shared/img';
 import { getDebug } from 'rfi-ai-shared/logger';
@@ -823,7 +823,7 @@ ${Object.keys(size)
     const driver = await this.getDriver();
     const IME_STRATEGY =
       (this.options?.imeStrategy ||
-        getAIConfig(MIDSCENE_ANDROID_IME_STRATEGY)) ??
+        getAIConfig(RAFI_ANDROID_IME_STRATEGY)) ??
       'webdriverio-only';
     const isAutoDismissKeyboard =
       options?.autoDismissKeyboard ?? this.options?.autoDismissKeyboard ?? true;

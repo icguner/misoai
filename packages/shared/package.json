@@ -1,8 +1,8 @@
 {
   "name": "rfi-ai-shared",
   "version": "0.20.3",
-  "repository": "https://github.com/web-infra-dev/midscene",
-  "homepage": "https://midscenejs.com/",
+  "repository": "https://github.com/web-infra-dev/rafi",
+  "homepage": "https://github.com/web-infra-dev/rafi",
   "types": "./dist/types/index.d.ts",
   "main": "./dist/lib/index.js",
   "module": "./dist/es/index.js",

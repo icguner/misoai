@@ -27,7 +27,7 @@ function detectEngineFromEnvironment(): ImageProcessingEngine {
     // Check for DISABLE flags (emergency fallback only)
     const disableFlags = [
       process.env.DISABLE_SHARP_IMAGE_PROCESSING,
-      process.env.MIDSCENE_DISABLE_SHARP,
+      process.env.RAFI_DISABLE_SHARP,
       process.env.FORCE_JIMP_ENGINE,
       process.env.USE_LEGACY_IMAGE_PROCESSING
     ];

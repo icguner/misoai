@@ -10,21 +10,21 @@ import {
   AZURE_OPENAI_DEPLOYMENT,
   AZURE_OPENAI_ENDPOINT,
   AZURE_OPENAI_KEY,
-  MIDSCENE_API_TYPE,
-  MIDSCENE_AZURE_OPENAI_INIT_CONFIG_JSON,
-  MIDSCENE_AZURE_OPENAI_SCOPE,
-  MIDSCENE_DEBUG_AI_PROFILE,
-  MIDSCENE_DEBUG_AI_RESPONSE,
-  MIDSCENE_LANGSMITH_DEBUG,
-  MIDSCENE_MODEL_NAME,
-  MIDSCENE_OPENAI_HTTP_PROXY,
-  MIDSCENE_OPENAI_INIT_CONFIG_JSON,
-  MIDSCENE_OPENAI_SOCKS_PROXY,
-  MIDSCENE_USE_ANTHROPIC_SDK,
-  MIDSCENE_USE_AZURE_OPENAI,
-  MIDSCENE_USE_QWEN_VL,
-  MIDSCENE_USE_KIMI_VL,
-  MIDSCENE_USE_VLM_UI_TARS,
+  RAFI_API_TYPE,
+  RAFI_AZURE_OPENAI_INIT_CONFIG_JSON,
+  RAFI_AZURE_OPENAI_SCOPE,
+  RAFI_DEBUG_AI_PROFILE,
+  RAFI_DEBUG_AI_RESPONSE,
+  RAFI_LANGSMITH_DEBUG,
+  RAFI_MODEL_NAME,
+  RAFI_OPENAI_HTTP_PROXY,
+  RAFI_OPENAI_INIT_CONFIG_JSON,
+  RAFI_OPENAI_SOCKS_PROXY,
+  RAFI_USE_ANTHROPIC_SDK,
+  RAFI_USE_AZURE_OPENAI,
+  RAFI_USE_QWEN_VL,
+  RAFI_USE_KIMI_VL,
+  RAFI_USE_VLM_UI_TARS,
   OPENAI_API_KEY,
   OPENAI_BASE_URL,
   OPENAI_MAX_TOKENS,
@@ -47,6 +47,12 @@ import { AIActionType } from '../common';
 import { assertSchema } from '../prompt/assertion';
 import { locatorSchema, vlLocatorSchema } from '../prompt/llm-locator';
 import { planSchema } from '../prompt/llm-planning';
+import { 
+  AIServiceError, 
+  AIErrorType,
+  handleAIServiceError, 
+  formatErrorForLogging 
+} from './error-handler';
 
 // Constants for temperature and seed configuration
 const AI_TEMPERATURE = 'AI_TEMPERATURE';
@@ -54,10 +60,10 @@ const AI_SEED = 'AI_SEED';
 
 export function checkAIConfig() {
   if (getAIConfig(OPENAI_API_KEY)) return true;
-  if (getAIConfig(MIDSCENE_USE_AZURE_OPENAI)) return true;
+  if (getAIConfig(RAFI_USE_AZURE_OPENAI)) return true;
   if (getAIConfig(ANTHROPIC_API_KEY)) return true;
 
-  return Boolean(getAIConfig(MIDSCENE_OPENAI_INIT_CONFIG_JSON));
+  return Boolean(getAIConfig(RAFI_OPENAI_INIT_CONFIG_JSON));
 }
 
 // if debug config is initialized
@@ -67,20 +73,20 @@ function initDebugConfig() {
   // if debug config is initialized, return
   if (debugConfigInitialized) return;
 
-  const shouldPrintTiming = getAIConfigInBoolean(MIDSCENE_DEBUG_AI_PROFILE);
+  const shouldPrintTiming = getAIConfigInBoolean(RAFI_DEBUG_AI_PROFILE);
   let debugConfig = '';
   if (shouldPrintTiming) {
     console.warn(
-      'MIDSCENE_DEBUG_AI_PROFILE is deprecated, use DEBUG=midscene:ai:profile instead',
+      'RAFI_DEBUG_AI_PROFILE is deprecated, use DEBUG=rafi:ai:profile instead',
     );
     debugConfig = 'ai:profile';
   }
   const shouldPrintAIResponse = getAIConfigInBoolean(
-    MIDSCENE_DEBUG_AI_RESPONSE,
+    RAFI_DEBUG_AI_RESPONSE,
   );
   if (shouldPrintAIResponse) {
     console.warn(
-      'MIDSCENE_DEBUG_AI_RESPONSE is deprecated, use DEBUG=midscene:ai:response instead',
+      'RAFI_DEBUG_AI_RESPONSE is deprecated, use DEBUG=rafi:ai:response instead',
     );
     if (debugConfig) {
       debugConfig = 'ai:*';
@@ -100,7 +106,7 @@ function initDebugConfig() {
 const defaultModel = 'gpt-4o';
 export function getModelName() {
   let modelName = defaultModel;
-  const nameInConfig = getAIConfig(MIDSCENE_MODEL_NAME);
+  const nameInConfig = getAIConfig(RAFI_MODEL_NAME);
   if (nameInConfig) {
     modelName = nameInConfig;
   }
@@ -117,10 +123,10 @@ async function createChatClient({
 }> {
   initDebugConfig();
   let openai: OpenAI | AzureOpenAI | undefined;
-  const extraConfig = getAIConfigInJson(MIDSCENE_OPENAI_INIT_CONFIG_JSON);
+  const extraConfig = getAIConfigInJson(RAFI_OPENAI_INIT_CONFIG_JSON);
 
-  const socksProxy = getAIConfig(MIDSCENE_OPENAI_SOCKS_PROXY);
-  const httpProxy = getAIConfig(MIDSCENE_OPENAI_HTTP_PROXY);
+  const socksProxy = getAIConfig(RAFI_OPENAI_SOCKS_PROXY);
+  const httpProxy = getAIConfig(RAFI_OPENAI_HTTP_PROXY);
 
   let proxyAgent = undefined;
   if (httpProxy) {
@@ -138,23 +144,27 @@ async function createChatClient({
       ...extraConfig,
       dangerouslyAllowBrowser: true,
     }) as OpenAI;
-  } else if (getAIConfig(MIDSCENE_USE_AZURE_OPENAI)) {
+  } else if (getAIConfig(RAFI_USE_AZURE_OPENAI)) {
     const extraAzureConfig = getAIConfigInJson(
-      MIDSCENE_AZURE_OPENAI_INIT_CONFIG_JSON,
+      RAFI_AZURE_OPENAI_INIT_CONFIG_JSON,
     );
 
     // https://learn.microsoft.com/en-us/azure/ai-services/openai/chatgpt-quickstart?tabs=bash%2Cjavascript-key%2Ctypescript-keyless%2Cpython&pivots=programming-language-javascript#rest-api
     // keyless authentication
-    const scope = getAIConfig(MIDSCENE_AZURE_OPENAI_SCOPE);
+    const scope = getAIConfig(RAFI_AZURE_OPENAI_SCOPE);
     let tokenProvider: any = undefined;
     if (scope) {
-      assert(
-        !ifInBrowser,
-        'Azure OpenAI is not supported in browser with Midscene.',
-      );
+      if (ifInBrowser) {
+        throw new AIServiceError(
+          AIErrorType.INVALID_CONFIG,
+          'Azure OpenAI is not supported in browser',
+          undefined,
+          'Use Azure OpenAI in server-side environment only',
+        );
+      }
       const credential = new DefaultAzureCredential();
 
-      assert(scope, 'MIDSCENE_AZURE_OPENAI_SCOPE is required');
+      assert(scope, 'RAFI_AZURE_OPENAI_SCOPE is required');
       tokenProvider = getBearerTokenProvider(credential, scope);
 
       openai = new AzureOpenAI({
@@ -177,12 +187,15 @@ async function createChatClient({
         ...extraAzureConfig,
       });
     }
-  } else if (!getAIConfig(MIDSCENE_USE_ANTHROPIC_SDK)) {
+  } else if (!getAIConfig(RAFI_USE_ANTHROPIC_SDK)) {
     const baseURL = getAIConfig(OPENAI_BASE_URL);
     if (typeof baseURL === 'string') {
       if (!/^https?:\/\//.test(baseURL)) {
-        throw new Error(
-          `OPENAI_BASE_URL must be a valid URL starting with http:// or https://, but got: ${baseURL}\nPlease check your config.`,
+        throw new AIServiceError(
+          AIErrorType.INVALID_CONFIG,
+          'Invalid base URL configuration',
+          undefined,
+          `OPENAI_BASE_URL must start with http:// or https://, got: ${baseURL}`,
         );
       }
     }
@@ -194,19 +207,19 @@ async function createChatClient({
       ...extraConfig,
       defaultHeaders: {
         ...(extraConfig?.defaultHeaders || {}),
-        [MIDSCENE_API_TYPE]: AIActionTypeValue.toString(),
+        [RAFI_API_TYPE]: AIActionTypeValue.toString(),
       },
       dangerouslyAllowBrowser: true,
     });
   }
 
-  if (openai && getAIConfigInBoolean(MIDSCENE_LANGSMITH_DEBUG)) {
+  if (openai && getAIConfigInBoolean(RAFI_LANGSMITH_DEBUG)) {
     if (ifInBrowser) {
       throw new Error('langsmith is not supported in browser');
     }
     console.log('DEBUGGING MODE: langsmith wrapper enabled');
     const { wrapOpenAI } = await import('langsmith/wrappers');
-    openai = wrapOpenAI(openai);
+    openai = wrapOpenAI(openai as any) as any;
   }
 
   if (typeof openai !== 'undefined') {
@@ -217,7 +230,7 @@ async function createChatClient({
   }
 
   // Anthropic
-  if (getAIConfig(MIDSCENE_USE_ANTHROPIC_SDK)) {
+  if (getAIConfig(RAFI_USE_ANTHROPIC_SDK)) {
     const apiKey = getAIConfig(ANTHROPIC_API_KEY);
     assert(apiKey, 'ANTHROPIC_API_KEY is required');
     openai = new Anthropic({
@@ -234,7 +247,12 @@ async function createChatClient({
     };
   }
 
-  throw new Error('Openai SDK or Anthropic SDK is not initialized');
+  throw new AIServiceError(
+    AIErrorType.API_KEY_MISSING,
+    'AI service not initialized',
+    undefined,
+    'Please configure OpenAI or Anthropic API credentials',
+  );
 }
 
 export async function call(
@@ -335,19 +353,16 @@ export async function call(
       timeCost = Date.now() - startTime;
       console.error(`[AI-RESPONSE] Success in ${timeCost}ms`);
     } catch (e: any) {
-      // Log detailed error information
-      console.error(`[AI-ERROR] Full error: ${e.message}`);
-      console.error(`[AI-ERROR] Error type: ${e.name}`);
-      console.error(`[AI-ERROR] Error status: ${e.status}`);
+      const aiError = handleAIServiceError(e, {
+        model,
+        hasImages: messages.some((m: any) => 
+          Array.isArray(m.content) && 
+          m.content.some((c: any) => c.type === 'image_url')
+        ),
+        action: AIActionTypeValue.toString(),
+      });
       
-      // Check for JSON parse errors specifically
-      if (e.message?.includes('JSON') || e.message?.includes('json')) {
-        console.error(`[AI-JSON-ERROR] JSON parsing failed. This usually means:`);
-        console.error(`  1. Response was truncated (token limit)`);
-        console.error(`  2. Model generated invalid JSON format`);
-        console.error(`  3. Network issue caused incomplete response`);
-        console.error(`  Try: reducing context/DOM size or using a different model`);
-      }
+      console.error(formatErrorForLogging(aiError));
       
       // Check if error is related to image/vision capabilities
       const isImageError = e.status === 422 || 
@@ -386,22 +401,20 @@ export async function call(
           timeCost = Date.now() - startTime;
           console.error(`[UNIFIED-SUCCESS] Text-only fallback successful for model ${model}`);
         } catch (retryError: any) {
-          const newError = new Error(
-            `Model ${model} doesn't support vision and text-only fallback also failed: ${retryError.message}. Trouble shooting: https://midscenejs.com/model-provider.html`,
-            {
-              cause: retryError,
-            },
+          const retryAIError = handleAIServiceError(retryError, {
+            model,
+            hasImages: false,
+            action: AIActionTypeValue.toString(),
+          });
+          throw new AIServiceError(
+            AIErrorType.VISION_NOT_SUPPORTED,
+            `Model ${model} doesn't support vision and text-only fallback also failed`,
+            retryError,
+            'Try using a vision-capable model like gpt-4o or gemini-2.5-pro',
           );
-          throw newError;
         }
       } else {
-        const newError = new Error(
-          `failed to call AI model service: ${e.message}. Trouble shooting: https://midscenejs.com/model-provider.html`,
-          {
-            cause: e,
-          },
-        );
-        throw newError;
+        throw aiError;
       }
     }
 

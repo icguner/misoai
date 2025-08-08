@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
 import debug from 'debug';
-import { getMidsceneRunSubDir, isNodeEnv } from './common';
+import { getRafiRunSubDir, isNodeEnv } from './common';
 
-const topicPrefix = 'midscene';
+const topicPrefix = 'rafi';
 // Map to store file streams
 const logStreams = new Map<string, fs.WriteStream>();
 
@@ -13,7 +13,7 @@ function getLogStream(topic: string): fs.WriteStream {
   const topicFileName = topic.replace(/:/g, '-');
   if (!logStreams.has(topicFileName)) {
     const logFile = path.join(
-      getMidsceneRunSubDir('log'),
+      getRafiRunSubDir('log'),
       `${topicFileName}.log`,
     );
     const stream = fs.createWriteStream(logFile, { flags: 'a' });
