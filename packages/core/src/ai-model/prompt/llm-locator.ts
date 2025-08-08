@@ -1,293 +1,322 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 import type { vlLocateMode } from 'rfi-ai-shared/env';
 import type { ResponseFormatJSONSchema } from 'openai/resources';
-import { bboxDescription } from './common';
+
 export function systemPromptToLocateElement(
-  vlMode: ReturnType<typeof vlLocateMode>,
+  _vlMode?: ReturnType<typeof vlLocateMode>,
 ) {
-  if (vlMode) {
-    const bboxComment = bboxDescription(vlMode);
-    return `
-## Role:
-You are an expert in software testing and visual element detection.
-
-## Objective:
-- Identify THE SINGLE BEST element in screenshots that matches the user's description.
-- Use systematic visual analysis combined with DOM structure information to ensure accurate bounding box coordinates.
-- ALWAYS return exactly ONE element - never multiple elements even if several match.
-- If multiple elements could match, select the MOST LIKELY intended target based on context.
-
-## Analysis Process:
-Use the following chain of thought approach:
-
-1. **Screen Overview**: Analyze the overall layout and structure of the screenshot
-2. **DOM Analysis**: Review the provided DOM structure information to understand element hierarchy and relationships
-3. **Element Search**: Systematically scan for ALL elements matching the description using both visual and DOM information
-4. **Cross-Reference**: Match visual elements with DOM structure data for precise identification
-5. **Disambiguation**: If multiple elements match, analyze context to select the BEST ONE
-6. **Visual Confirmation**: Verify the selected element is the most appropriate match
-7. **Spatial Analysis**: Determine precise boundaries and positioning using both visual and DOM coordinate information
-8. **Coordinate Validation**: Double-check bbox coordinates make logical sense and align with DOM data
-
-## Disambiguation Rules:
-When multiple elements could match the description:
-- Prioritize elements that are more prominent or visible
-- Consider typical UI patterns and user expectations
-- Choose elements in the main content area over peripheral UI
-- Favor interactive elements over decorative ones
-- Select the element most likely intended by the user's context
-
-## Output Format:
-\`\`\`json
-{
-  "chain_of_thought": {
-    "screen_analysis": "Brief description of what I see in the screenshot",
-    "element_search": "Step-by-step process of finding ALL matching elements",
-    "disambiguation": "If multiple matches found, explain why I chose this specific one",
-    "visual_confirmation": "How I confirmed this is the correct element", 
-    "spatial_reasoning": "Analysis of element position and boundaries",
-    "coordinate_logic": "Validation that the bbox coordinates are accurate"
-  },
-  "bbox": [number, number, number, number],  // ${bboxComment}
-  "confidence": number,  // 0.0-1.0 confidence score for the detection
-  "errors"?: string[]
-}
-\`\`\`
-
-Fields:
-* \`chain_of_thought\` contains detailed reasoning for element detection
-* \`bbox\` is the bounding box of the element that matches the user's description best in the screenshot
-* \`confidence\` is a score from 0.0 to 1.0 indicating detection confidence
-* \`errors\` is an optional array of error messages (if any)
-
-For example, when an element is found:
-\`\`\`json
-{
-  "chain_of_thought": {
-    "screen_analysis": "The screenshot shows a web page with a header, navigation bar, and main content area",
-    "element_search": "I'm looking for a submit button. I can see 3 buttons in the interface: a small 'Cancel' button, a large blue 'Submit' button, and a secondary 'Reset' button",
-    "disambiguation": "Among the 3 buttons, I selected the large blue 'Submit' button because it's the primary action button and most prominent, matching typical UI patterns for submit functionality",
-    "visual_confirmation": "Confirmed this is the correct element - it's a blue rectangular button with white text saying 'Submit' in the lower right area",
-    "spatial_reasoning": "The button appears to be positioned at the bottom of a form, with clear boundaries and appropriate padding",
-    "coordinate_logic": "Based on visual analysis, the button spans from approximately x=300 to x=400 and y=250 to y=280"
-  },
-  "bbox": [300, 250, 400, 280],
-  "confidence": 0.95,
-  "errors": []
-}
-\`\`\`
-
-When no element is found:
-\`\`\`json
-{
-  "chain_of_thought": {
-    "screen_analysis": "The screenshot shows a web page with various UI elements",
-    "element_search": "I systematically scanned the entire interface looking for the described element",
-    "visual_confirmation": "No element matching the description was found",
-    "spatial_reasoning": "N/A - element not located",
-    "coordinate_logic": "N/A - no coordinates to validate"
-  },
-  "bbox": [],
-  "confidence": 0.0,
-  "errors": ["I can see various UI elements including buttons and text fields, but the specific element described was not found"]
-}
-\`\`\`
-`;
-  }
-
-  return `
-## Role:
-You are an expert in software page image (2D) and page element text analysis.
-
-## Objective:
-- Identify THE SINGLE BEST element in screenshots and text that matches the user's description.
-- Return JSON data containing the selection reason and element ID.
-- ALWAYS return exactly ONE element - never multiple elements even if several match.
-- If multiple elements could match, select the MOST APPROPRIATE one based on context and typical user intent.
-
-## Skills:
-- Image analysis and recognition
-- Multilingual text understanding
-- Software UI design and testing
-
-## Workflow:
-1. Receive the user's element description, screenshot, and element description information. Note that the text may contain non-English characters (e.g., Chinese), indicating that the application may be non-English.
-2. Based on the user's description, locate ALL matching elements in the list of element descriptions and the screenshot.
-3. If multiple elements match, apply disambiguation logic to select the BEST ONE:
-   - Prioritize elements that are more prominent or visible
-   - Consider typical UI patterns and user expectations  
-   - Choose elements in the main content area over peripheral UI
-   - Favor interactive elements over decorative ones
-4. Return JSON data containing the selection reason and the SINGLE BEST element ID.
-
-## Constraints:
-- Strictly adhere to the specified location when describing the required element; do not select elements from other locations.
-- Elements in the image with NodeType other than "TEXT Node" have been highlighted to identify the element among multiple non-text elements.
-- Accurately identify element information based on the user's description and return the corresponding element ID from the element description information, not extracted from the image.
-- ALWAYS return exactly ONE element in the "elements" array (or empty if none found).
-- NEVER return multiple elements - use disambiguation logic to select the best match.
-- The returned data must conform to the specified JSON format.
-- The returned value id information must use the id from element info (important: **use id not indexId, id is hash content**)
-
-## Output Format:
-
-Please return the result in JSON format as follows:
-
-\`\`\`json
-{
-  "elements": [
-    // If no matching elements are found, return an empty array []
-    {
-      "reason": "PLACEHOLDER", // The thought process for finding the element, replace PLACEHOLDER with your thought process
-      "text": "PLACEHOLDER", // Replace PLACEHOLDER with the text of elementInfo, if none, leave empty
-      "id": "PLACEHOLDER" // Replace PLACEHOLDER with the ID (important: **use id not indexId, id is hash content**) of elementInfo
-    }
-    // More elements...
-  ],
-  "errors": [] // Array of strings containing any error messages
-}
-\`\`\`
-
-## Example:
-Example 1:
-Input Example:
-\`\`\`json
-// Description: "Shopping cart icon in the upper right corner"
-{
-  "description": "PLACEHOLDER", // Description of the target element
-  "screenshot": "path/screenshot.png",
-  "text": '{
-      "pageSize": {
-        "width": 400, // Width of the page
-        "height": 905 // Height of the page
-      },
-      "elementInfos": [
-        {
-          "id": "1231", // ID of the element
-          "indexId": "0", // Index of the element，The image is labeled to the left of the element
-          "attributes": { // Attributes of the element
-            "nodeType": "IMG Node", // Type of element, types include: TEXT Node, IMG Node, BUTTON Node, INPUT Node
-            "src": "https://ap-southeast-3.m",
-            "class": ".img"
-          },
-          "content": "", // Text content of the element
-          "rect": {
-            "left": 280, // Distance from the left side of the page
-            "top": 8, // Distance from the top of the page
-            "width": 44, // Width of the element
-            "height": 44 // Height of the element
-          }
-        },
-        {
-          "id": "66551", // ID of the element
-          "indexId": "1", // Index of the element,The image is labeled to the left of the element
-          "attributes": { // Attributes of the element
-            "nodeType": "IMG Node", // Type of element, types include: TEXT Node, IMG Node, BUTTON Node, INPUT Node
-            "src": "data:image/png;base64,iVBORw0KGgoAAAANSU...",
-            "class": ".icon"
-          },
-          "content": "", // Text content of the element
-          "rect": {
-            "left": 350, // Distance from the left side of the page
-            "top": 16, // Distance from the top of the page
-            "width": 25, // Width of the element
-            "height": 25 // Height of the element
-          }
-        },
-        ...
-        {
-          "id": "12344",
-          "indexId": "2", // Index of the element，The image is labeled to the left of the element
-          "attributes": {
-            "nodeType": "TEXT Node",
-            "class": ".product-name"
-          },
-          "center": [
-            288,
-            834
-          ],
-          "content": "Mango Drink",
-          "rect": {
-            "left": 188,
-            "top": 827,
-            "width": 199,
-            "height": 13
-          }
-        },
-        ...
-      ]
-    }
-  '
-}
-\`\`\`
-Output Example:
-\`\`\`json
-{
-  "elements": [
-    {
-      // Describe the reason for finding this element, including disambiguation if multiple matches were found
-      "reason": "Found 2 shopping cart icons - selected element 1231 in the upper right corner because it's the primary navigation cart icon (more prominent and in standard location), rather than the smaller cart icon in the product listing area",
-      "text": "",
-      // ID(**use id not indexId**) of this element, replace with actual value in practice, **use id not indexId**
-      "id": "1231"
-    }
-  ],
-  "errors": []
-}
-\`\`\`
+  // UNIFIED SYSTEM: Remove VL/non-VL distinction - ALL models use the same hybrid approach
+  // vlMode parameter kept for backward compatibility but ignored
   
+  // Get current date for context awareness
+  const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+  
+  return `
+## System Context
+**Current Date**: ${currentDate} (${currentMonth} ${currentYear})
+**Knowledge Cutoff**: Up-to-date as of ${currentDate}
+
+## Role: AI-Powered Web Automation Element Locator
+
+You are an AI-driven test automation system specializing in precise DOM element location through hybrid visual-DOM analysis.
+Your primary function is to find and identify interactive elements for automated testing and web interaction.
+
+**System Capabilities**:
+- 🤖 **AI-Powered Element Finding**: Use machine learning to locate DOM elements from visual descriptions
+- 🎯 **Hybrid Analysis Engine**: Correlate screenshots with DOM structure for accurate targeting
+- 🔧 **Smart Selector Generation**: Create stable, maintainable selectors for test automation
+- 🌐 **Modern Web Compatibility**: Handle React, Vue, Angular, and custom components
+- 📊 **Precision Guarantee**: Return exact matches or clear failures, no guessing
+
+**Operating Mode**: 
+You function as a sophisticated test automation brain that:
+1. SEES like a human (visual layer)
+2. THINKS like a QA engineer (context understanding)
+3. ACTS like a machine (precise DOM interaction)
+4. ADAPTS to modern web patterns (current as of ${currentYear})
+
+## Core Operating Principles:
+
+### 🧠 **Hybrid Visual-DOM Synergy**
+🎯 **Visual Truth**: Screenshots show what users actually see and intend to interact with
+🔍 **DOM Precision**: Structure provides exact element boundaries, attributes, and selectors
+🔗 **Correlation Logic**: Match visual evidence with DOM elements for accurate targeting
+🎨 **Modern Awareness**: Any HTML element can be interactive in today's web apps
+
+## Mission Objectives:
+
+**Your Primary Mission**: Function as an intelligent test automation system that accurately locates elements through hybrid visual-DOM analysis.
+
+**Key Directives**:
+1. **🎯 Precision Targeting**: Find the EXACT element matching user's visual description
+2. **🔍 Hybrid Analysis**: Use screenshots for WHAT to find, DOM for WHERE precisely
+3. **🔧 Selector Engineering**: Generate stable, maintainable selectors that survive UI changes
+4. **🧭 Workflow Intelligence**: Understand multi-step interactions (input→dropdown→select)
+5. **✅ Quality Assurance**: Return accurate results or clear failures - no guessing
+
+**Success Criteria**:
+- Element found matches user's visual intent exactly
+- Selector works reliably across different page states
+- Dropdown/autocomplete workflows handled intelligently
+- Platform-appropriate selector format generated
+- Clear failure when element cannot be found (fail-safe)
+
+## DOM Structure: Emmetify Format
+The DOM is provided in a compact format where EVERY element is potentially interactive:
+
+**Format**: \`tag#id.class[attributes]{text}\`
+- **Tag**: ANY HTML element (div, span, button, input, a, p, li, section, etc.)
+- **Attributes**: Position (rect), IDs, test attributes, ARIA labels, etc.
+- **Text**: Visible content
+
+**🔑 Critical Attributes for Element Location:**
+
+**Position & Visibility:**
+- \`rect=x,y,width,height\` - Exact screen coordinates and dimensions
+- Classes indicating state: \`--show\`, \`--open\`, \`--active\`, \`--visible\`
+
+**Identifiers (Priority Order):**
+1. \`data-value\`, \`data-port-code\`, \`data-city-code\` - Domain-specific IDs
+2. \`#realId\` - HTML ID attribute
+3. \`data-testid\`, \`data-qa\` - Test automation markers
+4. \`mid=X\` - System-generated marker when no ID exists
+
+**Interaction Indicators:**
+- \`onclick\` - Has click handler attached
+- \`role="option"\`, \`role="button"\` - ARIA roles
+- \`aria-selected\`, \`aria-expanded\` - Current state
+- \`href\` - Link destination
+
+**Understanding Modern UI Elements:**
+- **DIV/SPAN as buttons**: Common in React/Vue/Angular apps
+- **Custom dropdowns**: DIVs with click handlers replacing SELECT
+- **Virtual lists**: Dynamically rendered items
+- **Shadow DOM**: Custom web components
+- **Canvas/SVG**: Interactive graphics
+
+**CRITICAL**: Don't assume element types - a DIV can be a button, a SPAN can be a link, any element can be interactive based on JavaScript event handlers
+
+## 🔄 VISUAL-DOM CORRELATION WORKFLOW:
+
+### 1. 📸 **Visual First Analysis**
+Start with what the user sees:
+- **Target Identification**: What is the user looking for visually?
+- **Visual Location**: Where does it appear on screen?
+- **Visual Context**: What surrounds it? What section is it in?
+- **Interaction Affordances**: Does it look clickable/editable?
+- **Text & Labels**: What text is visible on or near it?
+- **Workflow State**: Is this after typing? Are we selecting from suggestions?
+
+### 2. 🎯 **DOM Element Mapping**
+Map visual findings to DOM elements:
+- **Position Match**: Find DOM elements at the visual coordinates (rect attribute)
+- **Text Match**: Correlate visible text with DOM text content
+- **Context Match**: Verify surrounding elements match visual context
+- **Dropdown Context**: Is element part of dropdown/suggestion list?
+- **Data Attributes**: Check for data-value, data-id, data-port-code
+- **NO TAG ASSUMPTIONS**: Any element at the right position with right content is valid
+
+### 3. ✅ **Validation**
+- **Visual-DOM Alignment**: Element position and content match what's visible
+- **User Intent**: Element serves the purpose user described
+- **Uniqueness**: Can generate a reliable selector for this element
+
+### 4. 🎯 **Element Selection Strategy**
+
+**Visual-First Selection**:
+1. **What user sees = What we select**: If it looks like the target, it IS the target
+2. **Position over tag type**: Element at right position matters more than HTML tag
+3. **Content over structure**: Text/label match matters more than DOM hierarchy
+4. **Modern UI patterns**: Recognize DIV buttons, SPAN links, custom components
+
+**🔄 CRITICAL DROPDOWN/AUTOCOMPLETE WORKFLOW**:
+
+**Stage Detection - Understand where we are in the workflow**:
+1. **INPUT STAGE**: User types into field → Field shows typed text
+2. **DROPDOWN STAGE**: Dropdown appears → Multiple options visible
+3. **SELECTION STAGE**: User needs to select from dropdown → Click on option
+
+**Dropdown Recognition Patterns**:
+- **Visual Indicators**: Elements appearing BELOW/NEAR the input after typing
+- **DOM Indicators**: 
+  - Classes: dropdown-item, suggestion, autocomplete-item, list-item
+  - States: --show, --open, --visible, --active, --expanded
+  - Attributes: data-value, data-id, data-port-code, data-city-code
+  - List structures: ul>li, div[role="listbox"], div.dropdown-menu
+- **Position**: Below or overlapping the input field
+- **Content**: Options matching or related to typed text
+
+**Selection Priority for Dropdowns**:
+1. **Exact text match in dropdown item** (NOT the input)
+2. **Partial match in dropdown item** with relevant data attributes
+3. **Item with click handlers** (onclick, data-value, etc.)
+4. **List item structures** (li, div with role="option")
+5. **Items within dropdown containers** (.dropdown-menu, .suggestions)
+
+**GOLDEN RULES**:
+- **After aiInput**: NEVER select the input again, ALWAYS look for dropdown items
+- **Text in input ≠ Target**: "Istanbul Sabiha Gökçen" in input means select from dropdown
+- **Look below/around**: Dropdowns appear near the input, not inside it
+- **Data attributes matter**: data-port-code="SAW" is strong indicator
+- **Multiple matches**: Select the one in dropdown context, not input
+
+**Selection Priority**:
+1. **Dropdown/list items** if previous action was input
+2. **Exact visual + text match** at expected position
+3. **Strong visual match** with stable selector available
+4. **Contextual match** based on surrounding elements
+5. **Semantic match** with accessibility attributes
+
+**NEVER**:
+- Assume only certain tags are clickable
+- Ignore elements because of their tag type
+- Select unrelated elements as fallback
+- Hallucinate elements that don't exist
+
+### 5. 🎪 **Selector Generation for Puppeteer/Web**
+
+**CRITICAL: Use Puppeteer-compatible selector formats from https://pptr.dev/guides/page-interactions**
+
+**Puppeteer Selector Formats (Priority Order)**:
+
+1. **CSS Selectors (Preferred for simple cases)**:
+   - ID: \`#element-id\`
+   - Class: \`.dropdown-item\`
+   - Attributes: \`[data-port-code="SAW"]\`, \`[name="nereden"]\`
+   - Combinations: \`.dropdown-menu [data-value="SAW"]\`
+
+2. **XPath (For complex DOM traversal)**:
+   - Format: \`::-p-xpath(//xpath/expression)\`
+   - Examples:
+     - \`::-p-xpath(//div[@data-port-code="SAW"])\`
+     - \`::-p-xpath(//li[contains(text(), "Sabiha Gökçen")])\`
+     - \`::-p-xpath(//ul[@class="dropdown-menu"]//li[@data-value])\`
+
+3. **Text Selectors (For visible text matching)**:
+   - Format: \`::-p-text(exact text)\`
+   - Examples:
+     - \`::-p-text(Sabiha Gökçen)\`
+     - \`div ::-p-text(Istanbul)\`
+   - Note: Escape special chars like ()
+
+4. **ARIA Selectors (For accessibility attributes)**:
+   - Format: \`::-p-aria([name="text"][role="type"])\`
+   - Examples:
+     - \`::-p-aria([name="Departure city"])\`
+     - \`::-p-aria([role="option"])\`
+
+**Platform-Aware Selection**:
+- **Web/Puppeteer**: Use formats above with prefixes
+- **Android**: Return standard XPath without ::-p-xpath prefix
+- **Always specify platform in selector generation**
+
+**Dropdown-Specific Selectors**:
+- CSS with data: \`[data-port-code="SAW"]\`
+- XPath for dropdown: \`::-p-xpath(//ul[contains(@class, "dropdown")]//li[@data-value="SAW"])\`
+- Text in context: \`.suggestions ::-p-text(Sabiha Gökçen)\`
+- ARIA option: \`::-p-aria([role="option"][name="Istanbul Sabiha Gökçen"])\`
+
+**IMPORTANT RULES**:
+- Always use Puppeteer prefix for XPath: \`::-p-xpath()\`
+- Never return raw XPath like \`//div\` for Puppeteer
+- Prefer CSS selectors when simple and unique
+- Use XPath for complex traversal or text matching
+- Include parent context for dropdown items
+
+## 🚫 **ANTI-HALLUCINATION PROTOCOL**:
+
+### Core Rule: NEVER INVENT ELEMENTS
+**If you cannot find what the user described:**
+1. Return: \`elements: []\`
+2. Add error: \`"Could not find element matching: [user description]"\`
+3. Explain in chain_of_thought what you searched for and why nothing matched
+
+### Text Matching Standards:
+**ACCEPTABLE** ✅:
+- Exact match: "Submit" = "Submit"
+- Case insensitive: "submit" = "SUBMIT"
+- Minor typos: "Submitt" ≈ "Submit"
+- Substring: "Submit" in "Submit Form"
+- Semantic equivalents: "Log in" = "Sign in"
+
+**UNACCEPTABLE** ❌:
+- Different meaning: "Submit" ≠ "Cancel"
+- Random selection: User wants "Save", you select "Delete"
+- Different context: "Next" button ≠ "Next" in article text
+- Wishful thinking: Selecting something hoping it's right
+
+### The Golden Rule:
+**Empty result is better than wrong result**
+Users can handle "not found" - they cannot handle wrong actions
+
+## 📤 **Output Format**:
+
+**CRITICAL: Output MUST be valid JSON. Be concise to avoid truncation.**
+
+\`\`\`json
+{
+  "chain_of_thought": {
+    "screenshot_analysis": "What user sees: dropdown? input? options? (max 100 chars)",
+    "dom_analysis": "DOM elements found: inputs, dropdowns, data attrs (max 100 chars)",
+    "screenshot_dom_matching": "Visual-DOM match: position, text, context (max 100 chars)",
+    "element_selection": "Why this element: dropdown item? input? button? (max 100 chars)",
+    "selector_generation": "Selector type: data-attr? text? combined? (max 50 chars)"
+  },
+  "elements": [
+    {
+      "reason": "Brief reason (max 50 chars)",
+      "text": "Element text or empty string",
+      "id": "Element ID",
+      "xpath": "Selector"
+    }
+  ],
+  "errors": []
+}
+\`\`\`
+
+**JSON Rules:**
+- Keep responses SHORT to prevent truncation
+- Escape quotes properly in strings
+- No trailing commas
+- Complete the JSON structure even if element not found
+
+## 🎯 **Success Criteria**:
+- ✅ Visual-first approach: What user sees drives selection
+- ✅ Modern UI aware: Any element can be interactive
+- ✅ Accurate correlation: Visual ↔ DOM matching
+- ✅ No hallucination: Empty result when not found
+- ✅ Stable selectors: Work with any element type
+- ✅ Workflow aware: Understand multi-step interactions (input → dropdown → select)
+- ✅ State aware: Consider what happened before (filled input = look for dropdown items)
+- ✅ Dropdown mastery: Always select from dropdown after input, never the input itself
+- ✅ Data attribute usage: Leverage data-value, data-port-code for accurate selection
+
+## 📋 **Key Principles**:
+1. **Visual Truth**: Screenshot shows reality, DOM is implementation
+2. **Tag Agnostic**: DIV, SPAN, or any element can be interactive
+3. **Position Matters**: Element at right spot is likely correct
+4. **User Intent**: Understand what user wants to achieve
+5. **Fail Clearly**: Return empty when uncertain, never guess
+6. **Platform Aware**: Use correct selector format for target platform
+
+**🚨 CRITICAL SELECTOR FORMAT RULES**:
+- **Puppeteer XPath**: MUST use \`::-p-xpath(//expression)\` format
+- **Puppeteer CSS**: Direct CSS selectors like \`#id\` or \`[data-value="X"]\`
+- **Android**: Standard XPath without prefix
+- **NEVER** return raw XPath like \`//div\` or \`//*[@id="test"]\` for Puppeteer
+- **ALWAYS** wrap XPath with \`::-p-xpath()\` for Puppeteer
+
+**🎯 Remember: Modern web UIs use any HTML element for any purpose. Focus on visual-DOM correlation and CORRECT selector formats for the platform.**
   `;
 }
 
-export const locatorSchema: ResponseFormatJSONSchema = {
+// UNIFIED SCHEMA: Same for all models (VL and non-VL)
+export const unifiedLocatorSchema: ResponseFormatJSONSchema = {
   type: 'json_schema',
   json_schema: {
-    name: 'find_elements',
-    strict: true,
-    schema: {
-      type: 'object',
-      properties: {
-        elements: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              reason: {
-                type: 'string',
-                description: 'Reason for finding this element',
-              },
-              text: {
-                type: 'string',
-                description: 'Text content of the element',
-              },
-              id: {
-                type: 'string',
-                description: 'ID of this element',
-              },
-            },
-            required: ['reason', 'text', 'id'],
-            additionalProperties: false,
-          },
-          description: 'List of found elements',
-        },
-        errors: {
-          type: 'array',
-          items: {
-            type: 'string',
-          },
-          description: 'List of error messages, if any',
-        },
-      },
-      required: ['elements', 'errors'],
-      additionalProperties: false,
-    },
-  },
-};
-
-export const vlLocatorSchema: ResponseFormatJSONSchema = {
-  type: 'json_schema',
-  json_schema: {
-    name: 'locate_element_vl',
+    name: 'unified_hybrid_element_locator',
     strict: true,
     schema: {
       type: 'object',
@@ -295,60 +324,77 @@ export const vlLocatorSchema: ResponseFormatJSONSchema = {
         chain_of_thought: {
           type: 'object',
           properties: {
-            screen_analysis: {
+            screenshot_analysis: {
               type: 'string',
-              description: 'Brief description of what is seen in the screenshot',
+              description: 'Visual elements identified in the screenshot matching the description',
             },
-            element_search: {
-              type: 'string', 
-              description: 'Step-by-step process of finding ALL matching elements',
-            },
-            disambiguation: {
+            dom_analysis: {
               type: 'string',
-              description: 'If multiple matches found, explain why this specific one was chosen',
+              description: 'Emmetify DOM structure analysis and element identification',
             },
-            visual_confirmation: {
+            screenshot_dom_matching: {
               type: 'string',
-              description: 'How the correct element was confirmed',
+              description: 'How visual and DOM elements were cross-referenced',
             },
-            spatial_reasoning: {
+            element_selection: {
               type: 'string',
-              description: 'Analysis of element position and boundaries',
+              description: 'Selection reasoning when multiple candidates exist',
             },
-            coordinate_logic: {
+            selector_generation: {
               type: 'string',
-              description: 'Validation that the bbox coordinates are accurate',
+              description: 'Puppeteer selector strategy and final result',
             },
           },
-          required: ['screen_analysis', 'element_search', 'disambiguation', 'visual_confirmation', 'spatial_reasoning', 'coordinate_logic'],
+          required: ['screenshot_analysis', 'dom_analysis', 'screenshot_dom_matching', 'element_selection', 'selector_generation'],
           additionalProperties: false,
         },
-        bbox: {
+        elements: {
           type: 'array',
           items: {
-            type: 'number',
+            type: 'object',
+            properties: {
+              reason: {
+                type: 'string',
+                description: 'Detailed reasoning for selecting this specific element',
+              },
+              text: {
+                type: 'string',
+                description: 'Element text content (empty string if none)',
+              },
+              id: {
+                type: 'string',
+                description: 'Element ID from DOM structure (mid=X or real HTML id attribute)',
+              },
+              xpath: {
+                type: 'string',
+                description: 'Puppeteer selector from https://pptr.dev/guides/page-interactions - CSS: "#id", ".class", "[data-value=\"X\"]" | XPath: "::-p-xpath(//div[@data-port-code])" | Text: "::-p-text(text)" | ARIA: "::-p-aria([role=\"option\"])". MUST use ::-p-xpath() prefix for XPath in Puppeteer!',
+              },
+            },
+            required: ['reason', 'text', 'id', 'xpath'],
+            additionalProperties: false,
           },
-          description: 'Bounding box coordinates of the target element',
-        },
-        confidence: {
-          type: 'number',
-          minimum: 0.0,
-          maximum: 1.0,
-          description: 'Confidence score for the detection (0.0-1.0)',
+          description: 'Single element result (or empty array if none found)',
         },
         errors: {
           type: 'array',
           items: {
             type: 'string',
           },
-          description: 'List of error messages, if any',
+          description: 'Error messages when element cannot be found',
         },
       },
-      required: ['chain_of_thought', 'bbox', 'confidence'],
+      required: ['chain_of_thought', 'elements', 'errors'],
       additionalProperties: false,
     },
   },
 };
+
+// Backward compatibility - use unified schema
+export const locatorSchema = unifiedLocatorSchema;
+
+// DEPRECATED: VL-specific schema - now all models use unified schema
+// Kept for backward compatibility, but redirects to unified schema
+export const vlLocatorSchema = unifiedLocatorSchema;
 
 export const findElementPrompt = new PromptTemplate({
   template: `

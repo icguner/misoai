@@ -312,16 +312,97 @@ export async function call(
         ...commonConfig,
       };
 
+      // Log the messages content for debugging VL models with DOM
+      if (vlLocateMode()) {
+        const userMessage = messages.find((m: any) => m.role === 'user');
+        if (userMessage && Array.isArray(userMessage.content)) {
+          const textContents = userMessage.content.filter((c: any) => c.type === 'text');
+          debugCall(`[VL-DOM-DEBUG] Text content count: ${textContents.length}`);
+          textContents.forEach((tc: any, index: number) => {
+            const preview = tc.text?.substring(0, 200) || '';
+            debugCall(`[VL-DOM-DEBUG] Text content ${index + 1} preview: ${preview}...`);
+            if (tc.text?.includes('DOM Structure Information')) {
+              debugCall(`[VL-DOM-DEBUG] ✅ DOM structure is included in the request!`);
+            }
+          });
+        }
+      }
+
+      console.error(`[AI-REQUEST] Calling model: ${model}`);
+      console.error(`[AI-REQUEST] Payload size: ${JSON.stringify(requestPayload).length} chars`);
+      
       result = await completion.create(requestPayload as any);
       timeCost = Date.now() - startTime;
+      console.error(`[AI-RESPONSE] Success in ${timeCost}ms`);
     } catch (e: any) {
-      const newError = new Error(
-        `failed to call AI model service: ${e.message}. Trouble shooting: https://midscenejs.com/model-provider.html`,
-        {
-          cause: e,
-        },
-      );
-      throw newError;
+      // Log detailed error information
+      console.error(`[AI-ERROR] Full error: ${e.message}`);
+      console.error(`[AI-ERROR] Error type: ${e.name}`);
+      console.error(`[AI-ERROR] Error status: ${e.status}`);
+      
+      // Check for JSON parse errors specifically
+      if (e.message?.includes('JSON') || e.message?.includes('json')) {
+        console.error(`[AI-JSON-ERROR] JSON parsing failed. This usually means:`);
+        console.error(`  1. Response was truncated (token limit)`);
+        console.error(`  2. Model generated invalid JSON format`);
+        console.error(`  3. Network issue caused incomplete response`);
+        console.error(`  Try: reducing context/DOM size or using a different model`);
+      }
+      
+      // Check if error is related to image/vision capabilities
+      const isImageError = e.status === 422 || 
+                          e.message?.includes('image') || 
+                          e.message?.includes('vision') ||
+                          e.message?.includes('unsupported') ||
+                          e.message?.includes('not supported');
+      
+      if (isImageError && messages.some((m: any) => 
+          Array.isArray(m.content) && 
+          m.content.some((c: any) => c.type === 'image_url'))) {
+        console.error(`[UNIFIED-VISION-ERROR] Model ${model} doesn't support vision/images`);
+        console.error(`[UNIFIED-FALLBACK] Retrying with text-only mode...`);
+        
+        // Retry without images - convert to text-only
+        const textOnlyMessages = messages.map((msg: any) => {
+          if (Array.isArray(msg.content)) {
+            const textParts = msg.content.filter((c: any) => c.type === 'text');
+            return {
+              ...msg,
+              content: textParts.length > 1 ? textParts : textParts[0]?.text || msg.content
+            };
+          }
+          return msg;
+        });
+        
+        console.error(`[UNIFIED-TEXT-RETRY] Attempting text-only request for non-vision model`);
+        
+        try {
+          result = await completion.create({
+            model,
+            messages: textOnlyMessages,
+            response_format: responseFormat,
+            ...commonConfig,
+          } as any);
+          timeCost = Date.now() - startTime;
+          console.error(`[UNIFIED-SUCCESS] Text-only fallback successful for model ${model}`);
+        } catch (retryError: any) {
+          const newError = new Error(
+            `Model ${model} doesn't support vision and text-only fallback also failed: ${retryError.message}. Trouble shooting: https://midscenejs.com/model-provider.html`,
+            {
+              cause: retryError,
+            },
+          );
+          throw newError;
+        }
+      } else {
+        const newError = new Error(
+          `failed to call AI model service: ${e.message}. Trouble shooting: https://midscenejs.com/model-provider.html`,
+          {
+            cause: e,
+          },
+        );
+        throw newError;
+      }
     }
 
     debugProfileStats(
@@ -407,7 +488,8 @@ export async function callToGetJSONObject<T>(
         break;
       case AIActionType.INSPECT_ELEMENT:
         // Use VL schema if in VL mode, otherwise use standard locator schema
-        responseFormat = vlLocateMode() ? vlLocatorSchema : locatorSchema;
+        // For VL models, use flexible JSON to allow hybrid mode format
+        responseFormat = vlLocateMode() ? { type: AIResponseFormat.JSON } : locatorSchema;
         break;
       case AIActionType.PLAN:
         responseFormat = planSchema;

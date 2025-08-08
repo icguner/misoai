@@ -242,11 +242,201 @@ ${Object.keys(size)
   }
 
   async getElementsNodeTree(): Promise<any> {
-    // Simplified implementation, returns an empty node tree
+    // Get Android XML DOM structure via Appium
+    try {
+      if (this.driver) {
+        const pageSource = await this.driver.getPageSource();
+        // Return simplified structure for now
+        return {
+          node: { xml: pageSource },
+          children: [],
+        };
+      }
+    } catch (error) {
+      debugPage('Failed to get page source: %s', (error as Error).message);
+    }
+    
+    // Fallback to empty tree
     return {
       node: null,
       children: [],
     };
+  }
+
+  // APPIUM NATIVE SELECTOR METHODS for direct flow
+  async clickBySelector(selector: string): Promise<void> {
+    debugPage('[APPIUM-CLICK] Attempting to click selector: %s', selector);
+    
+    if (!this.driver) {
+      await this.getDriver();
+    }
+    
+    try {
+      let element;
+      
+      // Handle different selector types
+      if (selector.startsWith('id:')) {
+        // Resource ID selector
+        const resourceId = selector.substring(3);
+        element = await this.driver.$(`android=new UiSelector().resourceId("${resourceId}")`);
+      } else if (selector.startsWith('~')) {
+        // Accessibility ID selector
+        const accessibilityId = selector.substring(1);
+        element = await this.driver.$(`~${accessibilityId}`);
+      } else if (selector.startsWith('//')) {
+        // XPath selector
+        element = await this.driver.$(selector);
+      } else if (selector.includes('@text=')) {
+        // Text-based selector
+        element = await this.driver.$(selector);
+      } else {
+        // Default to XPath
+        element = await this.driver.$(selector);
+      }
+      
+      if (element && await element.isExisting()) {
+        await element.click();
+        debugPage('[APPIUM-CLICK] Successfully clicked: %s', selector);
+        return;
+      }
+      
+      throw new Error(`Element not found for selector: ${selector}`);
+    } catch (error) {
+      debugPage('[APPIUM-CLICK] Failed to click %s: %s', selector, (error as Error).message);
+      throw error;
+    }
+  }
+
+  async typeBySelector(selector: string, text: string): Promise<void> {
+    debugPage('[APPIUM-TYPE] Attempting to type in selector: %s', selector);
+    
+    if (!this.driver) {
+      await this.getDriver();
+    }
+    
+    try {
+      let element;
+      
+      // Handle different selector types (same as clickBySelector)
+      if (selector.startsWith('id:')) {
+        const resourceId = selector.substring(3);
+        element = await this.driver.$(`android=new UiSelector().resourceId("${resourceId}")`);
+      } else if (selector.startsWith('~')) {
+        const accessibilityId = selector.substring(1);
+        element = await this.driver.$(`~${accessibilityId}`);
+      } else if (selector.startsWith('//')) {
+        element = await this.driver.$(selector);
+      } else {
+        element = await this.driver.$(selector);
+      }
+      
+      if (element && await element.isExisting()) {
+        await element.clearValue();
+        await element.setValue(text);
+        debugPage('[APPIUM-TYPE] Successfully typed: %s', text);
+        return;
+      }
+      
+      throw new Error(`Element not found for selector: ${selector}`);
+    } catch (error) {
+      debugPage('[APPIUM-TYPE] Failed to type in %s: %s', selector, (error as Error).message);
+      throw error;
+    }
+  }
+
+  async clearBySelector(selector: string): Promise<void> {
+    debugPage('[APPIUM-CLEAR] Attempting to clear selector: %s', selector);
+    
+    if (!this.driver) {
+      await this.getDriver();
+    }
+    
+    try {
+      let element;
+      
+      if (selector.startsWith('id:')) {
+        const resourceId = selector.substring(3);
+        element = await this.driver.$(`android=new UiSelector().resourceId("${resourceId}")`);
+      } else if (selector.startsWith('~')) {
+        const accessibilityId = selector.substring(1);
+        element = await this.driver.$(`~${accessibilityId}`);
+      } else {
+        element = await this.driver.$(selector);
+      }
+      
+      if (element && await element.isExisting()) {
+        await element.clearValue();
+        debugPage('[APPIUM-CLEAR] Successfully cleared: %s', selector);
+        return;
+      }
+      
+      throw new Error(`Element not found for selector: ${selector}`);
+    } catch (error) {
+      debugPage('[APPIUM-CLEAR] Failed to clear %s: %s', selector, (error as Error).message);
+      throw error;
+    }
+  }
+
+  async scrollToSelector(selector: string): Promise<void> {
+    debugPage('[APPIUM-SCROLL] Attempting to scroll to selector: %s', selector);
+    
+    if (!this.driver) {
+      await this.getDriver();
+    }
+    
+    try {
+      let element;
+      
+      // Handle different selector types
+      if (selector.startsWith('id:')) {
+        const resourceId = selector.substring(3);
+        element = await this.driver.$(`android=new UiSelector().resourceId("${resourceId}").scrollable(true)`);
+        if (!element || !await element.isExisting()) {
+          // Try without scrollable constraint
+          element = await this.driver.$(`android=new UiSelector().resourceId("${resourceId}")`);
+        }
+      } else if (selector.startsWith('~')) {
+        const accessibilityId = selector.substring(1);
+        element = await this.driver.$(`~${accessibilityId}`);
+      } else if (selector.startsWith('//')) {
+        element = await this.driver.$(selector);
+      } else {
+        element = await this.driver.$(selector);
+      }
+      
+      if (element && await element.isExisting()) {
+        // Try to scroll element into view
+        try {
+          // Method 1: Using scrollIntoView if element supports it
+          await element.scrollIntoView();
+          debugPage('[APPIUM-SCROLL] Successfully scrolled to element using scrollIntoView');
+        } catch (err) {
+          // Method 2: Use UiScrollable to find and scroll to element
+          try {
+            const scrollableSelector = 'new UiScrollable(new UiSelector().scrollable(true).instance(0))';
+            if (selector.startsWith('id:')) {
+              const resourceId = selector.substring(3);
+              await this.driver.$(`android=${scrollableSelector}.scrollIntoView(new UiSelector().resourceId("${resourceId}"))`);
+            } else if (selector.includes('@text=')) {
+              const textMatch = selector.match(/@text=["']([^"']+)["']/)?.[1];
+              if (textMatch) {
+                await this.driver.$(`android=${scrollableSelector}.scrollIntoView(new UiSelector().text("${textMatch}"))`);
+              }
+            }
+            debugPage('[APPIUM-SCROLL] Successfully scrolled using UiScrollable');
+          } catch (scrollErr) {
+            debugPage('[APPIUM-SCROLL] Could not scroll to element: %s', (scrollErr as Error).message);
+            // Element exists but couldn't scroll to it - not a critical error
+          }
+        }
+        return;
+      }
+      
+      throw new Error(`Element not found for selector: ${selector}`);
+    } catch (error) {
+      debugPage('[APPIUM-SCROLL] Failed to scroll to %s: %s', selector, (error as Error).message);
+      throw error;
+    }
   }
 
   private async getScreenSize(): Promise<{

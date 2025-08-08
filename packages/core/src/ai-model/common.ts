@@ -232,11 +232,48 @@ export function adaptGeminiBbox(
   width: number,
   height: number,
 ): [number, number, number, number] {
-  const left = Math.round((bbox[1] * width) / 1000);
-  const top = Math.round((bbox[0] * height) / 1000);
-  const right = Math.round((bbox[3] * width) / 1000);
-  const bottom = Math.round((bbox[2] * height) / 1000);
-  return [left, top, right, bottom];
+  // With hybrid mode and DOM data, Gemini returns actual pixel coordinates
+  // Format: [ymin, xmin, ymax, xmax] in actual pixels (not normalized)
+  // We need to check if the values are normalized (0-1000) or actual pixels
+  
+  // Better heuristic: Check if values make sense as pixels vs normalized
+  // If ymax > height or xmax > width, they can't be actual pixels, must be wrong
+  // If all values <= 1000 AND at least one > height or width, likely normalized
+  // If values are reasonable for actual screen dimensions, they're likely pixels
+  
+  const [ymin, xmin, ymax, xmax] = bbox;
+  const maxValue = Math.max(...bbox);
+  
+  // Check if these could be actual pixel coordinates
+  // They should be within screen bounds if they're pixels
+  const couldBePixels = ymax <= height && xmax <= width;
+  
+  // Check if these are likely normalized (0-1000 range)
+  // Normalized coords typically have max value close to 1000
+  const likelyNormalized = maxValue <= 1000 && maxValue > Math.max(width, height) * 0.8;
+  
+  // Decision logic:
+  // 1. If values exceed screen dimensions, must be an error or normalized
+  // 2. If all values fit within screen AND aren't suspiciously round (like 1000), treat as pixels
+  // 3. Otherwise treat as normalized
+  
+  if (couldBePixels && !likelyNormalized) {
+    // These are actual pixel coordinates (hybrid DOM mode)
+    // Gemini format: [ymin, xmin, ymax, xmax]
+    // We need: [left, top, right, bottom]
+    const left = Math.round(xmin);   // xmin
+    const top = Math.round(ymin);    // ymin
+    const right = Math.round(xmax);  // xmax
+    const bottom = Math.round(ymax); // ymax
+    return [left, top, right, bottom];
+  } else {
+    // These are normalized coordinates (visual-only mode)
+    const left = Math.round((xmin * width) / 1000);
+    const top = Math.round((ymin * height) / 1000);
+    const right = Math.round((xmax * width) / 1000);
+    const bottom = Math.round((ymax * height) / 1000);
+    return [left, top, right, bottom];
+  }
 }
 
 export function adaptKimiVLBbox(

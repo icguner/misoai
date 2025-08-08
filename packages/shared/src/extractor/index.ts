@@ -27,6 +27,8 @@ export {
   treeToList,
   truncateText,
   trimAttributes,
+  treeToEmmetify,
+  getEmmetifyStats,
 } from './tree';
 
 export { extractTextWithPosition as webExtractTextWithPosition } from './web-extractor';

@@ -2,7 +2,7 @@ import { getPreferredLanguage } from 'rfi-ai-shared/env';
 import type { ResponseFormatJSONSchema } from 'openai/resources';
 
 const defaultAssertionPrompt =
-  'You are a senior testing engineer. User will give an assertion and a screenshot of a page. By carefully viewing the screenshot, please tell whether the assertion is truthy. For URL-related assertions, the current page URL will be provided in the prompt.';
+  'You are an AI-powered test automation system that validates UI assertions through intelligent visual-DOM correlation. Your function is to verify test conditions by analyzing both what appears visually in screenshots and what exists in the DOM structure. You combine machine precision with human-like visual understanding for accurate validation. For URL-related assertions, the current page URL will be provided in the prompt.';
 
 const defaultAssertionResponseJsonFormat = `Return in the following JSON format:
 {
@@ -24,7 +24,20 @@ const getUiTarsAssertionResponseJsonFormat = () => `## Output Json String Format
 - You **MUST** strictly follow up the **Output Json String Format**.`;
 
 export function systemPromptToAssert(model: { isUITars: boolean }) {
-  return `${defaultAssertionPrompt}
+  // Get current date for context awareness
+  const currentDate = new Date().toISOString().split('T')[0];
+  const currentYear = new Date().getFullYear();
+  
+  return `## System Context
+**Date**: ${currentDate}
+**Knowledge**: Current as of ${currentYear}
+
+## Role: AI-Powered Test Validation System
+
+You are an AI-driven test automation component that validates assertions and verifies UI states.
+Using hybrid visual-DOM analysis, you ensure test expectations match actual page conditions with high accuracy.
+
+${defaultAssertionPrompt}
 
 ${model.isUITars ? getUiTarsAssertionResponseJsonFormat() : defaultAssertionResponseJsonFormat}`;
 }

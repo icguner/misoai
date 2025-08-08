@@ -113,6 +113,301 @@ export class Page<
     );
   }
 
+  // UNIFIED PUPPETEER NATIVE METHODS for selector-based operations
+  async getElementInfoBySelector(selector: string) {
+    const elementInfosScriptContent = getElementInfosScriptContent();
+    return this.evaluateJavaScript(
+      `${elementInfosScriptContent}midscene_element_inspector.getElementInfoBySelector('${selector}')`,
+    );
+  }
+
+  async clickBySelector(selector: string): Promise<void> {
+    console.error(`[PUPPETEER-CLICK] Attempting to click selector: ${selector}`);
+    if (this.pageType === 'puppeteer') {
+      try {
+        // First, find ALL elements matching the selector
+        const elements = await (this.underlyingPage as PuppeteerPage).$$(selector);
+        console.error(`[PUPPETEER-CLICK] Found ${elements.length} element(s) matching: ${selector}`);
+        
+        if (elements.length === 0) {
+          throw new Error(`No elements found for selector: ${selector}`);
+        }
+        
+        // Try to find a visible element
+        let clickableElement = null;
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i];
+          try {
+            // Check if element is visible and clickable
+            const isVisible = await element.evaluate((el) => {
+              const style = window.getComputedStyle(el);
+              const rect = el.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                style.opacity !== '0' &&
+                rect.width > 0 &&
+                rect.height > 0 &&
+                rect.top >= 0 &&
+                rect.left >= 0
+              );
+            });
+            
+            if (isVisible) {
+              console.error(`[PUPPETEER-CLICK] Element ${i + 1}/${elements.length} is visible`);
+              clickableElement = element;
+              break;
+            } else {
+              console.error(`[PUPPETEER-CLICK] Element ${i + 1}/${elements.length} is hidden/invisible`);
+            }
+          } catch (err) {
+            console.error(`[PUPPETEER-CLICK] Error checking element ${i + 1}: ${(err as Error).message}`);
+          }
+        }
+        
+        // If no visible element found, try the first one anyway
+        if (!clickableElement) {
+          console.error(`[PUPPETEER-CLICK] No visible elements found, attempting first element`);
+          clickableElement = elements[0];
+        }
+        
+        // Try to click the element
+        await clickableElement.click();
+        console.error(`[PUPPETEER-CLICK] Successfully clicked: ${selector}`);
+        return;
+        
+      } catch (error) {
+        console.error(`[PUPPETEER-CLICK] Failed to click ${selector}: ${(error as Error).message}`);
+        throw error;
+      }
+    } else if (this.pageType === 'playwright') {
+      // Playwright has built-in visibility handling
+      await (this.underlyingPage as PlaywrightPage).click(selector, { force: false });
+      return;
+    }
+    throw new Error(`Element not found for selector: ${selector}`);
+  }
+
+  async typeBySelector(selector: string, text: string): Promise<void> {
+    if (this.pageType === 'puppeteer') {
+      try {
+        // Find ALL elements matching the selector
+        const elements = await (this.underlyingPage as PuppeteerPage).$$(selector);
+        console.error(`[PUPPETEER-TYPE] Found ${elements.length} element(s) matching: ${selector}`);
+        
+        if (elements.length === 0) {
+          throw new Error(`No elements found for selector: ${selector}`);
+        }
+        
+        // Find the first visible element
+        let typableElement = null;
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i];
+          try {
+            const isVisible = await element.evaluate((el) => {
+              const style = window.getComputedStyle(el);
+              const rect = el.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                style.opacity !== '0' &&
+                rect.width > 0 &&
+                rect.height > 0
+              );
+            });
+            
+            if (isVisible) {
+              console.error(`[PUPPETEER-TYPE] Element ${i + 1}/${elements.length} is visible`);
+              typableElement = element;
+              break;
+            }
+          } catch (err) {
+            console.error(`[PUPPETEER-TYPE] Error checking element ${i + 1}: ${(err as Error).message}`);
+          }
+        }
+        
+        if (!typableElement) {
+          console.error(`[PUPPETEER-TYPE] No visible elements found, using first element`);
+          typableElement = elements[0];
+        }
+        
+        await typableElement.type(text);
+        console.error(`[PUPPETEER-TYPE] Successfully typed text`);
+        return;
+        
+      } catch (error) {
+        console.error(`[PUPPETEER-TYPE] Failed: ${(error as Error).message}`);
+        throw error;
+      }
+    } else if (this.pageType === 'playwright') {
+      await (this.underlyingPage as PlaywrightPage).fill(selector, text);
+      return;
+    }
+    throw new Error(`Element not found for selector: ${selector}`);
+  }
+
+  async clearBySelector(selector: string): Promise<void> {
+    if (this.pageType === 'puppeteer') {
+      try {
+        // Find ALL elements matching the selector
+        const elements = await (this.underlyingPage as PuppeteerPage).$$(selector);
+        console.error(`[PUPPETEER-CLEAR] Found ${elements.length} element(s) matching: ${selector}`);
+        
+        if (elements.length === 0) {
+          throw new Error(`No elements found for selector: ${selector}`);
+        }
+        
+        // Find the first visible element
+        let clearableElement = null;
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i];
+          try {
+            const isVisible = await element.evaluate((el) => {
+              const style = window.getComputedStyle(el);
+              const rect = el.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                style.opacity !== '0' &&
+                rect.width > 0 &&
+                rect.height > 0
+              );
+            });
+            
+            if (isVisible) {
+              console.error(`[PUPPETEER-CLEAR] Element ${i + 1}/${elements.length} is visible`);
+              clearableElement = element;
+              break;
+            }
+          } catch (err) {
+            console.error(`[PUPPETEER-CLEAR] Error checking element ${i + 1}: ${(err as Error).message}`);
+          }
+        }
+        
+        if (!clearableElement) {
+          console.error(`[PUPPETEER-CLEAR] No visible elements found, using first element`);
+          clearableElement = elements[0];
+        }
+        
+        await clearableElement.click({ clickCount: 3 }); // Select all
+        await clearableElement.press('Backspace');
+        console.error(`[PUPPETEER-CLEAR] Successfully cleared element`);
+        return;
+        
+      } catch (error) {
+        console.error(`[PUPPETEER-CLEAR] Failed: ${(error as Error).message}`);
+        throw error;
+      }
+    } else if (this.pageType === 'playwright') {
+      await (this.underlyingPage as PlaywrightPage).fill(selector, '');
+      return;
+    }
+    throw new Error(`Element not found for selector: ${selector}`);
+  }
+
+  async hoverBySelector(selector: string): Promise<void> {
+    if (this.pageType === 'puppeteer') {
+      try {
+        // Find ALL elements matching the selector
+        const elements = await (this.underlyingPage as PuppeteerPage).$$(selector);
+        console.error(`[PUPPETEER-HOVER] Found ${elements.length} element(s) matching: ${selector}`);
+        
+        if (elements.length === 0) {
+          throw new Error(`No elements found for selector: ${selector}`);
+        }
+        
+        // Find the first visible element
+        let hoverableElement = null;
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i];
+          try {
+            const isVisible = await element.evaluate((el) => {
+              const style = window.getComputedStyle(el);
+              const rect = el.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                style.opacity !== '0' &&
+                rect.width > 0 &&
+                rect.height > 0
+              );
+            });
+            
+            if (isVisible) {
+              console.error(`[PUPPETEER-HOVER] Element ${i + 1}/${elements.length} is visible`);
+              hoverableElement = element;
+              break;
+            }
+          } catch (err) {
+            console.error(`[PUPPETEER-HOVER] Error checking element ${i + 1}: ${(err as Error).message}`);
+          }
+        }
+        
+        if (!hoverableElement) {
+          console.error(`[PUPPETEER-HOVER] No visible elements found, using first element`);
+          hoverableElement = elements[0];
+        }
+        
+        await hoverableElement.hover();
+        console.error(`[PUPPETEER-HOVER] Successfully hovered over element`);
+        return;
+        
+      } catch (error) {
+        console.error(`[PUPPETEER-HOVER] Failed: ${(error as Error).message}`);
+        throw error;
+      }
+    } else if (this.pageType === 'playwright') {
+      await (this.underlyingPage as PlaywrightPage).hover(selector);
+      return;
+    }
+    throw new Error(`Element not found for selector: ${selector}`);
+  }
+
+  async scrollToSelector(selector: string): Promise<void> {
+    console.error(`[PUPPETEER-SCROLL] Attempting to scroll to selector: ${selector}`);
+    
+    if (this.pageType === 'puppeteer') {
+      try {
+        // Wait for element to exist
+        await (this.underlyingPage as PuppeteerPage).waitForSelector(selector, { timeout: 5000 });
+        
+        // Scroll element into view
+        const scrolled = await (this.underlyingPage as PuppeteerPage).evaluate((sel: string) => {
+          const elem = document.querySelector(sel);
+          if (elem) {
+            elem.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'center'
+            });
+            return true;
+          }
+          return false;
+        }, selector);
+        
+        if (scrolled) {
+          console.error(`[PUPPETEER-SCROLL] Successfully scrolled to element: ${selector}`);
+          return;
+        }
+        
+        throw new Error(`Could not scroll to element: ${selector}`);
+      } catch (error) {
+        console.error(`[PUPPETEER-SCROLL] Failed: ${(error as Error).message}`);
+        throw error;
+      }
+    } else if (this.pageType === 'playwright') {
+      // Playwright has built-in scrollIntoViewIfNeeded
+      await (this.underlyingPage as PlaywrightPage).locator(selector).scrollIntoViewIfNeeded();
+      return;
+    }
+    
+    throw new Error(`Cannot scroll to element: ${selector}`);
+  }
+
   async getElementsNodeTree() {
     // ref: packages/web-integration/src/playwright/ai-fixture.ts popup logic
     // During test execution, a new page might be opened through a connection, and the page remains confined to the same page instance.

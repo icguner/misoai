@@ -3,6 +3,7 @@ import { AndroidDevice, type AndroidDeviceOpt } from '../page';
 import { vlLocateMode } from 'rfi-ai-shared/env';
 import { getConnectedDevices } from '../utils';
 import { getDebug } from 'rfi-ai-shared/logger';
+import { sleep } from 'rfi-ai-core/utils';
 
 import { debugPage } from '../page';
 
@@ -27,6 +28,158 @@ export class AndroidAgent extends PageAgent<AndroidDevice> {
   async launch(uri: string): Promise<void> {
     const device = this.page;
     await device.launch(uri);
+  }
+
+  // Override aiTap for Android with direct Appium flow
+  async aiTap(locatePrompt: string, opt?: any): Promise<any> {
+    // DIRECT AI TO APPIUM FLOW
+    console.error(`\n[ANDROID-TAP] Starting direct aiTap for: "${locatePrompt}"`);
+    
+    try {
+      // 1. Get page context (XML DOM + Screenshot)
+      const pageContext = await this.getUIContext();
+      console.error(`[ANDROID-TAP] Got Android context with XML DOM`);
+      
+      // 2. Call AI's raw locate method
+      const locateParam = typeof locatePrompt === 'string' 
+        ? { prompt: locatePrompt } 
+        : locatePrompt;
+      const rawAIResponse = await (this.insight as any)._unstableRawLocate(
+        locateParam,
+        { context: pageContext }
+      );
+      console.error(`[ANDROID-TAP] Raw AI response received`);
+      
+      // 3. Extract selector from AI response
+      let selector: string | undefined;
+      
+      if (rawAIResponse?.elements?.length > 0) {
+        const element = rawAIResponse.elements[0];
+        selector = element.xpath;
+        console.error(`[ANDROID-TAP] ✅ Found selector from AI: ${selector}`);
+      }
+      
+      // 4. Use native Appium click
+      if (selector) {
+        console.error(`[ANDROID-TAP] 🎯 Attempting native Appium click on: ${selector}`);
+        await this.page.clickBySelector(selector);
+        console.error(`[ANDROID-TAP] ✅ Successfully clicked element`);
+        
+        // Add post-action delay for page stability
+        const delay = (this as any).postActionDelay ?? 250;
+        if (delay > 0) {
+          console.error(`[ANDROID-TAP] Waiting ${delay}ms for page to stabilize...`);
+          await sleep(delay);
+        }
+        
+        // Add to parent's action history through createSuccessResponse
+        if ((this as any).createSuccessResponse) {
+          return await (this as any).createSuccessResponse('Tap', selector, { 
+            target: locatePrompt,
+            method: 'direct-appium' 
+          });
+        } else {
+          return {
+            result: { 
+              success: true, 
+              selector,
+              method: 'direct-appium' 
+            },
+            metadata: {
+              status: 'finished',
+              thought: `Direct AI locate returned selector: ${selector}`,
+              action: { 
+                type: 'Tap', 
+                description: `Native Appium click on ${selector}`,
+                result: { selector, method: 'direct-android' }
+              }
+            }
+          };
+        }
+      }
+      
+      console.error(`[ANDROID-TAP] ⚠️ No selector found, falling back to standard flow`);
+    } catch (error) {
+      console.error(`[ANDROID-TAP] ❌ Error in direct flow: ${(error as Error).message}`);
+    }
+    
+    // Fallback to parent class implementation
+    return super.aiTap(locatePrompt, opt);
+  }
+
+  // Override aiInput for Android with direct Appium flow
+  async aiInput(value: string, locatePrompt: string, opt?: any): Promise<any> {
+    // DIRECT AI TO APPIUM FLOW
+    console.error(`\n[ANDROID-INPUT] Starting direct aiInput for: "${locatePrompt}" with value: "${value}"`);
+    
+    try {
+      // 1. Get page context
+      const pageContext = await this.getUIContext();
+      console.error(`[ANDROID-INPUT] Got Android context with XML DOM`);
+      
+      // 2. Call AI's raw locate method
+      const locateParam = typeof locatePrompt === 'string' 
+        ? { prompt: locatePrompt } 
+        : locatePrompt;
+      const rawAIResponse = await (this.insight as any)._unstableRawLocate(
+        locateParam,
+        { context: pageContext }
+      );
+      
+      // 3. Extract selector
+      let selector: string | undefined;
+      if (rawAIResponse?.elements?.length > 0) {
+        selector = rawAIResponse.elements[0].xpath;
+        console.error(`[ANDROID-INPUT] ✅ Found selector from AI: ${selector}`);
+      }
+      
+      // 4. Use native Appium input
+      if (selector) {
+        console.error(`[ANDROID-INPUT] 🎯 Attempting native Appium input on: ${selector}`);
+        await this.page.clearBySelector(selector);
+        await this.page.typeBySelector(selector, value);
+        console.error(`[ANDROID-INPUT] ✅ Successfully typed: "${value}"`);
+        
+        // Add post-action delay for page stability
+        const delay = (this as any).postActionDelay ?? 250;
+        if (delay > 0) {
+          console.error(`[ANDROID-INPUT] Waiting ${delay}ms for page to stabilize...`);
+          await sleep(delay);
+        }
+        
+        // Add to parent's action history through createSuccessResponse
+        if ((this as any).createSuccessResponse) {
+          return await (this as any).createSuccessResponse('Input', selector, { 
+            value,
+            target: locatePrompt,
+            method: 'direct-appium' 
+          });
+        } else {
+          return {
+            result: { 
+              success: true, 
+              selector,
+              value,
+              method: 'direct-appium' 
+            },
+            metadata: {
+              status: 'finished',
+              thought: `Direct AI locate returned selector: ${selector}`,
+              action: { 
+                type: 'Input', 
+                description: `Native Appium input on ${selector} with value: ${value}`,
+                result: { selector, value, method: 'direct-android' }
+              }
+            }
+          };
+        }
+      }
+    } catch (error) {
+      console.error(`[ANDROID-INPUT] ❌ Error: ${(error as Error).message}`);
+    }
+    
+    // Fallback to parent class implementation
+    return super.aiInput(value, locatePrompt, opt);
   }
 }
 

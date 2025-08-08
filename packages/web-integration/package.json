@@ -170,7 +170,7 @@
     "bin"
   ],
   "dependencies": {
-    "rfi-ai-core": "^0.20.5",
+    "rfi-ai-core": "workspace:*",
     "rfi-ai-shared": "^0.20.3",
     "@xmldom/xmldom": "0.8.10",
     "cors": "2.8.5",

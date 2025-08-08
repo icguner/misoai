@@ -43,6 +43,7 @@ import {
 import {
   findElementPrompt,
   systemPromptToLocateElement,
+  unifiedLocatorSchema,
 } from './prompt/llm-locator';
 import {
   sectionLocatorInstruction,
@@ -89,11 +90,19 @@ export async function AiLocateElement<
     'cannot find the target element description',
   );
 
+  // Enhanced context for better dropdown handling
+  const enhancedDescription = targetElementDescription.toLowerCase().includes('option') || 
+    targetElementDescription.toLowerCase().includes('dropdown') || 
+    targetElementDescription.toLowerCase().includes('select') ?
+    `IMPORTANT: This is likely a dropdown/autocomplete selection. Look for dropdown items, NOT input fields. ${targetElementDescription}` :
+    targetElementDescription;
+
   const userInstructionPrompt = await findElementPrompt.format({
     pageDescription: description,
-    targetElementDescription,
+    targetElementDescription: enhancedDescription,
   });
-  const systemPrompt = systemPromptToLocateElement(vlLocateMode());
+  // UNIFIED SYSTEM: All models use the same hybrid approach with enhanced CoT
+  const systemPrompt = systemPromptToLocateElement();
 
   let imagePayload = screenshotBase64;
 
@@ -108,14 +117,21 @@ export async function AiLocateElement<
     );
 
     imagePayload = options.searchConfig.imageBase64;
-  } else if (vlLocateMode() === 'qwen-vl') {
-    imagePayload = await paddingToMatchBlockByBase64(imagePayload);
-  } else if (!vlLocateMode()) {
-    imagePayload = await markupImageForLLM(
-      screenshotBase64,
-      context.tree,
-      context.size,
-    );
+  } else {
+    // UNIFIED IMAGE PROCESSING: Apply appropriate preprocessing based on model capabilities
+    const currentModel = vlLocateMode();
+    if (currentModel === 'qwen-vl') {
+      // Qwen-VL specific preprocessing
+      imagePayload = await paddingToMatchBlockByBase64(imagePayload);
+    } else if (!currentModel) {
+      // Non-VL models: Add element markers to screenshot
+      imagePayload = await markupImageForLLM(
+        screenshotBase64,
+        context.tree,
+        context.size,
+      );
+    }
+    // VL models (except qwen-vl) use raw screenshot
   }
 
   let referenceImagePayload: string | undefined;
@@ -127,7 +143,7 @@ export async function AiLocateElement<
     );
   }
 
-  // Prepare user content array
+  // Prepare user content array - send image to ALL models, handle errors gracefully
   const userContent: ChatCompletionUserMessageParam['content'] = [
     {
       type: 'image_url',
@@ -142,12 +158,73 @@ export async function AiLocateElement<
     },
   ];
 
-  // For VL models, also include DOM structure information for better bbox accuracy
-  if (vlLocateMode()) {
-    userContent.push({
-      type: 'text',
-      text: `\n\nDOM Structure Information:\n${description}`,
-    });
+  // UNIFIED HYBRID MODE: ALL models now receive DOM structure for hybrid analysis
+  // This ensures consistent behavior regardless of model type (VL or non-VL)
+  
+  // Ensure DOM structure is available for all models
+  if (!description || description.length === 0) {
+    console.warn(`[UNIFIED-DOM] WARNING: DOM structure is empty - hybrid mode may not work correctly`);
+    console.warn(`[UNIFIED-DOM] All models require DOM structure for optimal element location`);
+  }
+  
+  // Check if description is in Emmetify format
+  const isEmmetFormat = description.includes('Page:') && description.includes('DOM:');
+  
+  let domInfo: string;
+  if (isEmmetFormat) {
+    // Emmetify format - optimized for all models
+    domInfo = `\n\n## Compact DOM Structure (Emmetify Format):\n${description}\n\nElements use format: tag#id.class[attributes]{text}\nKey attributes: rect=left,top,width,height for coordinates, mid=X for markerId, data-testid for test automation\nGenerate reliable Puppeteer selectors from this DOM structure.`;
+  } else {
+    // Traditional format - enhanced for unified approach
+    domInfo = `\n\n## DOM Structure Information for Hybrid Analysis:\n${description}\n\nIMPORTANT: Combine visual screenshot analysis with DOM structure data for accurate element location. Generate Puppeteer-compatible selectors as primary output.`;
+  }
+  
+  userContent.push({
+    type: 'text',
+    text: domInfo,
+  });
+  
+  // Log unified hybrid mode information
+  const modelType = vlLocateMode() ? `${vlLocateMode()} (VL)` : 'Non-VL';
+  console.error(`[UNIFIED-HYBRID] Active for ${modelType} model - DOM + Screenshot analysis`);
+  console.error(`[UNIFIED-HYBRID] DOM format: ${isEmmetFormat ? 'Emmetify (compact)' : 'Traditional'}`);
+  console.error(`[UNIFIED-HYBRID] DOM content length: ${description.length} characters`);
+  console.error(`[UNIFIED-HYBRID] Expected output: Chain of thought + Puppeteer selectors`);
+  
+  // Log DOM content
+  if (description.length > 0) {
+    console.error(`[UNIFIED-HYBRID] DOM preview: ${description.substring(0, 200)}...`);
+    
+    // Full DOM logging controlled by environment variable
+    const debugDom = process.env.MIDSCENE_DEBUG_DOM === 'true' || process.env.DEBUG_EMMETIFY === 'true';
+    
+    if (debugDom) {
+      console.error(`\n[EMMETIFY-DOM-START] ========== FULL DOM SENT TO LLM ==========`);
+      
+      // Log page info if available
+      const pageMatch = description.match(/Page: (\d+) x (\d+)/);
+      if (pageMatch) {
+        console.error(`[EMMETIFY-DOM-INFO] Page dimensions: ${pageMatch[1]} x ${pageMatch[2]}`);
+      }
+      
+      // Split into chunks of 500 chars for readability
+      const chunkSize = 500;
+      const domContent = description.replace(/Page: \d+ x \d+\s*DOM: /, ''); // Remove page info from DOM
+      
+      for (let i = 0; i < domContent.length; i += chunkSize) {
+        const chunk = domContent.substring(i, Math.min(i + chunkSize, domContent.length));
+        console.error(`[EMMETIFY-DOM-CHUNK-${Math.floor(i/chunkSize) + 1}] ${chunk}`);
+      }
+      
+      // Log stats
+      const elementCount = (domContent.match(/[>+]/g) || []).length;
+      console.error(`[EMMETIFY-DOM-STATS] Approximate elements: ${elementCount}`);
+      console.error(`[EMMETIFY-DOM-END] ========== END OF DOM (${description.length} chars) ==========\n`);
+    } else {
+      console.error(`[UNIFIED-HYBRID] Use MIDSCENE_DEBUG_DOM=true to see full DOM content`);
+    }
+  } else {
+    console.error(`[UNIFIED-HYBRID-ERROR] ERROR: No DOM structure available for analysis!`);
   }
 
   const msgs: AIArgs = [
@@ -161,6 +238,7 @@ export async function AiLocateElement<
   const callAIFn =
     callAI || callToGetJSONObject<AIElementResponse | [number, number]>;
 
+  // Use unified schema for consistent response format across all models
   const res = await callAIFn(msgs, AIActionType.INSPECT_ELEMENT);
 
   const rawResponse = JSON.stringify(res.content);
@@ -171,16 +249,45 @@ export async function AiLocateElement<
   let errors: AIElementLocatorResponse['errors'] | undefined =
     'errors' in res.content ? res.content.errors : [];
     
-  // Log chain of thought reasoning if available (VL mode)
-  if (vlLocateMode() && 'chain_of_thought' in res.content) {
-    debugInspect('VL Chain of Thought Analysis:', res.content.chain_of_thought);
-    if ('confidence' in res.content) {
-      debugInspect('VL Detection Confidence:', res.content.confidence);
-    }
+  // UNIFIED RESPONSE HANDLING: Same processing for all models
+  if ('chain_of_thought' in res.content) {
+    const modelType = vlLocateMode() ? `VL-${vlLocateMode()}` : 'Non-VL';
+    debugInspect(`[UNIFIED] ${modelType} Chain of Thought Analysis:`, res.content.chain_of_thought);
+    
+    // All models now provide detailed reasoning
+    console.error(`[UNIFIED-REASONING] Model: ${modelType}`);
+    const chainOfThought = res.content.chain_of_thought as any;
+    console.error(`[UNIFIED-REASONING] Screenshot analysis completed: ${chainOfThought?.screenshot_analysis ? 'YES' : 'NO'}`);
+    console.error(`[UNIFIED-REASONING] DOM analysis completed: ${chainOfThought?.dom_analysis ? 'YES' : 'NO'}`);
+    console.error(`[UNIFIED-REASONING] Selector generated: ${chainOfThought?.selector_generation ? 'YES' : 'NO'}`);
+  }
+
+  // SIMPLE XPATH PROCESSING: All models return elements with xpath field  
+  if (matchedElements && matchedElements.length > 0) {
+    matchedElements = matchedElements.map(element => {
+      // AI model returns xpath field - use it directly
+      const puppeteerXpath = (element as any).xpath;
+      
+      if (!puppeteerXpath) {
+        console.warn(`[XPATH] Element missing XPath - will need fallback`);
+      } else {
+        console.error(`[XPATH] Element has xpath: ${puppeteerXpath}`);
+      }
+      
+      return {
+        ...element,
+        // Store xpath in xpaths array for compatibility
+        xpaths: puppeteerXpath ? [puppeteerXpath] : element.xpaths || [],
+        reason: (element as any).reason || 'Element located via AI xpath'
+      };
+    });
+    
+    console.error(`[XPATH] Processed ${matchedElements.length} element(s) with xpaths`);
   }
     
   try {
-    if ('bbox' in res.content && Array.isArray(res.content.bbox)) {
+    // Handle legacy bbox format for VL models (backward compatibility)
+    if ('bbox' in res.content && Array.isArray(res.content.bbox) && res.content.bbox.length > 0) {
       resRect = adaptBboxToRect(
         res.content.bbox,
         options.searchConfig?.rect?.width || context.size.width,
@@ -205,8 +312,16 @@ export async function AiLocateElement<
       }
 
       if (element) {
-        matchedElements = [element];
+        // Convert bbox-based element to unified format
+        const unifiedElement = {
+          ...element,
+          reason: 'Element located via bbox coordinates (legacy VL mode)',
+          xpaths: element.xpaths || [],
+          puppeteerSelector: element.xpaths?.[0] || ''
+        };
+        matchedElements = [unifiedElement];
         errors = [];
+        console.error(`[UNIFIED-BBOX] Converted bbox-based detection to unified format`);
       }
     }
   } catch (e) {
@@ -247,6 +362,7 @@ export async function AiLocateSection(options: {
   const { context, sectionDescription } = options;
   const { screenshotBase64 } = context;
 
+  // UNIFIED SYSTEM: Section locator also uses unified approach
   const systemPrompt = systemPromptToLocateSection(vlLocateMode());
   const sectionLocatorInstructionText = await sectionLocatorInstruction.format({
     sectionDescription,

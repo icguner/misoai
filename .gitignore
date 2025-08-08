@@ -121,3 +121,9 @@ CLAUDE.md
 **/CLAUDE.md
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Midscene.js dump files
+hirafi_run/dump
+hirafi_run/report
+hirafi_run/tmp
+hirafi_run/log

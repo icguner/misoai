@@ -1,0 +1,64 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v3.0.5 /Users/n100457/Desktop/misoai/packages/web-integration
+
+stdout | tests/unit-test/flypgs-hybrid.test.ts
+
+🎯 Flypgs.com Hybrid Mode Puppeteer Test Suite Created!
+📋 Features tested with hybrid AI:
+   ✈️ Flight search with aiInput and aiTap
+   🎫 Booking flow navigation
+   🧭 Menu and navigation testing
+   📱 Mobile responsive design
+   🔧 Advanced search filters
+   🤖 All interactions use new hybrid mode
+
+🚀 Run with: npm test flypgs-test.js
+
+stdout | tests/unit-test/flypgs-hybrid.test.ts > Flypgs.com Hybrid Mode Test Suite > should search for flights using hybrid AI mode
+🛫 Starting Flypgs.com flight search test with hybrid mode...
+
+2025-08-06T13:43:26.754Z midscene:ai:call sending request to gemini-2.5-pro
+2025-08-06T13:43:34.409Z midscene:ai:call response: ```json
+{
+  "pass": false,
+  "thought": "The assertion states that the page contains a flight search form. However, the screenshot shows a 'Page not found' error page with the message 'Aradığınız sayfaya ulaşılamadı'. While there is a link to search for flights ('Ucuz Uçuş Ara'), the flight search form itself is not present on the current page."
+}
+```
+stderr | tests/unit-test/flypgs-hybrid.test.ts > Flypgs.com Hybrid Mode Test Suite > should search for flights using hybrid AI mode
+Failed to get the Midscene report template due to the lack of the {{dump}} placeholder. If you are building Midscene.js by yourself, please refer to the contribution guide for more information: https://github.com/web-infra-dev/midscene/blob/main/CONTRIBUTING.md#FAQ
+
+stdout | tests/unit-test/flypgs-hybrid.test.ts > Flypgs.com Hybrid Mode Test Suite > should search for flights using hybrid AI mode
+Midscene - report file updated: /Users/n100457/Desktop/misoai/packages/web-integration/hirafi_run/report/puppeteer-2025-08-06_16-43-22-0nmremy0.html
+
+ ❯ tests/unit-test/flypgs-hybrid.test.ts (5 tests | 1 failed | 4 skipped) 16598ms
+   × Flypgs.com Hybrid Mode Test Suite > should search for flights using hybrid AI mode 16596ms
+     → Assertion failed: the page is Pegasus Airlines website with flight search form
+Reason: The assertion states that the page contains a flight search form. However, the screenshot shows a 'Page not found' error page with the message 'Aradığınız sayfaya ulaşılamadı'. While there is a link to search for flights ('Ucuz Uçuş Ara'), the flight search form itself is not present on the current page.
+   ↓ Flypgs.com Hybrid Mode Test Suite > should test booking flow with hybrid AI interactions
+   ↓ Flypgs.com Hybrid Mode Test Suite > should test navigation menu with hybrid AI
+   ↓ Flypgs.com Hybrid Mode Test Suite > should test mobile responsive design with hybrid AI
+   ↓ Flypgs.com Hybrid Mode Test Suite > should test advanced search filters with hybrid AI
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit-test/flypgs-hybrid.test.ts > Flypgs.com Hybrid Mode Test Suite > should search for flights using hybrid AI mode
+Error: Assertion failed: the page is Pegasus Airlines website with flight search form
+Reason: The assertion states that the page contains a flight search form. However, the screenshot shows a 'Page not found' error page with the message 'Aradığınız sayfaya ulaşılamadı'. While there is a link to search for flights ('Ucuz Uçuş Ara'), the flight search form itself is not present on the current page.
+ ❯ PuppeteerAgent.aiAssert src/common/agent.ts:1110:13
+    1108|         output?.thought || executor.latestErrorTask()?.error || '(no_r…
+    1109|       }`;
+    1110|       throw new Error(`${errMsg}\n${reasonMsg}`);
+       |             ^
+    1111|     }
+    1112| 
+ ❯ tests/unit-test/flypgs-hybrid.test.ts:34:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  16:43:16
+   Duration  18.98s (transform 151ms, setup 0ms, collect 976ms, tests 16.60s, environment 0ms, prepare 64ms)
+

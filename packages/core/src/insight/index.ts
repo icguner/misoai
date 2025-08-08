@@ -86,6 +86,27 @@ export default class Insight<
     }
   }
 
+  // Direct method to get raw AI response without validation
+  async _unstableRawLocate(
+    query: DetailedLocateParam,
+    opt?: LocateOpts,
+  ): Promise<any> {
+    const queryPrompt = typeof query === 'string' ? query : query.prompt;
+    assert(queryPrompt, 'query is required for locate');
+    
+    const context = opt?.context || (await this.contextRetrieverFn('locate'));
+    
+    // Direct call to AI without any validation
+    const { parseResult } = await AiLocateElement({
+      callAI: opt?.callAI || this.aiVendorFn,
+      context,
+      targetElementDescription: queryPrompt,
+    });
+    
+    // Return raw AI response
+    return parseResult;
+  }
+
   async locate(
     query: DetailedLocateParam,
     opt?: LocateOpts,
